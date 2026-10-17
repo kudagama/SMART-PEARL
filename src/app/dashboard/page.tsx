@@ -1,8 +1,10 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
+import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Phone, PhoneOff, User, Bot, Zap, Wifi, CheckCircle2, AlertCircle, Play, Pause, Activity, ShieldAlert, Cpu, X, Star, TrendingUp, AlertTriangle, Target, PhoneCall, Mic, MicOff, Volume2, Sparkles, Send, Check, Copy, ArrowRight, ShieldCheck, Wrench, CreditCard, Radio } from 'lucide-react';
+import { Phone, PhoneOff, User, Bot, Zap, Wifi, CheckCircle2, AlertCircle, Play, Pause, Activity, ShieldAlert, Cpu, X, Star, TrendingUp, AlertTriangle, Target, PhoneCall, Mic, MicOff, Volume2, Sparkles, Send, Check, Copy, ArrowRight, ShieldCheck, Wrench, CreditCard, Radio, Award, BookOpen } from 'lucide-react';
+import { evaluateCallQuality, QualityStandardResult, OFFICIAL_SLT_STANDARDS } from '@/lib/qualityStandards';
 
 type TranscriptMessage = {
   id: string;
@@ -115,6 +117,9 @@ export default function DashboardPage() {
   const silenceTimerRef = useRef<NodeJS.Timeout | null>(null);
   const voiceLangRef = useRef<'en-US' | 'si-LK'>('en-US');
 
+  // SLT Quality Standards Compliance State
+  const [qualityResult, setQualityResult] = useState<QualityStandardResult>(() => evaluateCallQuality([]));
+
   // Keep voiceLangRef in sync
   useEffect(() => {
     voiceLangRef.current = voiceLang;
@@ -124,6 +129,20 @@ export default function DashboardPage() {
   useEffect(() => {
     if (transcriptRef.current) {
       transcriptRef.current.scrollTop = transcriptRef.current.scrollHeight;
+    }
+  }, [transcript, liveMicText]);
+
+  // Real-time SLT Call Quality Standards Evaluation
+  useEffect(() => {
+    const allItems = [...transcript];
+    if (liveMicText) {
+      allItems.push({ id: 'live-stream', speaker: 'agent', text: liveMicText });
+    }
+    if (allItems.length > 0) {
+      const result = evaluateCallQuality(allItems);
+      setQualityResult(result);
+    } else {
+      setQualityResult(evaluateCallQuality([]));
     }
   }, [transcript, liveMicText]);
 
@@ -486,6 +505,43 @@ export default function DashboardPage() {
     
     if (transcript.length > 0) {
       setShowEvaluation(true);
+
+      // Save this evaluated call into localStorage for the Performance tab!
+      try {
+        const finalEval = evaluateCallQuality(transcript);
+        const newCallRecord = {
+          id: `call-${Date.now()}`,
+          type: activeCallType === 'fiberVoicePonOn' || activeCallType === 'fiberVoicePonOff'
+            ? 'FTTH Voice Support'
+            : activeCallType === 'losRed'
+            ? 'Fibre LOS Fault'
+            : activeCallType === 'highPing'
+            ? 'High Ping Gaming'
+            : activeCallType === 'unlimitedSlow'
+            ? 'Broadband Speed Issue'
+            : activeCallType === 'foodCityReload'
+            ? '4G Prepaid Reload Issue'
+            : activeCallType === 'sinhala'
+            ? 'Sinhala Directory Inquiry'
+            : activeCallType === 'tamil'
+            ? 'Tamil Hospital Inquiry'
+            : 'Telecom Customer Service',
+          caller: '011 244 5566',
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          duration: formatTime(callTimer || 38),
+          score: finalEval.overallScore,
+          sentiment: finalEval.overallScore >= 85 ? 'Excellent' : finalEval.overallScore >= 70 ? 'Good' : 'Average',
+          strengths: finalEval.strengths,
+          weaknesses: finalEval.weaknesses,
+          criteria: finalEval.criteria,
+          language: finalEval.language,
+          transcript: transcript.map(t => `${t.speaker.toUpperCase()}: ${t.text}`).join('\n')
+        };
+        const existing = JSON.parse(localStorage.getItem('slt_call_evaluations') || '[]');
+        localStorage.setItem('slt_call_evaluations', JSON.stringify([newCallRecord, ...existing.slice(0, 15)]));
+      } catch (e) {
+        console.error('Failed to save call evaluation to localStorage', e);
+      }
     }
   };
 
@@ -1140,6 +1196,185 @@ export default function DashboardPage() {
               </div>
             </div>
 
+            {/* REAL-TIME SLT CALL QUALITY STANDARDS COMPLIANCE MONITOR */}
+            <motion.div 
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-6 p-4 rounded-2xl bg-gradient-to-br from-[#005696]/5 via-indigo-50/50 to-blue-50/50 border border-indigo-200/80 shadow-xs relative overflow-hidden"
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between pb-2.5 mb-3 border-b border-indigo-100">
+                <div className="flex items-center gap-2">
+                  <div className="w-7 h-7 rounded-lg bg-[#005696] text-white flex items-center justify-center shadow-xs">
+                    <ShieldCheck className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h3 className="text-xs font-black text-slate-900 tracking-tight flex items-center gap-1.5">
+                      Quality Standards of Calls
+                      <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-indigo-100 text-indigo-700">
+                        QA SLA
+                      </span>
+                    </h3>
+                    <p className="text-[10px] text-slate-500 font-medium">Real-time Call Quality Compliance Verification</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <div className={`px-2.5 py-1 rounded-xl font-black text-xs shadow-2xs flex items-center gap-1 ${
+                    qualityResult.overallScore >= 85
+                      ? 'bg-emerald-500 text-white'
+                      : qualityResult.overallScore >= 60
+                      ? 'bg-[#005696] text-white'
+                      : 'bg-amber-500 text-white'
+                  }`}>
+                    <Award className="w-3.5 h-3.5" />
+                    <span>{qualityResult.overallScore}%</span>
+                  </div>
+
+                  <Link 
+                    href="/evaluations"
+                    title="Open Full Performance Dashboard"
+                    className="p-1.5 rounded-lg bg-white hover:bg-slate-100 border border-slate-200 text-slate-600 hover:text-[#005696] transition-all shadow-2xs"
+                  >
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </Link>
+                </div>
+              </div>
+
+              {/* 5 Real-Time Quality Checkpoints */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-3">
+                {/* 1. Greeting */}
+                <div className={`p-2 rounded-xl border text-left transition-all ${
+                  qualityResult.criteria.greeting.passed
+                    ? 'bg-emerald-50/80 border-emerald-300 text-emerald-900'
+                    : 'bg-white/80 border-slate-200 text-slate-600'
+                }`}>
+                  <div className="flex items-center justify-between mb-0.5">
+                    <span className="text-[10px] font-bold">1. Greeting</span>
+                    {qualityResult.criteria.greeting.passed ? (
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                    ) : (
+                      <span className="w-2 h-2 rounded-full bg-slate-300" />
+                    )}
+                  </div>
+                  <p className="text-[9px] font-semibold text-slate-500 leading-tight truncate">
+                    {qualityResult.criteria.greeting.passed ? 'Ayubowan / ආයුබෝවන්' : 'Ayubowan + Name'}
+                  </p>
+                </div>
+
+                {/* 2. Holding */}
+                <div className={`p-2 rounded-xl border text-left transition-all ${
+                  qualityResult.criteria.holding.passed
+                    ? 'bg-emerald-50/80 border-emerald-300 text-emerald-900'
+                    : 'bg-white/80 border-slate-200 text-slate-600'
+                }`}>
+                  <div className="flex items-center justify-between mb-0.5">
+                    <span className="text-[10px] font-bold">2. Holding 45s</span>
+                    {qualityResult.criteria.holding.passed ? (
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                    ) : (
+                      <span className="w-2 h-2 rounded-full bg-slate-300" />
+                    )}
+                  </div>
+                  <p className="text-[9px] font-semibold text-slate-500 leading-tight truncate">
+                    {qualityResult.criteria.holding.passed ? 'Hold & Retrieved' : 'Hold + Retrieval'}
+                  </p>
+                </div>
+
+                {/* 3. Pre-Close */}
+                <div className={`p-2 rounded-xl border text-left transition-all ${
+                  qualityResult.criteria.preClose.passed
+                    ? 'bg-emerald-50/80 border-emerald-300 text-emerald-900'
+                    : 'bg-white/80 border-slate-200 text-slate-600'
+                }`}>
+                  <div className="flex items-center justify-between mb-0.5">
+                    <span className="text-[10px] font-bold">3. Pre-Close</span>
+                    {qualityResult.criteria.preClose.passed ? (
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                    ) : (
+                      <span className="w-2 h-2 rounded-full bg-slate-300" />
+                    )}
+                  </div>
+                  <p className="text-[9px] font-semibold text-slate-500 leading-tight truncate">
+                    {qualityResult.criteria.preClose.passed ? 'Inquiry Done' : 'Anything else?'}
+                  </p>
+                </div>
+
+                {/* 4. IVR C-Sat Ending */}
+                <div className={`p-2 rounded-xl border text-left transition-all ${
+                  qualityResult.criteria.ivrEnding.passed
+                    ? 'bg-emerald-50/80 border-emerald-300 text-emerald-900'
+                    : 'bg-white/80 border-slate-200 text-slate-600'
+                }`}>
+                  <div className="flex items-center justify-between mb-0.5">
+                    <span className="text-[10px] font-bold">4. IVR C-Sat</span>
+                    {qualityResult.criteria.ivrEnding.passed ? (
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                    ) : (
+                      <span className="w-2 h-2 rounded-full bg-slate-300" />
+                    )}
+                  </div>
+                  <p className="text-[9px] font-semibold text-slate-500 leading-tight truncate">
+                    {qualityResult.criteria.ivrEnding.passed ? 'Rating Script' : 'Rate service'}
+                  </p>
+                </div>
+
+                {/* 5. Sir/Madam */}
+                <div className={`p-2 rounded-xl border text-left transition-all ${
+                  qualityResult.criteria.sirMadam.passed
+                    ? 'bg-indigo-50/80 border-indigo-300 text-indigo-900'
+                    : 'bg-white/80 border-slate-200 text-slate-600'
+                }`}>
+                  <div className="flex items-center justify-between mb-0.5">
+                    <span className="text-[10px] font-bold">5. Sir / Madam</span>
+                    {qualityResult.criteria.sirMadam.passed ? (
+                      <CheckCircle2 className="w-3.5 h-3.5 text-indigo-600" />
+                    ) : (
+                      <span className="w-2 h-2 rounded-full bg-slate-300" />
+                    )}
+                  </div>
+                  <p className="text-[9px] font-semibold text-slate-500 leading-tight truncate">
+                    {qualityResult.criteria.sirMadam.passed ? 'Honorific Used' : 'Address Sir/Madam'}
+                  </p>
+                </div>
+
+                {/* 6. Apology / Courtesy */}
+                <div className="p-2 rounded-xl border bg-white/80 border-slate-200 text-slate-600 text-left">
+                  <div className="flex items-center justify-between mb-0.5">
+                    <span className="text-[10px] font-bold">6. Courtesy</span>
+                    <Check className="w-3.5 h-3.5 text-emerald-600" />
+                  </div>
+                  <p className="text-[9px] font-semibold text-slate-500 leading-tight truncate">
+                    Sorry when needed
+                  </p>
+                </div>
+              </div>
+
+              {/* Live Real-time Quality Coaching Prompt Banner */}
+              <div className="p-2.5 rounded-xl bg-white border border-indigo-100 shadow-2xs flex items-center justify-between text-left">
+                <div className="flex items-center gap-2 overflow-hidden">
+                  <Sparkles className="w-4 h-4 text-[#005696] shrink-0" />
+                  <p className="text-[11px] font-bold text-slate-700 truncate">
+                    {!qualityResult.criteria.greeting.passed
+                      ? 'Say: "ආයුබෝවන්! මම හිමාලි, මට පුළුවනි ඔබට සහය වන්න" or "Ayubowan! I am Himali..."'
+                      : !qualityResult.criteria.sirMadam.passed
+                      ? 'Remember to address the customer respectfully as "Sir" or "Madam"'
+                      : !qualityResult.criteria.preClose.passed
+                      ? 'Pre-close: "වෙනත් යමක් දැනගැනීමට අවශ්‍යද?" / "Is there anything else I can help you with Sir/Madam?"'
+                      : !qualityResult.criteria.ivrEnding.passed
+                      ? 'Ending: "මා ලබාදුන් සේවය ඇගයීම සඳහා රැඳී සිටින්න. SLT Mobitel ඇමතුවාට ස්තූතියි."'
+                      : '🌟 Outstanding! 100% adherence to official SLT Call Quality Standards.'}
+                  </p>
+                </div>
+                <Link
+                  href="/evaluations"
+                  className="text-[10px] font-black text-[#005696] hover:underline shrink-0 ml-2"
+                >
+                  View Performance ➔
+                </Link>
+              </div>
+            </motion.div>
+
             <AnimatePresence>
               {suggestions.length === 0 ? (
                 <motion.div 
@@ -1181,25 +1416,39 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Evaluation Saved Toast */}
+      {/* Evaluation Saved Toast with Link to Performance */}
       <AnimatePresence>
         {showEvaluation && (
           <motion.div 
             initial={{ opacity: 0, y: 50 }} 
             animate={{ opacity: 1, y: 0 }} 
             exit={{ opacity: 0, y: 50 }}
-            className="absolute bottom-6 right-6 bg-slate-900 text-white px-5 py-3 rounded-xl shadow-2xl flex items-center gap-3 z-50"
+            className="absolute bottom-6 right-6 bg-slate-900 text-white p-4 rounded-2xl shadow-2xl flex items-center justify-between gap-4 z-50 border border-slate-700"
           >
-            <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center">
-              <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+            <div className="flex items-center gap-3">
+              <div className={`w-10 h-10 rounded-full flex items-center justify-center font-black text-sm ${
+                qualityResult.overallScore >= 85 ? 'bg-emerald-500/20 text-emerald-400' : 'bg-amber-500/20 text-amber-400'
+              }`}>
+                {qualityResult.overallScore}%
+              </div>
+              <div>
+                <p className="text-sm font-black">Call Finished & Evaluated</p>
+                <p className="text-xs text-slate-300">
+                  Quality Score: <span className="font-bold text-emerald-400">{qualityResult.overallScore}%</span> • Saved to Performance tab.
+                </p>
+              </div>
             </div>
-            <div>
-              <p className="text-sm font-bold">Call Finished</p>
-              <p className="text-xs text-slate-300">Evaluation saved to Performance tab.</p>
+            <div className="flex items-center gap-2">
+              <Link 
+                href="/evaluations"
+                className="px-3 py-1.5 bg-[#005696] hover:bg-[#00477d] text-white rounded-lg text-xs font-bold transition-all shadow-sm"
+              >
+                View in Performance ➔
+              </Link>
+              <button onClick={() => setShowEvaluation(false)} className="p-1 hover:bg-slate-800 rounded-lg transition-colors">
+                <X className="w-4 h-4 text-slate-400" />
+              </button>
             </div>
-            <button onClick={() => setShowEvaluation(false)} className="ml-4 p-1 hover:bg-slate-800 rounded-lg transition-colors">
-              <X className="w-4 h-4 text-slate-400" />
-            </button>
           </motion.div>
         )}
       </AnimatePresence>
