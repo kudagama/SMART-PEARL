@@ -54,9 +54,11 @@ export default function ContactGrid() {
     };
 
     recognition.onresult = (event: any) => {
-      const current = event.resultIndex;
-      const transcript = event.results[current][0].transcript;
-      setQuery(transcript);
+      let fullTranscript = '';
+      for (let i = 0; i < event.results.length; ++i) {
+        fullTranscript += event.results[i][0].transcript + ' ';
+      }
+      setQuery(fullTranscript.trim());
     };
 
     recognition.onend = () => {

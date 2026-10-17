@@ -102,25 +102,42 @@ export default function DashboardPage() {
   const [isMicListening, setIsMicListening] = useState(false);
   const [isAiTriaging, setIsAiTriaging] = useState(false);
   const [micTranscript, setMicTranscript] = useState('');
+  const [liveMicText, setLiveMicText] = useState('');
+  const [voiceLang, setVoiceLang] = useState<'en-US' | 'si-LK'>('en-US');
   const [dispatchedTicket, setDispatchedTicket] = useState<{ number: string; group: string; time: string } | null>(null);
 
   const transcriptRef = useRef<HTMLDivElement>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const scriptTimers = useRef<NodeJS.Timeout[]>([]);
   const recognitionRef = useRef<any>(null);
+  const isListeningActiveRef = useRef<boolean>(false);
+  const liveMicTextRef = useRef<string>('');
+  const silenceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const voiceLangRef = useRef<'en-US' | 'si-LK'>('en-US');
 
-  // Scroll to bottom of transcript
+  // Keep voiceLangRef in sync
+  useEffect(() => {
+    voiceLangRef.current = voiceLang;
+  }, [voiceLang]);
+
+  // Scroll to bottom of transcript whenever messages or live streaming text update
   useEffect(() => {
     if (transcriptRef.current) {
       transcriptRef.current.scrollTop = transcriptRef.current.scrollHeight;
     }
-  }, [transcript]);
+  }, [transcript, liveMicText]);
 
-  // Clean up speech recognition on unmount
+  // Clean up speech recognition & timers on unmount
   useEffect(() => {
     return () => {
+      isListeningActiveRef.current = false;
+      if (silenceTimerRef.current) {
+        clearTimeout(silenceTimerRef.current);
+      }
       if (recognitionRef.current) {
-        recognitionRef.current.stop();
+        try {
+          recognitionRef.current.stop();
+        } catch (e) {}
       }
     };
   }, []);
@@ -292,18 +309,51 @@ export default function DashboardPage() {
     setSuggestions(prev => [triageCard, ...prev.filter(s => !s.id.startsWith('triage-')).slice(0, 3)]);
   };
 
-  // Live Microphone Voice Recognition Toggle
-  const toggleMicListening = () => {
-    if (isMicListening) {
-      if (recognitionRef.current) {
-        recognitionRef.current.stop();
-      }
-      setIsMicListening(false);
-      return;
-    }
+  // Commit the full coherent utterance once speaker pauses or finishes speaking
+  const commitUtterance = (textToCommit: string) => {
+    const clean = textToCommit.trim();
+    if (!clean || clean.length < 3) return;
 
+    // Check if this exact text was already committed right before to avoid accidental duplicate
+    setTranscript((prev) => {
+      const lastMsg = prev[prev.length - 1];
+      if (lastMsg && lastMsg.speaker === 'customer' && lastMsg.text === clean) {
+        return prev;
+      }
+      return [
+        ...prev,
+        { id: `mic-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`, speaker: 'customer', text: clean },
+      ];
+    });
+
+    setLiveMicText('');
+    liveMicTextRef.current = '';
+    setMicTranscript(clean);
+
+    // Trigger Gemini Voice Triage ONCE with the complete coherent sentence!
+    triggerVoiceTriage(clean);
+  };
+
+  const stopMicListening = () => {
+    isListeningActiveRef.current = false;
+    if (silenceTimerRef.current) {
+      clearTimeout(silenceTimerRef.current);
+      silenceTimerRef.current = null;
+    }
+    if (liveMicTextRef.current) {
+      commitUtterance(liveMicTextRef.current);
+    }
+    if (recognitionRef.current) {
+      try {
+        recognitionRef.current.stop();
+      } catch (e) {}
+    }
+    setIsMicListening(false);
+  };
+
+  const startMicListening = () => {
     if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-      alert('Your browser does not support Web Speech Recognition. Please try Google Chrome.');
+      alert('Your browser does not support Web Speech Recognition. Please try Google Chrome or Edge.');
       return;
     }
 
@@ -314,43 +364,77 @@ export default function DashboardPage() {
 
     recognition.continuous = true;
     recognition.interimResults = true;
-    recognition.lang = 'en-US';
+    recognition.lang = voiceLangRef.current;
+
+    isListeningActiveRef.current = true;
+    setIsMicListening(true);
+    setLiveMicText('');
+    liveMicTextRef.current = '';
 
     recognition.onstart = () => {
       setIsMicListening(true);
-      setMicTranscript('');
     };
 
     recognition.onresult = (event: any) => {
-      let finalTranscript = '';
-      for (let i = event.resultIndex; i < event.results.length; ++i) {
-        if (event.results[i].isFinal) {
-          finalTranscript += event.results[i][0].transcript;
+      // Accumulate entire sentence in ONE continuous string
+      let fullSentence = '';
+      for (let i = 0; i < event.results.length; ++i) {
+        fullSentence += event.results[i][0].transcript + ' ';
+      }
+      const trimmed = fullSentence.trim();
+      if (!trimmed) return;
+
+      // Update live stream in place without creating multiple fragmented messages
+      setLiveMicText(trimmed);
+      liveMicTextRef.current = trimmed;
+      setMicTranscript(trimmed);
+
+      // Debounce: when speaker pauses for ~1300ms, finalize the sentence into the conversation!
+      if (silenceTimerRef.current) {
+        clearTimeout(silenceTimerRef.current);
+      }
+      silenceTimerRef.current = setTimeout(() => {
+        if (liveMicTextRef.current) {
+          commitUtterance(liveMicTextRef.current);
         }
-      }
-
-      const current = event.results[event.results.length - 1][0].transcript;
-      setMicTranscript(current);
-
-      if (finalTranscript || current.length > 10) {
-        setTranscript(prev => [
-          ...prev,
-          { id: Math.random().toString(), speaker: 'customer', text: current }
-        ]);
-        triggerVoiceTriage(current);
-      }
+      }, 1300);
     };
 
     recognition.onerror = (event: any) => {
-      console.error('Speech recognition error:', event.error);
-      setIsMicListening(false);
+      console.warn('Speech recognition warning:', event.error);
+      if (event.error === 'not-allowed') {
+        stopMicListening();
+        alert('Microphone permission was denied. Please allow microphone access in your browser settings.');
+      }
     };
 
     recognition.onend = () => {
-      setIsMicListening(false);
+      // If user hasn't explicitly stopped, restart continuous session seamlessly
+      if (isListeningActiveRef.current) {
+        try {
+          recognition.start();
+        } catch (e) {
+          // Ignore if already started
+        }
+      } else {
+        setIsMicListening(false);
+      }
     };
 
-    recognition.start();
+    try {
+      recognition.start();
+    } catch (e) {
+      console.error('Error starting recognition:', e);
+    }
+  };
+
+  // Toggle Live Microphone Voice Recognition
+  const toggleMicListening = () => {
+    if (isMicListening) {
+      stopMicListening();
+    } else {
+      startMicListening();
+    }
   };
 
   const startCallSimulation = (type: 'sinhala' | 'english' | 'tamil' | 'incremental' | 'fiberVoicePonOn' | 'fiberVoicePonOff' | 'losRed' | 'highPing' | 'unlimitedSlow' | 'foodCityReload') => {
@@ -749,6 +833,45 @@ export default function DashboardPage() {
                   </span>
                 </div>
 
+                {/* Recognition Language Selector */}
+                <div className="flex items-center justify-between text-xs bg-indigo-50/80 p-2 px-3 rounded-xl border border-indigo-100 shadow-2xs">
+                  <span className="text-[11px] font-bold text-slate-700 flex items-center gap-1.5">
+                    <Volume2 className="w-3.5 h-3.5 text-[#005696]" /> Voice Language:
+                  </span>
+                  <div className="flex gap-1 bg-white p-0.5 rounded-lg border border-slate-200 shadow-2xs text-[10px]">
+                    <button
+                      onClick={() => {
+                        setVoiceLang('en-US');
+                        if (isMicListening) {
+                          stopMicListening();
+                        }
+                      }}
+                      className={`px-2.5 py-1 rounded-md font-black transition-all ${
+                        voiceLang === 'en-US'
+                          ? 'bg-[#005696] text-white shadow-xs'
+                          : 'text-slate-600 hover:text-slate-900'
+                      }`}
+                    >
+                      🌐 Singlish / English
+                    </button>
+                    <button
+                      onClick={() => {
+                        setVoiceLang('si-LK');
+                        if (isMicListening) {
+                          stopMicListening();
+                        }
+                      }}
+                      className={`px-2.5 py-1 rounded-md font-black transition-all ${
+                        voiceLang === 'si-LK'
+                          ? 'bg-[#005696] text-white shadow-xs'
+                          : 'text-slate-600 hover:text-slate-900'
+                      }`}
+                    >
+                      🇱🇰 සිංහල (si-LK)
+                    </button>
+                  </div>
+                </div>
+
                 {/* Primary Live Microphone Button */}
                 <div className="space-y-2">
                   <button
@@ -762,12 +885,12 @@ export default function DashboardPage() {
                     {isMicListening ? (
                       <>
                         <MicOff className="w-5 h-5 text-white animate-bounce" />
-                        <span>Listening... Click to Stop & Identify Fault</span>
+                        <span>Listening Continuously... Click to Finish</span>
                       </>
                     ) : (
                       <>
                         <Mic className="w-5 h-5 text-cyan-200" />
-                        <span>🎙️ Speak Fault (Live Microphone - Gemini)</span>
+                        <span>🎙️ Speak Fault (Continuous Live Voice)</span>
                       </>
                     )}
                   </button>
@@ -777,17 +900,32 @@ export default function DashboardPage() {
                     <motion.div 
                       initial={{ opacity: 0, height: 0 }}
                       animate={{ opacity: 1, height: 'auto' }}
-                      className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-center space-y-1.5"
+                      className="p-3.5 bg-gradient-to-r from-rose-50 via-red-50 to-pink-50 border border-rose-200 rounded-xl text-center space-y-2 shadow-xs"
                     >
-                      <div className="flex items-center justify-center gap-1">
+                      <div className="flex items-center justify-center gap-1.5">
                         <span className="w-1.5 h-4 bg-rose-500 rounded-full animate-pulse"></span>
                         <span className="w-1.5 h-6 bg-rose-600 rounded-full animate-pulse delay-75"></span>
                         <span className="w-1.5 h-8 bg-rose-700 rounded-full animate-pulse delay-150"></span>
                         <span className="w-1.5 h-5 bg-rose-600 rounded-full animate-pulse delay-100"></span>
                         <span className="w-1.5 h-3 bg-rose-500 rounded-full animate-pulse delay-200"></span>
                       </div>
-                      <p className="text-xs font-bold text-rose-900">
-                        {micTranscript ? `"${micTranscript}"` : 'Listening to your voice... Speak your fault or issue now.'}
+                      
+                      <div className="bg-white/95 p-3 rounded-xl border border-rose-200/90 text-left shadow-2xs">
+                        <div className="flex items-center justify-between mb-1.5">
+                          <span className="text-[10px] font-black uppercase tracking-wider text-rose-600 flex items-center gap-1.5">
+                            <Radio className="w-3.5 h-3.5 text-rose-500 animate-pulse" /> Live Speech Buffer ({voiceLang === 'si-LK' ? 'සිංහල' : 'Singlish / English'})
+                          </span>
+                          <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800">
+                            Streaming In-Place
+                          </span>
+                        </div>
+                        <p className="text-xs font-semibold text-slate-800 italic leading-relaxed min-h-[1.5rem]">
+                          {liveMicText || micTranscript ? `"${liveMicText || micTranscript}"` : 'Listening continuously... Speak your sentence naturally.'}
+                        </p>
+                      </div>
+
+                      <p className="text-[10px] text-slate-500 font-medium">
+                        💡 Pause for 1 second when finished speaking to auto-commit and send to Gemini.
                       </p>
                     </motion.div>
                   )}
@@ -946,7 +1084,28 @@ export default function DashboardPage() {
                     <span className={msg.speaker === 'agent' ? 'text-blue-100' : 'text-emerald-200 uppercase'}>{msg.speaker}:</span> <span className="text-white font-medium">{msg.text}</span>
                   </div>
                 ))}
-                {callActive && (
+
+                {/* Active streaming voice line (continuous live feedback without fragmenting into chunks) */}
+                {liveMicText && (
+                  <div className="text-xs font-bold text-amber-200 bg-blue-900/60 p-2 rounded-lg border border-cyan-400/40 flex items-center justify-between shadow-xs">
+                    <div className="flex items-center gap-2 overflow-hidden">
+                      <span className="text-cyan-300 uppercase shrink-0 flex items-center gap-1 font-black">
+                        <Radio className="w-3.5 h-3.5 text-rose-400 animate-pulse" /> CUSTOMER (SPEAKING):
+                      </span>
+                      <span className="text-white font-medium italic">{liveMicText}</span>
+                    </div>
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping shrink-0 ml-2"></span>
+                  </div>
+                )}
+
+                {isAiTriaging && (
+                  <div className="flex items-center gap-2 text-cyan-200 text-xs font-bold bg-indigo-950/50 p-2 rounded-lg border border-indigo-500/30">
+                    <Sparkles className="w-3.5 h-3.5 animate-spin text-cyan-300" />
+                    <span>Gemini 3.8 Flash analyzing complete conversation...</span>
+                  </div>
+                )}
+
+                {callActive && !liveMicText && (
                   <div className="flex items-center gap-2 text-blue-200 text-xs font-medium mt-2">
                     <Activity className="w-3 h-3 animate-pulse" /> AI is listening to the live call...
                   </div>
