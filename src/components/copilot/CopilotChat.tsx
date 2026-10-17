@@ -295,92 +295,89 @@ export default function CopilotChat() {
                             </span>
                           </div>
 
-                          {/* Key Decision Callout */}
+                          {/* 1-Click Fast Action Button at Top for Quick Complaint Logging */}
+                          {'tt_template' in msg.triage.knowledge_article && msg.triage.knowledge_article.tt_template && (
+                            <button
+                              type="button"
+                              onClick={() => copyTtToClipboard((msg.triage!.knowledge_article as any).tt_template, msg.id)}
+                              className={`w-full py-2.5 px-3 rounded-lg text-xs font-black flex items-center justify-center gap-2 shadow-md transition-all active:scale-95 ${
+                                copiedTtId === msg.id
+                                  ? 'bg-emerald-500 text-white'
+                                  : 'bg-gradient-to-r from-cyan-400 via-cyan-300 to-sky-400 hover:from-cyan-300 hover:to-sky-300 text-slate-950'
+                              }`}
+                            >
+                              {copiedTtId === msg.id ? (
+                                <>
+                                  <Check className="w-4 h-4 text-white" />
+                                  <span>Copied TT Draft! Paste in CRM (Clarity)</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Copy className="w-4 h-4 text-slate-950" />
+                                  <span>Copy Trouble Ticket Draft ({msg.triage.target_workgroup})</span>
+                                </>
+                              )}
+                            </button>
+                          )}
+
+                          {/* Key Decision Callout - Quick Glance */}
                           {'key_decision' in msg.triage.knowledge_article && msg.triage.knowledge_article.key_decision && (
                             <div className="p-2.5 rounded-lg bg-amber-500/15 border border-amber-400/40 text-amber-200 text-xs leading-relaxed space-y-1">
                               <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-amber-300">
                                 <AlertTriangle className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                                Key Decision Logic
+                                Quick Decision Rules
                               </div>
-                              <p className="text-[11px] text-amber-100/90 leading-snug">
+                              <p className="text-[11px] text-amber-100/95 font-medium leading-snug">
                                 {msg.triage.knowledge_article.key_decision}
                               </p>
                             </div>
                           )}
 
-                          {/* Step-by-Step SOP Checklist */}
+                          {/* Simplified Step-by-Step SOP Checklist */}
                           {'steps' in msg.triage.knowledge_article && msg.triage.knowledge_article.steps && msg.triage.knowledge_article.steps.length > 0 && (
-                            <div className="space-y-2">
+                            <div className="space-y-1.5">
                               <div className="text-[10px] uppercase font-bold tracking-wider text-cyan-300 flex items-center justify-between">
-                                <span>Official Resolution Steps ({msg.triage.knowledge_article.steps.length} Steps)</span>
-                                <span className="text-white/60 text-[9px] font-normal">Execute in order</span>
+                                <span>Agent Troubleshooting Steps (Quick Checklist)</span>
+                                <span className="text-white/60 text-[9px] font-normal">Execute 1 to {msg.triage.knowledge_article.steps.length}</span>
                               </div>
 
-                              <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1">
+                              <div className="space-y-1.5">
                                 {msg.triage.knowledge_article.steps.map((st) => (
                                   <div 
                                     key={st.step}
-                                    className="p-2.5 rounded-lg bg-slate-900/80 border border-white/10 hover:border-cyan-400/40 transition-all text-xs space-y-1.5"
+                                    className="p-2 rounded-lg bg-slate-900/90 border border-white/10 hover:border-cyan-400/40 transition-all text-xs flex items-start gap-2.5"
                                   >
-                                    <div className="flex items-start justify-between gap-2">
-                                      <div className="flex items-center gap-2">
-                                        <span className="w-5 h-5 rounded-full bg-cyan-500 text-slate-950 font-black text-[11px] flex items-center justify-center shrink-0">
-                                          {st.step}
-                                        </span>
-                                        <span className="font-bold text-white text-[11px] leading-tight">
+                                    <span className="w-5 h-5 rounded-full bg-cyan-500 text-slate-950 font-black text-[11px] flex items-center justify-center shrink-0 mt-0.5">
+                                      {st.step}
+                                    </span>
+                                    <div className="flex-1 min-w-0">
+                                      <div className="flex items-center justify-between gap-1">
+                                        <span className="font-bold text-white text-[11px]">
                                           {st.title}
                                         </span>
+                                        {st.outcome_group && (
+                                          <span className="text-[9px] px-1.5 py-0.2 rounded bg-indigo-500/30 text-indigo-200 border border-indigo-400/30 font-mono font-bold shrink-0">
+                                            {st.outcome_group}
+                                          </span>
+                                        )}
                                       </div>
-                                      {st.outcome_group && (
-                                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-indigo-500/30 text-indigo-200 border border-indigo-400/30 font-mono font-bold shrink-0">
-                                          {st.outcome_group}
-                                        </span>
-                                      )}
+                                      <p className="text-[11px] text-slate-200 leading-normal mt-0.5">
+                                        {st.action}
+                                      </p>
                                     </div>
-
-                                    <p className="text-[11px] text-slate-300 leading-normal pl-7">
-                                      {st.action}
-                                    </p>
-
-                                    {st.details && st.details.length > 0 && (
-                                      <div className="pl-7 space-y-1 pt-1 border-t border-white/5">
-                                        {st.details.map((dt, idx) => (
-                                          <p key={idx} className="text-[10px] text-cyan-200/80 leading-snug">
-                                            {dt}
-                                          </p>
-                                        ))}
-                                      </div>
-                                    )}
                                   </div>
                                 ))}
                               </div>
                             </div>
                           )}
 
-                          {/* 1-Click Trouble Ticket Copy Template */}
+                          {/* Trouble Ticket Draft Preview Box */}
                           {'tt_template' in msg.triage.knowledge_article && msg.triage.knowledge_article.tt_template && (
-                            <div className="p-2.5 rounded-lg bg-black/40 border border-white/10 space-y-1.5">
-                              <div className="flex items-center justify-between">
-                                <span className="text-[10px] font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1">
-                                  Trouble Ticket (TT) Draft
-                                </span>
-                                <button
-                                  type="button"
-                                  onClick={() => copyTtToClipboard((msg.triage!.knowledge_article as any).tt_template, msg.id)}
-                                  className="px-2 py-1 rounded bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 border border-cyan-400/40 text-[10px] font-bold flex items-center gap-1 transition-all active:scale-95"
-                                >
-                                  {copiedTtId === msg.id ? (
-                                    <>
-                                      <Check className="w-3 h-3 text-emerald-400" /> Copied!
-                                    </>
-                                  ) : (
-                                    <>
-                                      <Copy className="w-3 h-3" /> Copy TT Draft
-                                    </>
-                                  )}
-                                </button>
-                              </div>
-                              <pre className="text-[10px] font-mono text-slate-300 whitespace-pre-wrap leading-tight bg-black/50 p-2 rounded max-h-24 overflow-y-auto">
+                            <div className="p-2 rounded-lg bg-black/50 border border-white/10 space-y-1">
+                              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                                Ticket Draft Preview
+                              </span>
+                              <pre className="text-[10px] font-mono text-cyan-200/90 whitespace-pre-wrap leading-tight bg-black/60 p-2 rounded max-h-20 overflow-y-auto">
                                 {(msg.triage.knowledge_article as any).tt_template}
                               </pre>
                             </div>
