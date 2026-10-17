@@ -223,21 +223,281 @@ export default function DashboardPage() {
     }
   };
 
+function FaultTriageCardContent({
+  data,
+  generatedTicketNo,
+  onDispatch
+}: {
+  data: any;
+  generatedTicketNo: string;
+  onDispatch: () => void;
+}) {
+  const [copiedTt, setCopiedTt] = useState(false);
+  const { triage, rule, technical_context, billing_context, transcription, asset_type, knowledge_article } = data;
+
+  const groupStyles: Record<string, { bg: string; text: string; border: string; glow: string; badge: string }> = {
+    'MDF': { bg: 'from-blue-950 via-cyan-900 to-slate-900', text: 'text-cyan-300', border: 'border-cyan-500/50', glow: 'shadow-cyan-500/20', badge: 'bg-cyan-400 text-cyan-950 font-black' },
+    'AREA-MTCE': { bg: 'from-amber-950 via-orange-900 to-slate-900', text: 'text-amber-300', border: 'border-amber-500/50', glow: 'shadow-amber-500/20', badge: 'bg-amber-400 text-amber-950 font-black' },
+    'AREA-CPE-MTCE': { bg: 'from-amber-950 via-orange-900 to-slate-900', text: 'text-amber-300', border: 'border-amber-500/50', glow: 'shadow-amber-500/20', badge: 'bg-amber-400 text-amber-950 font-black' },
+    'INT-NW-SYS-ADMIN': { bg: 'from-indigo-950 via-blue-900 to-slate-900', text: 'text-indigo-300', border: 'border-indigo-500/50', glow: 'shadow-indigo-500/20', badge: 'bg-indigo-400 text-indigo-950 font-black' },
+    'BSS-OPR-OCR': { bg: 'from-emerald-950 via-teal-900 to-slate-900', text: 'text-emerald-300', border: 'border-emerald-500/50', glow: 'shadow-emerald-500/20', badge: 'bg-emerald-400 text-emerald-950 font-black' },
+    'CEN-CSC-TECH': { bg: 'from-purple-950 via-violet-900 to-slate-900', text: 'text-purple-300', border: 'border-purple-500/50', glow: 'shadow-purple-500/20', badge: 'bg-purple-400 text-purple-950 font-black' },
+    'CEN-CSC-UI': { bg: 'from-rose-950 via-pink-900 to-slate-900', text: 'text-rose-300', border: 'border-rose-500/50', glow: 'shadow-rose-500/20', badge: 'bg-rose-400 text-rose-950 font-black' },
+    'NONE': { bg: 'from-slate-900 via-gray-900 to-zinc-900', text: 'text-slate-300', border: 'border-slate-500/50', glow: 'shadow-slate-500/20', badge: 'bg-slate-300 text-slate-900 font-black' },
+  };
+
+  const style = groupStyles[triage?.target_workgroup] || groupStyles['AREA-MTCE'];
+
+  const copyTt = (text: string) => {
+    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      navigator.clipboard.writeText(text);
+      setCopiedTt(true);
+      setTimeout(() => setCopiedTt(false), 2500);
+    }
+  };
+
+  return (
+    <div className="space-y-3.5">
+      {/* Top Header Badge */}
+      <div className="flex items-center justify-between text-[11px] font-bold">
+        <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200">
+          <Sparkles className="w-3 h-3 text-indigo-600 animate-pulse" /> Gemini Voice Triage
+        </span>
+        <span className="text-slate-400 font-mono text-[10px] uppercase font-bold tracking-wider">
+          Asset: {asset_type}
+        </span>
+      </div>
+
+      {/* TARGET WORKGROUP HERO BANNER */}
+      <div className={`p-4 rounded-xl bg-gradient-to-br ${style.bg} border ${style.border} text-white shadow-lg ${style.glow} relative overflow-hidden`}>
+        <div className="absolute top-0 right-0 w-28 h-28 bg-white/5 rounded-bl-full pointer-events-none"></div>
+        
+        <div className="flex items-center justify-between mb-1 relative z-10">
+          <span className="text-[10px] font-bold uppercase tracking-widest text-cyan-200 flex items-center gap-1.5">
+            <Target className="w-3.5 h-3.5 text-cyan-400" /> Target Support Group
+          </span>
+          <span className={`text-[10px] px-2 py-0.5 rounded shadow-sm ${style.badge}`}>
+            {triage.action_type}
+          </span>
+        </div>
+
+        <p className="text-2xl font-black tracking-tight text-white mb-2 relative z-10 flex items-center gap-2">
+          <Wrench className="w-5 h-5 text-cyan-400" /> {triage.target_workgroup}
+        </p>
+
+        <div className="pt-2 border-t border-white/10 text-xs text-white/90 leading-snug relative z-10 font-medium">
+          <span className="text-cyan-200 font-bold">Routing Logic: </span>
+          {triage.routing_reason}
+        </div>
+      </div>
+
+      {/* Voice Utterance */}
+      <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-1">
+        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+          <Volume2 className="w-3 h-3 text-slate-500" /> Voice Input Transcript
+        </p>
+        <p className="text-xs font-semibold text-slate-800 italic">
+          "{transcription}"
+        </p>
+      </div>
+
+      {/* Context & Pre-check Badges */}
+      <div className="grid grid-cols-2 gap-2 text-[11px]">
+        {technical_context?.pon_status && technical_context.pon_status !== 'NOT_APPLICABLE' && (
+          <div className="p-2 bg-blue-50/70 border border-blue-200 rounded-lg flex items-center justify-between">
+            <span className="text-slate-500 font-medium">PON LED:</span>
+            <span className={`font-bold px-1.5 py-0.5 rounded text-[10px] ${technical_context.pon_status === 'ON' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}`}>
+              {technical_context.pon_status}
+            </span>
+          </div>
+        )}
+
+        {technical_context?.measured_speed_mbps !== undefined && technical_context.measured_speed_mbps !== null && (
+          <div className="p-2 bg-purple-50/70 border border-purple-200 rounded-lg flex items-center justify-between">
+            <span className="text-slate-500 font-medium">Speed:</span>
+            <span className="font-bold text-purple-700 text-[10px]">{technical_context.measured_speed_mbps} Mbps</span>
+          </div>
+        )}
+
+        {technical_context?.ping_delay_ms !== undefined && technical_context.ping_delay_ms !== null && (
+          <div className="p-2 bg-violet-50/70 border border-violet-200 rounded-lg flex items-center justify-between">
+            <span className="text-slate-500 font-medium">Latency:</span>
+            <span className="font-bold text-violet-700 text-[10px]">{technical_context.ping_delay_ms} ms</span>
+          </div>
+        )}
+
+        {billing_context?.channel_type && (
+          <div className="p-2 bg-amber-50/70 border border-amber-200 rounded-lg flex items-center justify-between">
+            <span className="text-slate-500 font-medium">Channel:</span>
+            <span className="font-bold text-amber-800 text-[10px]">{billing_context.channel_type}</span>
+          </div>
+        )}
+
+        <div className="p-2 bg-slate-50 border border-slate-200 rounded-lg flex items-center justify-between col-span-2">
+          <span className="text-slate-500 font-medium">Pre-checks:</span>
+          <div className="flex items-center gap-2 text-[10px] font-bold text-emerald-700">
+            <span className="flex items-center gap-0.5"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> LDAP</span>
+            <span className="flex items-center gap-0.5"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> GB Portal</span>
+            <span className="flex items-center gap-0.5"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Bill Ok</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Operational Advice */}
+      {triage.operational_advice && (
+        <div className="p-3 bg-amber-50/80 border border-amber-200 rounded-xl text-xs text-amber-900 space-y-1">
+          <p className="font-bold text-[10px] uppercase tracking-wider text-amber-800">Operational Advice / Agent Action</p>
+          <p className="leading-relaxed">{triage.operational_advice}</p>
+        </div>
+      )}
+
+      {/* KNOWLEDGE HUB RESOLUTION SOP (STEPS & DECISION TREE IN FEED) */}
+      {knowledge_article && (
+        <div className="p-4 rounded-xl bg-slate-900 text-white border border-cyan-500/40 shadow-md space-y-3">
+          {/* Header */}
+          <div className="flex items-center justify-between border-b border-white/10 pb-2.5">
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded-lg bg-cyan-500/20 border border-cyan-400/40 flex items-center justify-center text-cyan-300">
+                <BookOpen className="w-4 h-4" />
+              </div>
+              <div>
+                <span className="text-[10px] uppercase font-bold tracking-wider text-cyan-300 block">
+                  Knowledge Hub Resolution SOP
+                </span>
+                <h5 className="text-xs font-bold text-white leading-tight">
+                  {knowledge_article.title}
+                </h5>
+              </div>
+            </div>
+            <span className="text-[9px] px-2 py-0.5 rounded bg-cyan-400/20 text-cyan-300 border border-cyan-400/30 font-bold shrink-0">
+              {knowledge_article.badge || 'SOP Steps'}
+            </span>
+          </div>
+
+          {/* Key Decision Callout */}
+          {knowledge_article.key_decision && (
+            <div className="p-2.5 rounded-lg bg-amber-500/15 border border-amber-400/40 text-amber-200 text-xs leading-relaxed space-y-1">
+              <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-amber-300">
+                <AlertTriangle className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                Key Decision Logic
+              </div>
+              <p className="text-[11px] text-amber-100/90 leading-snug">
+                {knowledge_article.key_decision}
+              </p>
+            </div>
+          )}
+
+          {/* Step-by-Step SOP Checklist */}
+          {knowledge_article.steps && knowledge_article.steps.length > 0 && (
+            <div className="space-y-2">
+              <div className="text-[10px] uppercase font-bold tracking-wider text-cyan-300 flex items-center justify-between">
+                <span>Official Resolution Checklist ({knowledge_article.steps.length} Steps)</span>
+                <span className="text-white/60 text-[9px] font-normal">Execute in order</span>
+              </div>
+
+              <div className="space-y-2 max-h-[320px] overflow-y-auto pr-1">
+                {knowledge_article.steps.map((st: any) => (
+                  <div 
+                    key={st.step}
+                    className="p-2.5 rounded-lg bg-slate-950/80 border border-white/10 hover:border-cyan-400/40 transition-all text-xs space-y-1.5"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <span className="w-5 h-5 rounded-full bg-cyan-500 text-slate-950 font-black text-[11px] flex items-center justify-center shrink-0">
+                          {st.step}
+                        </span>
+                        <span className="font-bold text-white text-[11px] leading-tight">
+                          {st.title}
+                        </span>
+                      </div>
+                      {st.outcome_group && (
+                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-indigo-500/30 text-indigo-200 border border-indigo-400/30 font-mono font-bold shrink-0">
+                          {st.outcome_group}
+                        </span>
+                      )}
+                    </div>
+
+                    <p className="text-[11px] text-slate-300 leading-normal pl-7">
+                      {st.action}
+                    </p>
+
+                    {st.details && st.details.length > 0 && (
+                      <div className="pl-7 space-y-1 pt-1 border-t border-white/5">
+                        {st.details.map((dt: string, idx: number) => (
+                          <p key={idx} className="text-[10px] text-cyan-200/80 leading-snug">
+                            {dt}
+                          </p>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Trouble Ticket Template with Copy Button */}
+          {knowledge_article.tt_template && (
+            <div className="p-2.5 rounded-lg bg-black/50 border border-white/10 space-y-1.5">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1">
+                  Trouble Ticket (TT) Draft
+                </span>
+                <button
+                  type="button"
+                  onClick={() => copyTt(knowledge_article.tt_template)}
+                  className="px-2 py-1 rounded bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 border border-cyan-400/40 text-[10px] font-bold flex items-center gap-1 transition-all active:scale-95"
+                >
+                  {copiedTt ? (
+                    <>
+                      <Check className="w-3 h-3 text-emerald-400" /> Copied!
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-3 h-3" /> Copy TT Draft
+                    </>
+                  )}
+                </button>
+              </div>
+              <pre className="text-[10px] font-mono text-slate-300 whitespace-pre-wrap leading-tight bg-black/60 p-2 rounded max-h-24 overflow-y-auto">
+                {knowledge_article.tt_template}
+              </pre>
+            </div>
+          )}
+
+          {/* Secondary Link to Knowledge Hub Flowchart */}
+          <Link
+            href={knowledge_article.url || '/knowledge-hub/faq/ftth/pon-los-indicator'}
+            className="p-2.5 bg-white/5 hover:bg-white/10 rounded-lg border border-white/10 text-cyan-300 flex items-center justify-between group transition-all text-xs"
+          >
+            <span className="flex items-center gap-2">
+              <BookOpen className="w-4 h-4 text-cyan-400" />
+              <span>View full visual decision flowchart in Knowledge Hub</span>
+            </span>
+            <ArrowRight className="w-3.5 h-3.5 text-cyan-400 group-hover:translate-x-1 transition-transform" />
+          </Link>
+        </div>
+      )}
+
+      {/* One-click Action Button */}
+      <button 
+        onClick={onDispatch}
+        className="w-full py-2.5 px-4 text-xs font-black text-white bg-gradient-to-r from-[#005696] to-[#0070ba] hover:from-[#00477d] hover:to-[#005696] rounded-xl shadow-md transition-all active:scale-95 flex items-center justify-center gap-2"
+      >
+        <Send className="w-3.5 h-3.5" />
+        {triage.action_type === 'DIRECT_TT'
+          ? `Dispatch Trouble Ticket to ${triage.target_workgroup}`
+          : triage.action_type === 'BILL_SR_ONLY'
+          ? 'Raise Billing Service Request (SR)'
+          : 'Log CQMS Customer Complaint'}
+      </button>
+    </div>
+  );
+}
+
   // Render high-impact Telecom Fault Triage & Workgroup Card
   const renderFaultTriageCard = (data: any) => {
-    const { triage, rule, technical_context, billing_context, pre_check_flags, transcription, asset_type, knowledge_article } = data;
-
-    const groupStyles: Record<string, { bg: string; text: string; border: string; glow: string; badge: string }> = {
-      'MDF': { bg: 'from-blue-950 via-cyan-900 to-slate-900', text: 'text-cyan-300', border: 'border-cyan-500/50', glow: 'shadow-cyan-500/20', badge: 'bg-cyan-400 text-cyan-950 font-black' },
-      'AREA-MTCE': { bg: 'from-amber-950 via-orange-900 to-slate-900', text: 'text-amber-300', border: 'border-amber-500/50', glow: 'shadow-amber-500/20', badge: 'bg-amber-400 text-amber-950 font-black' },
-      'INT-NW-SYS-ADMIN': { bg: 'from-indigo-950 via-blue-900 to-slate-900', text: 'text-indigo-300', border: 'border-indigo-500/50', glow: 'shadow-indigo-500/20', badge: 'bg-indigo-400 text-indigo-950 font-black' },
-      'BSS-OPR-OCR': { bg: 'from-emerald-950 via-teal-900 to-slate-900', text: 'text-emerald-300', border: 'border-emerald-500/50', glow: 'shadow-emerald-500/20', badge: 'bg-emerald-400 text-emerald-950 font-black' },
-      'CEN-CSC-TECH': { bg: 'from-purple-950 via-violet-900 to-slate-900', text: 'text-purple-300', border: 'border-purple-500/50', glow: 'shadow-purple-500/20', badge: 'bg-purple-400 text-purple-950 font-black' },
-      'CEN-CSC-UI': { bg: 'from-rose-950 via-pink-900 to-slate-900', text: 'text-rose-300', border: 'border-rose-500/50', glow: 'shadow-rose-500/20', badge: 'bg-rose-400 text-rose-950 font-black' },
-      'NONE': { bg: 'from-slate-900 via-gray-900 to-zinc-900', text: 'text-slate-300', border: 'border-slate-500/50', glow: 'shadow-slate-500/20', badge: 'bg-slate-300 text-slate-900 font-black' },
-    };
-
-    const style = groupStyles[triage.target_workgroup] || groupStyles['AREA-MTCE'];
+    const { triage, rule } = data;
     const generatedTicketNo = `${triage.action_type === 'DIRECT_TT' ? 'TT' : triage.action_type === 'BILL_SR_ONLY' ? 'SR' : 'CQ'}-20261017-${Math.floor(1000 + Math.random() * 9000)}`;
 
     const triageCard: CopilotSuggestion = {
@@ -245,150 +505,17 @@ export default function DashboardPage() {
       type: 'intent',
       title: `Fault Triage: ${rule.name}`,
       content: (
-        <div className="space-y-3.5">
-          {/* Top Header Badge */}
-          <div className="flex items-center justify-between text-[11px] font-bold">
-            <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200">
-              <Sparkles className="w-3 h-3 text-indigo-600 animate-pulse" /> Gemini Voice Triage
-            </span>
-            <span className="text-slate-400 font-mono text-[10px] uppercase font-bold tracking-wider">
-              Asset: {asset_type}
-            </span>
-          </div>
-
-          {/* TARGET WORKGROUP HERO BANNER */}
-          <div className={`p-4 rounded-xl bg-gradient-to-br ${style.bg} border ${style.border} text-white shadow-lg ${style.glow} relative overflow-hidden`}>
-            <div className="absolute top-0 right-0 w-28 h-28 bg-white/5 rounded-bl-full pointer-events-none"></div>
-            
-            <div className="flex items-center justify-between mb-1 relative z-10">
-              <span className="text-[10px] font-bold uppercase tracking-widest text-cyan-200 flex items-center gap-1.5">
-                <Target className="w-3.5 h-3.5 text-cyan-400" /> Target Support Group
-              </span>
-              <span className={`text-[10px] px-2 py-0.5 rounded shadow-sm ${style.badge}`}>
-                {triage.action_type}
-              </span>
-            </div>
-
-            <p className="text-2xl font-black tracking-tight text-white mb-2 relative z-10 flex items-center gap-2">
-              <Wrench className="w-5 h-5 text-cyan-400" /> {triage.target_workgroup}
-            </p>
-
-            <div className="pt-2 border-t border-white/10 text-xs text-white/90 leading-snug relative z-10 font-medium">
-              <span className="text-cyan-200 font-bold">Routing Logic: </span>
-              {triage.routing_reason}
-            </div>
-          </div>
-
-          {/* Voice Utterance */}
-          <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-1">
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
-              <Volume2 className="w-3 h-3 text-slate-500" /> Voice Input Transcript
-            </p>
-            <p className="text-xs font-semibold text-slate-800 italic">
-              "{transcription}"
-            </p>
-          </div>
-
-          {/* Context & Pre-check Badges */}
-          <div className="grid grid-cols-2 gap-2 text-[11px]">
-            {technical_context?.pon_status && technical_context.pon_status !== 'NOT_APPLICABLE' && (
-              <div className="p-2 bg-blue-50/70 border border-blue-200 rounded-lg flex items-center justify-between">
-                <span className="text-slate-500 font-medium">PON LED:</span>
-                <span className={`font-bold px-1.5 py-0.5 rounded text-[10px] ${technical_context.pon_status === 'ON' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}`}>
-                  {technical_context.pon_status}
-                </span>
-              </div>
-            )}
-
-            {technical_context?.measured_speed_mbps !== undefined && technical_context.measured_speed_mbps !== null && (
-              <div className="p-2 bg-purple-50/70 border border-purple-200 rounded-lg flex items-center justify-between">
-                <span className="text-slate-500 font-medium">Speed:</span>
-                <span className="font-bold text-purple-700 text-[10px]">{technical_context.measured_speed_mbps} Mbps</span>
-              </div>
-            )}
-
-            {technical_context?.ping_delay_ms !== undefined && technical_context.ping_delay_ms !== null && (
-              <div className="p-2 bg-violet-50/70 border border-violet-200 rounded-lg flex items-center justify-between">
-                <span className="text-slate-500 font-medium">Latency:</span>
-                <span className="font-bold text-violet-700 text-[10px]">{technical_context.ping_delay_ms} ms</span>
-              </div>
-            )}
-
-            {billing_context?.channel_type && (
-              <div className="p-2 bg-amber-50/70 border border-amber-200 rounded-lg flex items-center justify-between">
-                <span className="text-slate-500 font-medium">Channel:</span>
-                <span className="font-bold text-amber-800 text-[10px]">{billing_context.channel_type}</span>
-              </div>
-            )}
-
-            <div className="p-2 bg-slate-50 border border-slate-200 rounded-lg flex items-center justify-between col-span-2">
-              <span className="text-slate-500 font-medium">Pre-checks:</span>
-              <div className="flex items-center gap-2 text-[10px] font-bold text-emerald-700">
-                <span className="flex items-center gap-0.5"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> LDAP</span>
-                <span className="flex items-center gap-0.5"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> GB Portal</span>
-                <span className="flex items-center gap-0.5"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Bill Ok</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Operational Advice */}
-          {triage.operational_advice && (
-            <div className="p-3 bg-amber-50/80 border border-amber-200 rounded-xl text-xs text-amber-900 space-y-1">
-              <p className="font-bold text-[10px] uppercase tracking-wider text-amber-800">Operational Advice / Agent Action</p>
-              <p className="leading-relaxed">{triage.operational_advice}</p>
-            </div>
-          )}
-
-          {/* Knowledge Hub Interactive Guide Link */}
-          {(knowledge_article || rule?.code === 'RULE_STB_ONT_ROUTER_FAULTY') && (
-            <Link
-              href={knowledge_article?.url || '/knowledge-hub/faq/ftth/ont-not-working'}
-              className="p-3 rounded-xl bg-blue-50/90 border border-blue-200 hover:border-[#005696] text-blue-950 flex items-center justify-between group transition-all shadow-xs"
-            >
-              <div className="flex items-center gap-2.5">
-                <div className="p-2 rounded-lg bg-[#005696] text-white shrink-0 group-hover:bg-[#00477d] transition-colors">
-                  <BookOpen className="w-4 h-4" />
-                </div>
-                <div className="space-y-0.5">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-[#005696]">
-                      {knowledge_article?.badge || 'Interactive SOP Decision Tree'}
-                    </span>
-                    <span className="text-[9px] px-1.5 py-0.2 rounded bg-emerald-100 text-emerald-800 font-bold">
-                      Knowledge Hub
-                    </span>
-                  </div>
-                  <h5 className="font-bold text-xs text-slate-900 group-hover:text-[#005696] transition-colors">
-                    {knowledge_article?.title || 'ONT Not Working - Interactive Diagnostic Guide'}
-                  </h5>
-                  <p className="text-[11px] text-slate-600 line-clamp-1">
-                    {knowledge_article?.summary || 'Check Power LED: If OFF, press power button; If ON, restart. Unresolved -> dispatch to AREA-CPE-MTCE.'}
-                  </p>
-                </div>
-              </div>
-              <ArrowRight className="w-4 h-4 text-[#005696] group-hover:translate-x-1 transition-transform shrink-0 ml-2" />
-            </Link>
-          )}
-
-          {/* One-click Action Button */}
-          <button 
-            onClick={() => {
-              setDispatchedTicket({
-                number: generatedTicketNo,
-                group: triage.target_workgroup,
-                time: new Date().toLocaleTimeString()
-              });
-            }}
-            className="w-full py-2.5 px-4 text-xs font-black text-white bg-gradient-to-r from-[#005696] to-[#0070ba] hover:from-[#00477d] hover:to-[#005696] rounded-xl shadow-md transition-all active:scale-95 flex items-center justify-center gap-2"
-          >
-            <Send className="w-3.5 h-3.5" />
-            {triage.action_type === 'DIRECT_TT'
-              ? `Dispatch Trouble Ticket to ${triage.target_workgroup}`
-              : triage.action_type === 'BILL_SR_ONLY'
-              ? 'Raise Billing Service Request (SR)'
-              : 'Log CQMS Customer Complaint'}
-          </button>
-        </div>
+        <FaultTriageCardContent
+          data={data}
+          generatedTicketNo={generatedTicketNo}
+          onDispatch={() => {
+            setDispatchedTicket({
+              number: generatedTicketNo,
+              group: triage.target_workgroup,
+              time: new Date().toLocaleTimeString()
+            });
+          }}
+        />
       )
     };
 

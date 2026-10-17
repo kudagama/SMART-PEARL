@@ -8,6 +8,7 @@ import {
   PON_STATUS,
   RELOAD_CHANNELS,
 } from '@/models/enums';
+import { KNOWLEDGE_HUB_SOPS, matchKnowledgeHubSop } from '@/lib/knowledgeHubSops';
 
 // System prompt instructing Gemini to analyze voice or text for SLT Fault Triage
 const GEMINI_SYSTEM_PROMPT = `
@@ -109,13 +110,7 @@ function extractFaultRulesFallback(text: string) {
       action_type: ACTION_TYPES.CUSTOMER_SELF_CARE,
       operational_advice: '1. Check I-Hub/LDAP connection status -> If Not Active, advise to settle bill. 2. If Active, check VAS Portal GB availability -> If throttled due to GB, advise Extra GB. If throttled due to arrears, advise bill payment. If GBs available, proceed to ONT Indicators FAQ.',
       routing_reason: 'FTTH General Inquiry / Connection Status & Quota Triage SOP.',
-      knowledge_article: {
-        title: 'General Questions FTTH - Connection Status & Quota SOP',
-        url: '/knowledge-hub/faq/ftth/general-questions',
-        summary: '1. Check Connection Status (I-Hub/LDAP) -> 2. Check VAS Portal GB availability -> 3. Route to ONT Indicators if quota is available.',
-        target_group: 'CEN-CSC-DATA',
-        badge: 'FTTH SOP'
-      }
+      knowledge_article: KNOWLEDGE_HUB_SOPS.GENERAL_QUESTIONS
     };
   }
 
@@ -180,11 +175,18 @@ function extractFaultRulesFallback(text: string) {
     !lower.includes('wi-fi') &&
     !lower.includes('wlan') &&
     (
+      (lower.includes('pon') && lower.includes('los')) ||
       lower.includes('pon indicator') ||
+      lower.includes('los indicator') ||
       lower.includes('pon red') ||
+      lower.includes('los red') ||
       lower.includes('pon blinking') ||
+      lower.includes('los blinking') ||
+      lower.includes('los blink') ||
+      lower.includes('pon blink') ||
       lower.includes('pon steady') ||
       lower.includes('pon off') ||
+      lower.includes('los off') ||
       lower.includes('private proxy') ||
       lower.includes('proxy switched off') ||
       lower.includes('proxy on') ||
@@ -220,13 +222,7 @@ function extractFaultRulesFallback(text: string) {
         ? 'PON is STEADY: Restart ONT -> Change Browser -> Check another Device -> Check Private Proxy. If proxy off but still not working, dispatch Trouble Ticket to AREA-CPE-MTCE. Note: If customer not at premises, use Default WG.'
         : 'PON/LOS is RED, OFF, or BLINKING: Optical signal interrupted. Create Trouble Ticket to AREA-CPE-MTCE (or Default WG if customer unavailable). Include mandatory TT description.',
       routing_reason: 'Official Decision SOP: PON/LOS Indicator triage matrix -> Dispatch to AREA-CPE-MTCE.',
-      knowledge_article: {
-        title: 'PON/LOS Indicator RED, OFF, Blinking or Steady - Decision Flowchart',
-        url: '/knowledge-hub/faq/ftth/pon-los-indicator',
-        summary: 'RED/OFF/BLINKING -> Dispatch TT to AREA-CPE-MTCE (or Default WG). STEADY -> Restart ONT, check browser/device/proxy. Unresolved -> TT to AREA-CPE-MTCE.',
-        target_group: 'AREA-CPE-MTCE',
-        badge: 'Interactive SOP'
-      }
+      knowledge_article: KNOWLEDGE_HUB_SOPS.PON_LOS_INDICATOR
     };
   }
 
@@ -283,13 +279,7 @@ function extractFaultRulesFallback(text: string) {
         ? 'Ask distance between ONT and device. Add distance in description of TT. Forward to AREA-CPE-MTCE under BB Service.'
         : 'Verify client device Wi-Fi ON and router config (SSID/WPA2). If config correct but internet dead -> Create TT to CEN-CSC-TECH under BB Service.',
       routing_reason: `Wi-Fi Not Working (PON Steady) SOP: ${isWlanOff ? 'WLAN LED Dead -> AREA-CPE-MTCE' : isCoverageLow ? 'Low coverage -> AREA-CPE-MTCE' : 'Config verified OK -> CEN-CSC-TECH'}.`,
-      knowledge_article: {
-        title: 'Wi-Fi Not Working (PON Steady) - Official Decision Flowchart',
-        url: '/knowledge-hub/faq/ftth/wifi-not-working',
-        summary: 'WLAN LED OFF: Press Wi-Fi button in ONT. Unresolved -> TT to AREA-CPE-MTCE. WLAN LED ON: Verify client device & router config. Config correct -> TT to CEN-CSC-TECH. Low coverage -> Record distance & dispatch AREA-CPE-MTCE.',
-        target_group: targetGroup,
-        badge: 'Interactive SOP'
-      }
+      knowledge_article: KNOWLEDGE_HUB_SOPS.WIFI_NOT_WORKING
     };
   }
 
@@ -317,13 +307,7 @@ function extractFaultRulesFallback(text: string) {
       action_type: ACTION_TYPES.DIRECT_TT,
       operational_advice: 'Optical power loss detected. Mandatory pre-checks verified: Dispatch Trouble Ticket to AREA-MTCE for fiber restoration.',
       routing_reason: 'LOS Red Light indicates physical optical link failure -> AREA-MTCE.',
-      knowledge_article: {
-        title: 'PON/LOS Indicator RED, OFF, Blinking or Steady - Decision Flowchart',
-        url: '/knowledge-hub/faq/ftth/pon-los-indicator',
-        summary: 'RED/OFF/BLINKING -> Dispatch TT to AREA-CPE-MTCE (or Default WG). STEADY -> Restart ONT, check browser/device/proxy. Unresolved -> TT to AREA-CPE-MTCE.',
-        target_group: 'AREA-CPE-MTCE',
-        badge: 'Interactive SOP'
-      }
+      knowledge_article: KNOWLEDGE_HUB_SOPS.PON_LOS_INDICATOR
     };
   }
 
@@ -404,13 +388,7 @@ function extractFaultRulesFallback(text: string) {
         action_type: ACTION_TYPES.CUSTOMER_SELF_CARE,
         operational_advice: 'Check connection status in I-Hub/CRM: Status is OGB-DC. Inform Customer to settle the Outstanding bill (END).',
         routing_reason: 'Browsing Slow SOP: Connection Status is OGB-DC -> Customer bill settlement mandatory.',
-        knowledge_article: {
-          title: 'Browsing Slow - Official Decision Flowchart',
-          url: '/knowledge-hub/faq/ftth/browsing-slow',
-          summary: 'Check OGB-DC -> Settle bill. Voice noisy -> TT under Voice to Default WG with remarks. Quota exceeded: No -> Restart ONT & TT to CEN-CSC-TECH. Quota exceeded: Yes -> Add extra GB via QED or instruct self-care via MySLT app/portal/0112121212 IVR.',
-          target_group: 'Bill Settlement',
-          badge: 'Interactive SOP'
-        }
+        knowledge_article: KNOWLEDGE_HUB_SOPS.BROWSING_SLOW
       };
     }
 
@@ -437,13 +415,7 @@ function extractFaultRulesFallback(text: string) {
         action_type: ACTION_TYPES.DIRECT_TT,
         operational_advice: 'Voice line noisy detected. Create a TT under Voice Service to Default Work Group with remarks.',
         routing_reason: 'Browsing Slow SOP: Voice line noisy -> Dispatch TT under Voice Service to Default Work Group.',
-        knowledge_article: {
-          title: 'Browsing Slow - Official Decision Flowchart',
-          url: '/knowledge-hub/faq/ftth/browsing-slow',
-          summary: 'Check OGB-DC -> Settle bill. Voice noisy -> TT under Voice to Default WG with remarks. Quota exceeded: No -> Restart ONT & TT to CEN-CSC-TECH. Quota exceeded: Yes -> Add extra GB via QED or instruct self-care via MySLT app/portal/0112121212 IVR.',
-          target_group: 'Default Work Group (Voice)',
-          badge: 'Interactive SOP'
-        }
+        knowledge_article: KNOWLEDGE_HUB_SOPS.BROWSING_SLOW
       };
     }
 
@@ -470,13 +442,7 @@ function extractFaultRulesFallback(text: string) {
         action_type: ACTION_TYPES.CUSTOMER_SELF_CARE,
         operational_advice: 'Ask if customer wishes to add Extra GB. If Yes: Check extra GB field in I-HUB/CRM -> If Yes: Follow QED instructions and Add Extra GB. If No: Don’t add extra GB through 1212 but instruct customer to add extra GBs via My SLT App, My SLT portal & 0112121212 IVR.',
         routing_reason: 'Browsing Slow SOP: Usage Limit exceeded -> Add Extra GB via QED or Self-Care channels.',
-        knowledge_article: {
-          title: 'Browsing Slow - Official Decision Flowchart',
-          url: '/knowledge-hub/faq/ftth/browsing-slow',
-          summary: 'Check OGB-DC -> Settle bill. Voice noisy -> TT under Voice to Default WG with remarks. Quota exceeded: No -> Restart ONT & TT to CEN-CSC-TECH. Quota exceeded: Yes -> Add extra GB via QED or instruct self-care via MySLT app/portal/0112121212 IVR.',
-          target_group: 'QED Extra GB / Self-Care',
-          badge: 'Interactive SOP'
-        }
+        knowledge_article: KNOWLEDGE_HUB_SOPS.BROWSING_SLOW
       };
     }
 
@@ -503,13 +469,7 @@ function extractFaultRulesFallback(text: string) {
       action_type: ACTION_TYPES.DIRECT_TT,
       operational_advice: 'Instruct customer to restart the ONT and create a TT to CEN-CSC-TECH work group under BB Service.',
       routing_reason: 'Browsing Slow SOP: Usage Limit not exceeded & ONT restart completed -> Dispatch TT to CEN-CSC-TECH.',
-      knowledge_article: {
-        title: 'Browsing Slow - Official Decision Flowchart',
-        url: '/knowledge-hub/faq/ftth/browsing-slow',
-        summary: 'Check OGB-DC -> Settle bill. Voice noisy -> TT under Voice to Default WG with remarks. Quota exceeded: No -> Restart ONT & TT to CEN-CSC-TECH. Quota exceeded: Yes -> Add extra GB via QED or instruct self-care via MySLT app/portal/0112121212 IVR.',
-        target_group: 'CEN-CSC-TECH',
-        badge: 'Interactive SOP'
-      }
+      knowledge_article: KNOWLEDGE_HUB_SOPS.BROWSING_SLOW
     };
   }
 
@@ -543,13 +503,7 @@ function extractFaultRulesFallback(text: string) {
           ? `Measured speed is ${speed} Mbps (< 40 Mbps threshold) and low pay bill verified. Direct Trouble Ticket to AREA-MTCE.`
           : `Measured speed is ${speed} Mbps (>= 40 Mbps). Ticket dispatch to AREA-MTCE prohibited. Advise package usage.`,
       routing_reason: `Measured speed: ${speed} Mbps, Threshold: 40 Mbps.`,
-      knowledge_article: {
-        title: 'Browsing Slow - Official Decision Flowchart',
-        url: '/knowledge-hub/faq/ftth/browsing-slow',
-        summary: 'Check OGB-DC -> Settle bill. Voice noisy -> TT under Voice to Default WG with remarks. Quota exceeded: No -> Restart ONT & TT to CEN-CSC-TECH. Quota exceeded: Yes -> Add extra GB via QED or instruct self-care via MySLT app/portal/0112121212 IVR.',
-        target_group: 'CEN-CSC-TECH',
-        badge: 'Interactive SOP'
-      }
+      knowledge_article: KNOWLEDGE_HUB_SOPS.BROWSING_SLOW
     };
   }
 
@@ -650,13 +604,7 @@ function extractFaultRulesFallback(text: string) {
       action_type: ACTION_TYPES.DIRECT_TT,
       operational_advice: 'Follow official Decision Flowchart: Check Power LED -> Toggle power button / restart -> Verify charger connection. If device remains unresponsive, dispatch Trouble Ticket to AREA-CPE-MTCE.',
       routing_reason: 'Confirmed premises ONT hardware/power failure -> Dispatch to AREA-CPE-MTCE for device replacement.',
-      knowledge_article: {
-        title: 'ONT Not Working - Interactive Diagnostic Decision Guide',
-        url: '/knowledge-hub/faq/ftth/ont-not-working',
-        summary: 'Step 1: Check Power LED (OFF/ON) -> Step 2: Toggle Power Button / Restart -> Step 3: Check Power Adapter -> Terminal: Escalate to AREA-CPE-MTCE.',
-        target_group: 'AREA-CPE-MTCE',
-        badge: 'Interactive SOP'
-      }
+      knowledge_article: KNOWLEDGE_HUB_SOPS.ONT_NOT_WORKING
     };
   }
 
@@ -711,13 +659,7 @@ function extractFaultRulesFallback(text: string) {
       action_type: ACTION_TYPES.DIRECT_TT,
       operational_advice: 'Direct Trouble Ticket to AREA-CPE-MTCE for on-site hardware swap and premises inspection.',
       routing_reason: 'Premises ONT/STB hardware malfunction -> AREA-CPE-MTCE field dispatch.',
-      knowledge_article: {
-        title: 'ONT Not Working - Interactive Diagnostic Decision Guide',
-        url: '/knowledge-hub/faq/ftth/ont-not-working',
-        summary: 'Step 1: Check Power LED (OFF/ON) -> Step 2: Toggle Power Button / Restart -> Step 3: Check Power Adapter -> Terminal: Escalate to AREA-CPE-MTCE.',
-        target_group: 'AREA-CPE-MTCE',
-        badge: 'Interactive SOP'
-      }
+      knowledge_article: KNOWLEDGE_HUB_SOPS.ONT_NOT_WORKING
     };
   }
 
@@ -847,38 +789,13 @@ export async function POST(request: Request) {
       },
       knowledge_article:
         triageResult.knowledge_article ||
-        (recognizedText.toLowerCase().includes('wifi') || recognizedText.toLowerCase().includes('wi-fi') || recognizedText.toLowerCase().includes('wlan')
-          ? {
-              title: 'Wi-Fi Not Working (PON Steady) - Official Decision Flowchart',
-              url: '/knowledge-hub/faq/ftth/wifi-not-working',
-              summary: 'WLAN LED OFF: Press Wi-Fi button in ONT. Unresolved -> TT to AREA-CPE-MTCE. WLAN LED ON: Verify client device & router config. Config correct -> TT to CEN-CSC-TECH. Low coverage -> Record distance & dispatch AREA-CPE-MTCE.',
-              target_group: 'AREA-CPE-MTCE',
-              badge: 'Interactive SOP'
-            }
+        matchKnowledgeHubSop(recognizedText) ||
+        (triageResult.suggested_rule_code === 'RULE_LOS_RED'
+          ? KNOWLEDGE_HUB_SOPS.PON_LOS_INDICATOR
           : triageResult.suggested_rule_code === 'RULE_STB_ONT_ROUTER_FAULTY'
-          ? {
-              title: 'ONT Not Working - Interactive Diagnostic Decision Guide',
-              url: '/knowledge-hub/faq/ftth/ont-not-working',
-              summary: 'Check Power LED: If OFF, press power button & verify charger; If ON, restart. Unresolved -> dispatch to AREA-CPE-MTCE.',
-              target_group: 'AREA-CPE-MTCE',
-              badge: 'Interactive SOP'
-            }
-          : triageResult.suggested_rule_code === 'RULE_LOS_RED'
-          ? {
-              title: 'PON / LOS Indicator Diagnostic Matrix',
-              url: '/knowledge-hub/faq/ftth/pon-los-indicator',
-              summary: 'RED/OFF/BLINKING -> Dispatch TT to AREA-CPE-MTCE (or Default WG). STEADY -> Restart ONT, check browser/device/proxy. Unresolved -> TT to AREA-CPE-MTCE.',
-              target_group: 'AREA-CPE-MTCE',
-              badge: 'Interactive SOP'
-            }
-          : (triageResult.suggested_rule_code === 'RULE_UNLIMITED_SLOWNESS' || recognizedText.toLowerCase().includes('slow') || recognizedText.toLowerCase().includes('browsing'))
-          ? {
-              title: 'Browsing Slow - Official Decision Flowchart',
-              url: '/knowledge-hub/faq/ftth/browsing-slow',
-              summary: 'Check OGB-DC -> Settle bill. Voice noisy -> TT under Voice to Default WG with remarks. Quota exceeded: No -> Restart ONT & TT to CEN-CSC-TECH. Quota exceeded: Yes -> Add extra GB via QED or instruct self-care via MySLT app/portal/0112121212 IVR.',
-              target_group: 'Default WG / CEN-CSC-TECH / QED',
-              badge: 'Interactive SOP'
-            }
+          ? KNOWLEDGE_HUB_SOPS.ONT_NOT_WORKING
+          : triageResult.suggested_rule_code === 'RULE_UNLIMITED_SLOWNESS'
+          ? KNOWLEDGE_HUB_SOPS.BROWSING_SLOW
           : null),
       timestamp: new Date().toISOString(),
     });
