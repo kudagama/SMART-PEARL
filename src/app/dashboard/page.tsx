@@ -92,9 +92,44 @@ const foodCityReloadScript = [
   { delay: 7500, speaker: 'agent', text: 'Logging BILL_SR_ONLY request and advising customer to contact Food City for payment reversal.' }
 ];
 
+const faultSinhalaFullScript = [
+  { delay: 1000, speaker: 'agent', text: 'ආයුබෝවන්! මම හිමාලි, මට පුළුවනි ඔබට සහය වන්න.' },
+  { delay: 4000, speaker: 'customer', text: 'මිස් මගේ Fiber router එකේ LOS red light එක blink වෙනවා, internet sampoornayenma naha! Cable එක කැඩිලද කොහෙද.' },
+  { delay: 9000, speaker: 'agent', text: 'කරුණාකර ඇමතුමේ රැඳී ඉන්න සර්, මම ඔබගේ account එකේ optical signal එක සහ LDAP checks පරික්ෂා කරන්නම්.' },
+  { delay: 14000, speaker: 'agent', text: 'රැඳීසිටියාට ස්තූතියි සර්. ඔබගේ fiber line එකේ optical signal loss එකක් තියෙන්නේ. මම මේ දැන්ම Area Maintenance (AREA-MTCE) වෙත Trouble Ticket එකක් යොමු කරනවා.' },
+  { delay: 19000, speaker: 'agent', text: 'වෙනත් යමක් දැනගැනීමට අවශ්‍යද සර්?' },
+  { delay: 22000, speaker: 'customer', text: 'නෑ මිස්, බොහොම ස්තූතියි.' },
+  { delay: 25000, speaker: 'agent', text: 'මා ලබාදුන් සේවය ඇගයීම සඳහා රැඳී සිටින්න. SLT Mobitel ඇමතුවාට ස්තූතියි. සුබ දවසක්!' }
+];
+
+const faultEnglishFullScript = [
+  { delay: 1000, speaker: 'agent', text: 'Ayubowan! I am Himali, How may I help you Sir?' },
+  { delay: 4000, speaker: 'customer', text: 'My FTTH telephone has no dial tone and the phone is completely dead. But on the router, the PON LED is solid ON.' },
+  { delay: 9000, speaker: 'agent', text: 'Please hold on Sir while I verify your ONT optical status in the system.' },
+  { delay: 14000, speaker: 'agent', text: 'Thank you for being on hold Sir. Since optical signal is healthy with PON ON, I have logged a Direct Trouble Ticket to our MDF (Main Distribution Frame) team.' },
+  { delay: 19000, speaker: 'agent', text: 'Is there anything else I can help you with Sir?' },
+  { delay: 22000, speaker: 'customer', text: 'That is all. Thank you very much!' },
+  { delay: 25000, speaker: 'agent', text: 'Please hold on to rate my service. Thank you for calling SLT Mobitel. Have a nice day!' }
+];
+
+const faultTamilFullScript = [
+  { delay: 1000, speaker: 'agent', text: 'வணக்கம் ! நான் ஹிமாலி , என்னால் எவ்வகையில் உதவ முடியும்? Sir' },
+  { delay: 4000, speaker: 'customer', text: 'Valorant play பண்ணும் போது ping 190ms க்கு மேல போகுது, gaming server lag ஆகுது.' },
+  { delay: 9000, speaker: 'agent', text: 'தயவு செய்து அழைப்பில் காத்திருங்கள் Sir, IP routing latency பார்க்கிறேன்.' },
+  { delay: 14000, speaker: 'agent', text: 'அழைப்பில் காத்திருந்தமைக்கு நன்றி Sir. CEN-CSC-TECH தொழில்நுட்ப பிரிவிற்கு Trouble Ticket அனுப்பி உள்ளேன்.' },
+  { delay: 19000, speaker: 'agent', text: 'வேறேதும் தெரிந்து கொள்ள இருக்கிறதா? Sir' },
+  { delay: 22000, speaker: 'customer', text: 'இல்லை, நன்றி.' },
+  { delay: 25000, speaker: 'agent', text: 'இந்த அழைப்பை மதிப்பீடு செய்ய தயவு செய்து காத்திருங்கள். SLT Mobitel அழைத்தமைக்கு நன்றி இந்த நாள் இனிய நாளாக அமையட்டும்.' }
+];
+
 export default function DashboardPage() {
   const [callActive, setCallActive] = useState(false);
-  const [activeCallType, setActiveCallType] = useState<'sinhala' | 'english' | 'tamil' | 'incremental' | 'fiberVoicePonOn' | 'fiberVoicePonOff' | 'losRed' | 'highPing' | 'unlimitedSlow' | 'foodCityReload' | null>(null);
+  const [activeCallType, setActiveCallType] = useState<
+    'sinhala' | 'english' | 'tamil' | 'incremental' | 
+    'fiberVoicePonOn' | 'fiberVoicePonOff' | 'losRed' | 
+    'highPing' | 'unlimitedSlow' | 'foodCityReload' | 
+    'faultSinhalaFull' | 'faultEnglishFull' | 'faultTamilFull' | null
+  >(null);
   const [transcript, setTranscript] = useState<TranscriptMessage[]>([]);
   const [suggestions, setSuggestions] = useState<CopilotSuggestion[]>([]);
   const [callTimer, setCallTimer] = useState(0);
@@ -456,7 +491,7 @@ export default function DashboardPage() {
     }
   };
 
-  const startCallSimulation = (type: 'sinhala' | 'english' | 'tamil' | 'incremental' | 'fiberVoicePonOn' | 'fiberVoicePonOff' | 'losRed' | 'highPing' | 'unlimitedSlow' | 'foodCityReload') => {
+  const startCallSimulation = (type: 'sinhala' | 'english' | 'tamil' | 'incremental' | 'fiberVoicePonOn' | 'fiberVoicePonOff' | 'losRed' | 'highPing' | 'unlimitedSlow' | 'foodCityReload' | 'faultSinhalaFull' | 'faultEnglishFull' | 'faultTamilFull') => {
     setCallActive(true);
     setActiveCallType(type);
     setTranscript([]);
@@ -479,6 +514,9 @@ export default function DashboardPage() {
     else if (type === 'highPing') activeScript = highPingScript;
     else if (type === 'unlimitedSlow') activeScript = unlimitedSlowScript;
     else if (type === 'foodCityReload') activeScript = foodCityReloadScript;
+    else if (type === 'faultSinhalaFull') activeScript = faultSinhalaFullScript;
+    else if (type === 'faultEnglishFull') activeScript = faultEnglishFullScript;
+    else if (type === 'faultTamilFull') activeScript = faultTamilFullScript;
 
     // Schedule transcript messages and auto-trigger Gemini Voice Triage
     activeScript.forEach((step) => {
@@ -511,7 +549,13 @@ export default function DashboardPage() {
         const finalEval = evaluateCallQuality(transcript);
         const newCallRecord = {
           id: `call-${Date.now()}`,
-          type: activeCallType === 'fiberVoicePonOn' || activeCallType === 'fiberVoicePonOff'
+          type: activeCallType === 'faultSinhalaFull'
+            ? 'Fiber LOS Red Fault (Full Call)'
+            : activeCallType === 'faultEnglishFull'
+            ? 'FTTH Voice Dead PON ON (Full Call)'
+            : activeCallType === 'faultTamilFull'
+            ? 'Gaming High Ping 190ms (Full Call)'
+            : activeCallType === 'fiberVoicePonOn' || activeCallType === 'fiberVoicePonOff'
             ? 'FTTH Voice Support'
             : activeCallType === 'losRed'
             ? 'Fibre LOS Fault'
@@ -987,11 +1031,97 @@ export default function DashboardPage() {
                   )}
                 </div>
 
-                {/* Telecom Fault Voice Presets */}
+                {/* Full Telecom Fault Call Simulations (100% QA Standard & Copilot Triage) */}
+                <div className="pt-3 border-t border-indigo-200/60 space-y-3">
+                  <div className="flex items-center justify-between text-left">
+                    <div>
+                      <p className="text-xs font-black text-indigo-950 flex items-center gap-1.5 uppercase tracking-wide">
+                        <Award className="w-4 h-4 text-amber-500" /> Full Fault Call Simulations
+                      </p>
+                      <p className="text-[10px] text-slate-500 font-medium">End-to-end calls with 100% Call Quality Standards & Gemini Triage</p>
+                    </div>
+                    <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
+                      100% QA Rated
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-2.5">
+                    {/* Sinhala Full Call */}
+                    <button
+                      onClick={() => startCallSimulation('faultSinhalaFull')}
+                      className="p-3 bg-gradient-to-r from-amber-500/10 via-orange-500/5 to-white hover:from-amber-500/20 hover:to-orange-50/50 border border-amber-300/80 hover:border-amber-500 rounded-xl text-left transition-all shadow-xs group relative overflow-hidden"
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-xs font-black text-slate-900 flex items-center gap-1.5">
+                          <span>🇱🇰</span> සිංහල Fibre LOS Red Light (Full Call)
+                        </span>
+                        <span className="px-2 py-0.5 rounded bg-amber-400 text-amber-950 text-[10px] font-black uppercase tracking-wider">
+                          AREA-MTCE
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-slate-600 font-medium line-clamp-1">
+                        &quot;Router එකේ LOS red light එක blink වෙනවා...&quot; $\rightarrow$ Signal Check $\rightarrow$ Direct TT Dispatch
+                      </p>
+                      <div className="mt-2 flex items-center gap-3 text-[10px] text-slate-500 font-semibold">
+                        <span className="flex items-center gap-1 text-emerald-700 font-bold"><CheckCircle2 className="w-3 h-3 text-emerald-600" /> Greeting &amp; Holding</span>
+                        <span className="flex items-center gap-1 text-emerald-700 font-bold"><CheckCircle2 className="w-3 h-3 text-emerald-600" /> Pre-close</span>
+                        <span className="flex items-center gap-1 text-emerald-700 font-bold"><CheckCircle2 className="w-3 h-3 text-emerald-600" /> IVR C-Sat</span>
+                      </div>
+                    </button>
+
+                    {/* English Full Call */}
+                    <button
+                      onClick={() => startCallSimulation('faultEnglishFull')}
+                      className="p-3 bg-gradient-to-r from-cyan-500/10 via-blue-500/5 to-white hover:from-cyan-500/20 hover:to-cyan-50/50 border border-cyan-300/80 hover:border-cyan-500 rounded-xl text-left transition-all shadow-xs group relative overflow-hidden"
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-xs font-black text-slate-900 flex items-center gap-1.5">
+                          <span>🌐</span> English Voice Dead / PON ON (Full Call)
+                        </span>
+                        <span className="px-2 py-0.5 rounded bg-cyan-400 text-cyan-950 text-[10px] font-black uppercase tracking-wider">
+                          MDF Route
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-slate-600 font-medium line-clamp-1">
+                        &quot;FTTH telephone has no dial tone, PON is solid ON&quot; $\rightarrow$ MDF Internal Dispatch
+                      </p>
+                      <div className="mt-2 flex items-center gap-3 text-[10px] text-slate-500 font-semibold">
+                        <span className="flex items-center gap-1 text-emerald-700 font-bold"><CheckCircle2 className="w-3 h-3 text-emerald-600" /> Ayubowan &amp; ID</span>
+                        <span className="flex items-center gap-1 text-emerald-700 font-bold"><CheckCircle2 className="w-3 h-3 text-emerald-600" /> Hold Protocol</span>
+                        <span className="flex items-center gap-1 text-emerald-700 font-bold"><CheckCircle2 className="w-3 h-3 text-emerald-600" /> IVR Rating</span>
+                      </div>
+                    </button>
+
+                    {/* Tamil Full Call */}
+                    <button
+                      onClick={() => startCallSimulation('faultTamilFull')}
+                      className="p-3 bg-gradient-to-r from-purple-500/10 via-violet-500/5 to-white hover:from-purple-500/20 hover:to-purple-50/50 border border-purple-300/80 hover:border-purple-500 rounded-xl text-left transition-all shadow-xs group relative overflow-hidden"
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-xs font-black text-slate-900 flex items-center gap-1.5">
+                          <span>🇮🇳</span> தமிழ் Gaming High Ping Latency (Full Call)
+                        </span>
+                        <span className="px-2 py-0.5 rounded bg-purple-400 text-purple-950 text-[10px] font-black uppercase tracking-wider">
+                          CEN-CSC-TECH
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-slate-600 font-medium line-clamp-1">
+                        &quot;Valorant ping 190ms gaming lag&quot; $\rightarrow$ IP Routing Latency TT
+                      </p>
+                      <div className="mt-2 flex items-center gap-3 text-[10px] text-slate-500 font-semibold">
+                        <span className="flex items-center gap-1 text-emerald-700 font-bold"><CheckCircle2 className="w-3 h-3 text-emerald-600" /> வணக்கம் Greeting</span>
+                        <span className="flex items-center gap-1 text-emerald-700 font-bold"><CheckCircle2 className="w-3 h-3 text-emerald-600" /> காத்திருங்கள்</span>
+                        <span className="flex items-center gap-1 text-emerald-700 font-bold"><CheckCircle2 className="w-3 h-3 text-emerald-600" /> C-Sat Transfer</span>
+                      </div>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Telecom Fault Voice Presets (Quick 1-Click Snippets) */}
                 <div className="pt-2 border-t border-slate-200/80 space-y-2.5">
                   <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider text-left flex items-center justify-between">
-                    <span>⚡ Quick Test Voice Fault Calls</span>
-                    <span className="text-[9px] text-indigo-600 font-mono">Auto-Triage</span>
+                    <span>⚡ Quick Test Voice Fault Snippets</span>
+                    <span className="text-[9px] text-indigo-600 font-mono">1-Click Triage</span>
                   </p>
                   
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
