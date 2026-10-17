@@ -17,11 +17,6 @@ import {
   Phone,
   Radio,
   FileText,
-  ThumbsUp,
-  MessageSquare,
-  Eye,
-  Star,
-  Send,
   X,
   Copy,
   Check,
@@ -364,60 +359,7 @@ const FAQ_DETAILS: Record<string, {
 export default function FAQPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFaqKey, setSelectedFaqKey] = useState<string | null>(null);
-  const [hasLiked, setHasLiked] = useState(true);
-  const [likeCount, setLikeCount] = useState(2);
-  const [isFavorite, setIsFavorite] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
-
-  // User comments state
-  const [comments, setComments] = useState<Array<{
-    id: string;
-    author: string;
-    date: string;
-    text: string;
-    avatarColor: string;
-    likes: number;
-  }>>([
-    {
-      id: 'c1',
-      author: 'kiruthika Jeganathan',
-      date: 'October 10, 2024',
-      text: 'Pls update Trio package change process',
-      avatarColor: 'bg-emerald-700',
-      likes: 1
-    },
-    {
-      id: 'c2',
-      author: 'Mohamed Riyas',
-      date: 'June 6, 2024',
-      text: '@Nilmini Dombagolla Thank you very much for your feedback/request. The Fault Reporting tile is updated.',
-      avatarColor: 'bg-teal-700',
-      likes: 1
-    },
-    {
-      id: 'c3',
-      author: 'Nilmini Dombagolla',
-      date: 'June 6, 2024',
-      text: 'PLS UPDATE FAULT REPORTING TILE',
-      avatarColor: 'bg-amber-700',
-      likes: 1
-    }
-  ]);
-  const [newCommentText, setNewCommentText] = useState('');
-
-  const handlePostComment = () => {
-    if (!newCommentText.trim()) return;
-    const newEntry = {
-      id: `c-${Date.now()}`,
-      author: 'Gehan Jayawardana',
-      date: 'Just now',
-      text: newCommentText.trim(),
-      avatarColor: 'bg-blue-600',
-      likes: 0
-    };
-    setComments([newEntry, ...comments]);
-    setNewCommentText('');
-  };
 
   const copyToClipboard = (text: string, id: string) => {
     navigator.clipboard.writeText(text);
@@ -814,111 +756,6 @@ export default function FAQPage() {
         </div>
       </div>
 
-      {/* 7. SOCIAL ENGAGEMENT & COMMENTS SECTION */}
-      <div className="bg-white border-t border-slate-200 px-6 py-6 text-slate-700 space-y-6">
-        <div className="max-w-4xl mx-auto space-y-5">
-          
-          {/* Social Stats Line matching screenshot */}
-          <div className="flex flex-wrap items-center justify-between gap-4 text-xs font-semibold text-slate-600 border-b border-slate-200 pb-3">
-            <div className="flex items-center gap-4">
-              <button
-                onClick={() => {
-                  setHasLiked(!hasLiked);
-                  setLikeCount(hasLiked ? likeCount - 1 : likeCount + 1);
-                }}
-                className={`flex items-center gap-1.5 transition-colors ${hasLiked ? 'text-[#005696] font-black' : 'hover:text-[#005696]'}`}
-              >
-                <ThumbsUp className={`w-4 h-4 ${hasLiked ? 'fill-current text-[#005696]' : ''}`} />
-                <span>You and {likeCount - 1} person liked this</span>
-              </button>
-
-              <span className="flex items-center gap-1">
-                <MessageSquare className="w-4 h-4 text-slate-400" />
-                <span>{comments.length} Comments</span>
-              </span>
-
-              <span className="flex items-center gap-1 text-slate-500">
-                <Eye className="w-4 h-4 text-slate-400" />
-                <span>252252 Views</span>
-              </span>
-            </div>
-
-            <button
-              onClick={() => setIsFavorite(!isFavorite)}
-              className={`flex items-center gap-1.5 hover:text-[#005696] transition-colors ${isFavorite ? 'text-amber-500 font-bold' : ''}`}
-            >
-              <Star className={`w-4 h-4 ${isFavorite ? 'fill-current text-amber-500' : ''}`} />
-              <span>{isFavorite ? 'Saved in favorites' : 'Add to favorites'}</span>
-            </button>
-          </div>
-
-          {/* Comments List */}
-          <div className="space-y-4">
-            <h3 className="text-sm font-bold text-slate-800">
-              {comments.length} Comments
-            </h3>
-
-            {/* Comment Input Box matching screenshot */}
-            <div className="flex items-start gap-3">
-              <div className="w-8 h-8 rounded-full bg-cyan-700 text-white font-bold flex items-center justify-center text-xs shrink-0 shadow-xs">
-                GJ
-              </div>
-              <div className="flex-1 flex gap-2">
-                <input
-                  type="text"
-                  value={newCommentText}
-                  onChange={(e) => setNewCommentText(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handlePostComment()}
-                  placeholder="Add a comment. Type @ to mention someone"
-                  className="flex-1 px-3.5 py-2 text-xs border border-slate-300 rounded-md focus:outline-none focus:ring-1 focus:ring-[#005696] bg-slate-50 focus:bg-white transition-all"
-                />
-                <button
-                  onClick={handlePostComment}
-                  className="px-4 py-2 bg-slate-200 hover:bg-[#005696] hover:text-white text-slate-700 text-xs font-bold rounded-md transition-colors"
-                >
-                  Post
-                </button>
-              </div>
-            </div>
-
-            {/* Existing Comments */}
-            <div className="space-y-4 pt-2">
-              {comments.map((comment) => (
-                <div key={comment.id} className="flex items-start gap-3 text-xs">
-                  <div className={`w-8 h-8 rounded-full ${comment.avatarColor} text-white font-bold flex items-center justify-center text-[10px] shrink-0 shadow-2xs`}>
-                    {comment.author.split(' ').map(n => n[0]).join('').slice(0, 2)}
-                  </div>
-                  <div className="space-y-1 flex-1">
-                    <div className="flex items-center gap-2">
-                      <span className="font-bold text-slate-900">{comment.author}</span>
-                      <span className="text-[10px] text-slate-400">{comment.date}</span>
-                    </div>
-                    <p className="text-slate-700 font-medium leading-relaxed">
-                      {comment.text}
-                    </p>
-                    <div className="flex items-center gap-3 text-[11px] text-[#005696] font-semibold pt-0.5">
-                      <button className="hover:underline">Reply</button>
-                      <span>·</span>
-                      <button className="hover:underline flex items-center gap-1">
-                        <ThumbsUp className="w-3 h-3" />
-                        <span>Like</span>
-                      </button>
-                      {comment.likes > 0 && (
-                        <>
-                          <span>·</span>
-                          <span className="text-slate-500 font-normal">{comment.likes} person liked this</span>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-          </div>
-
-        </div>
-      </div>
 
       {/* ======================================================== */}
       {/* INTERACTIVE FAQ DETAIL MODAL / DRAWER                    */}
