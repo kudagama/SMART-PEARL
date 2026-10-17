@@ -74,6 +74,51 @@ You must return ONLY a clean JSON object without Markdown backticks or extra tex
 function extractFaultRulesFallback(text: string) {
   const lower = text.toLowerCase();
 
+  // 0. General Questions FTTH / Connection Status / VAS Portal GB Check
+  if (
+    lower.includes('general question') ||
+    lower.includes('general questions') ||
+    lower.includes('connection status') ||
+    lower.includes('i-hub') ||
+    lower.includes('ihub') ||
+    lower.includes('ldap status') ||
+    lower.includes('vas portal') ||
+    lower.includes('gb availability') ||
+    lower.includes('bill arrears') ||
+    lower.includes('throttled due to')
+  ) {
+    return {
+      transcription: text,
+      detected_language: lower.includes('eka') ? 'Singlish' : 'English',
+      customer_intent: 'GENERAL',
+      asset_type: ASSET_TYPES.DATA,
+      symptom: 'FTTH General Questions / Connection Status & Quota Check',
+      technical_context: {
+        pon_status: PON_STATUS.NOT_APPLICABLE,
+        measured_speed_mbps: null,
+        game_name: null,
+        ping_delay_ms: null,
+        addon_name: null,
+        error_message: null,
+        device_age_months: null,
+      },
+      billing_context: { channel_type: null, amount: null, transaction_date: null },
+      pre_check_flags: { ldap_checked: true, gb_portal_checked: true, peotv_admin_checked: false, low_pay_bill_verified: false },
+      suggested_rule_code: 'RULE_UNLIMITED_SLOWNESS',
+      target_workgroup: 'CEN-CSC-DATA',
+      action_type: ACTION_TYPES.CUSTOMER_SELF_CARE,
+      operational_advice: '1. Check I-Hub/LDAP connection status -> If Not Active, advise to settle bill. 2. If Active, check VAS Portal GB availability -> If throttled due to GB, advise Extra GB. If throttled due to arrears, advise bill payment. If GBs available, proceed to ONT Indicators FAQ.',
+      routing_reason: 'FTTH General Inquiry / Connection Status & Quota Triage SOP.',
+      knowledge_article: {
+        title: 'General Questions FTTH - Connection Status & Quota SOP',
+        url: '/knowledge-hub/faq/ftth/general-questions',
+        summary: '1. Check Connection Status (I-Hub/LDAP) -> 2. Check VAS Portal GB availability -> 3. Route to ONT Indicators if quota is available.',
+        target_group: 'CEN-CSC-DATA',
+        badge: 'FTTH SOP'
+      }
+    };
+  }
+
   // 1. Fiber Voice line faulty
   if (
     lower.includes('voice') ||

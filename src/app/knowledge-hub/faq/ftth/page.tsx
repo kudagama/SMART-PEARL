@@ -49,11 +49,12 @@ const FTTH_FAQ_ROWS = [
       {
         text: 'General Questions FTTH',
         linkText: 'Click Here',
-        type: 'modal',
+        type: 'general_questions_flowchart',
+        pageUrl: '/knowledge-hub/faq/ftth/general-questions',
         content: {
-          title: 'General Questions FTTH',
-          guidance: 'Overview of Fibre To The Home (FTTH) architecture, GPON transmission principles, maximum bandwidth capabilities (up to 1 Gbps), and standard CPE warranty terms.',
-          sop: '1. Verify optical line active status via LDAP/GB portal.\n2. Confirm customer package type (Home, Pro, Gaming, Enterprise).\n3. Check optical attenuation levels before answering customer inquiries.'
+          title: 'General Questions FTTH - Connection Status & Quota SOP',
+          guidance: 'Step-by-step triage: Check Connection Status in I-Hub/LDAP -> If Not Active, inform to settle bill (END). If Active, check VAS Portal GB availability -> If throttled due to GB, add Extra GB (END); If throttled due to bill arrears, settle bill (check LDAP/VAS package match); If GBs available, follow FAQ on ONT Indicators.',
+          sop: '1. Check I-Hub/LDAP status (Active/Not Active).\n2. If Active, check VAS Portal GB availability.\n3. Verify LDAP vs VAS Portal package match.\n4. Route to ONT Indicators if quota is available.'
         }
       }
     ]
@@ -374,6 +375,7 @@ export default function FTTHFAQPage() {
   const [sampleCallData, setSampleCallData] = useState<any | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [showOntPdfModal, setShowOntPdfModal] = useState(false);
+  const [showGeneralPdfModal, setShowGeneralPdfModal] = useState(false);
   const [zoomLevel, setZoomLevel] = useState(100);
   const [ttCopied, setTtCopied] = useState(false);
 
@@ -562,10 +564,38 @@ export default function FTTHFAQPage() {
                     <td className="p-4 align-top space-y-2">
                       {row.actions.map((act, aIdx) => {
                         const isOntFlowchart = act.type === 'ont_pdf_flowchart' || act.text.includes('ONT not working');
+                        const isGeneralFlowchart = act.type === 'general_questions_flowchart' || act.text.includes('General Questions FTTH');
                         return (
                           <div key={aIdx} className="space-y-1">
                             <div className="flex items-baseline flex-wrap gap-1.5 leading-relaxed">
-                              {isOntFlowchart ? (
+                              {isGeneralFlowchart ? (
+                                <>
+                                  <Link
+                                    href="/knowledge-hub/faq/ftth/general-questions"
+                                    className="font-bold text-[#005696] hover:text-[#003865] hover:underline cursor-pointer flex items-center gap-1.5"
+                                  >
+                                    <span>{act.text}</span>
+                                    <span className="px-1.5 py-0.2 rounded bg-emerald-100 text-emerald-800 font-bold text-[10px]">
+                                      Interactive Guide
+                                    </span>
+                                  </Link>
+
+                                  <Link
+                                    href="/knowledge-hub/faq/ftth/general-questions"
+                                    className="font-bold text-[#005696] hover:text-[#003865] hover:underline cursor-pointer ml-1 inline-flex items-center gap-0.5 text-xs"
+                                  >
+                                    ( View Interactive Guide )
+                                  </Link>
+
+                                  <button
+                                    onClick={() => setShowGeneralPdfModal(true)}
+                                    className="text-slate-500 hover:text-slate-700 hover:underline cursor-pointer ml-1 text-[11px]"
+                                    title="View SharePoint PDF viewer layout"
+                                  >
+                                    ( PDF )
+                                  </button>
+                                </>
+                              ) : isOntFlowchart ? (
                                 <>
                                   <Link
                                     href="/knowledge-hub/faq/ftth/ont-not-working"
@@ -1591,6 +1621,585 @@ export default function FTTHFAQPage() {
                       fill="#000000"
                     >
                       relevant troubleshooting details.
+                    </text>
+                  </g>
+
+                </svg>
+
+              </div>
+            </div>
+
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* ======================================================== */}
+      {/* 10. OFFICIAL GENERAL QUESTIONS PDF VIEWER MODAL          */}
+      {/* ======================================================== */}
+      <AnimatePresence>
+        {showGeneralPdfModal && (
+          <div className="fixed inset-0 z-50 flex flex-col bg-[#262626] text-white overflow-hidden animate-in fade-in duration-200">
+            
+            {/* Top SharePoint / PDF Reader Dark Toolbar */}
+            <div className="bg-[#262626] border-b border-white/10 px-3 sm:px-5 py-2 flex items-center justify-between text-xs select-none shrink-0 shadow-md">
+              
+              {/* Left Icons */}
+              <div className="flex items-center gap-2 sm:gap-3 text-slate-300">
+                <button
+                  title="Document Thumbnails"
+                  className="p-1 rounded hover:bg-white/10 hover:text-white transition-colors"
+                >
+                  <FileText className="w-4 h-4" />
+                </button>
+
+                <div className="h-4 w-px bg-slate-600"></div>
+
+                <button
+                  onClick={() => window.print()}
+                  title="Download / Print PDF"
+                  className="p-1 rounded hover:bg-white/10 hover:text-white transition-colors"
+                >
+                  <Download className="w-4 h-4" />
+                </button>
+
+                <button
+                  title="Star Favorite"
+                  className="p-1 rounded hover:bg-white/10 hover:text-amber-400 transition-colors"
+                >
+                  <Star className="w-4 h-4" />
+                </button>
+
+                <button
+                  title="Document Information"
+                  className="p-1 rounded hover:bg-white/10 hover:text-white transition-colors"
+                >
+                  <AlertCircle className="w-4 h-4" />
+                </button>
+
+                <button
+                  title="More Options"
+                  className="p-1 rounded hover:bg-white/10 hover:text-white transition-colors font-bold text-sm tracking-widest px-1.5"
+                >
+                  •••
+                </button>
+              </div>
+
+              {/* Center: Red Adobe PDF badge + File Name */}
+              <div className="flex items-center gap-2 mx-2 truncate">
+                <div className="bg-red-600 text-white rounded-xs px-1.5 py-0.5 text-[10px] font-black tracking-wider flex items-center justify-center shadow-xs">
+                  PDF
+                </div>
+                <span className="text-xs sm:text-sm font-semibold text-white tracking-tight truncate">
+                  General Questions.pdf
+                </span>
+              </div>
+
+              {/* Right Icons */}
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <div
+                  title="User Profile: GJ"
+                  className="w-6 h-6 rounded-full bg-teal-600 border border-teal-300 flex items-center justify-center font-bold text-[10px] text-white shadow-2xs"
+                >
+                  GJ
+                </div>
+
+                <button
+                  title="Teams Conversation"
+                  className="p-1 rounded hover:bg-white/10 text-slate-300 hover:text-white transition-colors hidden sm:inline-flex"
+                >
+                  <MessageSquare className="w-4 h-4" />
+                </button>
+
+                <button
+                  className="hidden md:flex items-center gap-1 text-[11px] text-slate-200 hover:bg-white/10 px-2 py-1 rounded transition-colors"
+                >
+                  <Eye className="w-3.5 h-3.5 text-slate-300" />
+                  <span>Viewing</span>
+                  <ChevronDown className="w-3 h-3 text-slate-400" />
+                </button>
+
+                <button
+                  className="hidden lg:flex items-center gap-1 text-[11px] text-slate-200 hover:bg-white/10 px-2 py-1 rounded transition-colors"
+                >
+                  <ExternalLink className="w-3.5 h-3.5 text-slate-300" />
+                  <span>Open</span>
+                  <ChevronDown className="w-3 h-3 text-slate-400" />
+                </button>
+
+                <button
+                  className="hidden sm:flex items-center gap-1 text-[11px] text-slate-200 hover:bg-white/10 px-2 py-1 rounded transition-colors"
+                >
+                  <Share2 className="w-3.5 h-3.5 text-slate-300" />
+                  <span>Share</span>
+                  <ChevronDown className="w-3 h-3 text-slate-400" />
+                </button>
+
+                <button
+                  onClick={() => setShowGeneralPdfModal(false)}
+                  title="Close PDF Viewer"
+                  className="p-1 rounded text-slate-300 hover:text-white hover:bg-red-600/40 transition-colors ml-1"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+            </div>
+
+            {/* Sub Toolbar / Zoom & Direct Page Helper */}
+            <div className="bg-[#1f1f1f] px-4 py-1.5 flex items-center justify-between text-xs text-slate-400 border-b border-black/40">
+              <div className="flex items-center gap-3">
+                <span className="text-[11px] text-slate-400">Page 1 of 1</span>
+                <span className="text-slate-600">|</span>
+                <button
+                  onClick={() => setZoomLevel(Math.max(60, zoomLevel - 15))}
+                  title="Zoom Out"
+                  className="p-1 hover:text-white hover:bg-white/10 rounded"
+                >
+                  <ZoomOut className="w-3.5 h-3.5" />
+                </button>
+                <span className="text-[11px] font-mono text-slate-300 min-w-[3rem] text-center">{zoomLevel}%</span>
+                <button
+                  onClick={() => setZoomLevel(Math.min(150, zoomLevel + 15))}
+                  title="Zoom In"
+                  className="p-1 hover:text-white hover:bg-white/10 rounded"
+                >
+                  <ZoomIn className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  onClick={() => setZoomLevel(100)}
+                  className="text-[10px] uppercase font-bold px-1.5 py-0.5 bg-white/5 hover:bg-white/15 rounded text-slate-300"
+                >
+                  Reset
+                </button>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Link
+                  href="/knowledge-hub/faq/ftth/general-questions"
+                  className="px-2.5 py-1 bg-[#005696] hover:bg-[#0070ba] text-white rounded text-[11px] font-bold flex items-center gap-1.5 shadow-xs transition-colors"
+                >
+                  <ExternalLink className="w-3 h-3" />
+                  <span>Open Full Interactive Web Page</span>
+                </Link>
+              </div>
+            </div>
+
+            {/* Main Viewer Body with Centered White Page */}
+            <div className="flex-1 bg-[#3c4043] overflow-y-auto p-4 sm:p-8 flex justify-center items-start">
+              <div
+                style={{ transform: `scale(${zoomLevel / 100})`, transformOrigin: 'top center' }}
+                className="bg-white text-black shadow-[0_20px_50px_rgba(0,0,0,0.7)] rounded-xs w-full max-w-[800px] min-h-[920px] p-6 sm:p-10 relative transition-transform duration-150"
+              >
+                
+                {/* SVG Vector Flowchart matching General Questions.pdf */}
+                <svg
+                  viewBox="0 0 800 640"
+                  className="w-full h-auto select-none font-sans"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <defs>
+                    <filter id="retroShadowGqModal" x="-15%" y="-15%" width="130%" height="130%">
+                      <feDropShadow dx="4" dy="4" stdDeviation="0" floodColor="#000000" floodOpacity="1" />
+                    </filter>
+                    <marker id="arrowGqModal" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+                      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#000000" />
+                    </marker>
+                  </defs>
+
+                  {/* Flowchart Title */}
+                  <text
+                    x="400"
+                    y="32"
+                    textAnchor="middle"
+                    fontWeight="900"
+                    fontSize="28"
+                    fontFamily="Arial, Helvetica, sans-serif"
+                    fill="#000000"
+                    letterSpacing="0.5"
+                  >
+                    General Questions
+                  </text>
+
+                  {/* ROOT NODE: Check the Connection Status (I-Hub/ LDAP) */}
+                  <g>
+                    <rect
+                      x="340"
+                      y="54"
+                      width="260"
+                      height="46"
+                      rx="23"
+                      ry="23"
+                      fill="#5cb85c"
+                      stroke="#000000"
+                      strokeWidth="2.5"
+                      filter="url(#retroShadowGqModal)"
+                    />
+                    <text
+                      x="470"
+                      y="74"
+                      textAnchor="middle"
+                      fontWeight="bold"
+                      fontSize="12"
+                      fontFamily="Arial, Helvetica, sans-serif"
+                      fill="#000000"
+                    >
+                      Check the Connection Status
+                    </text>
+                    <text
+                      x="470"
+                      y="89"
+                      textAnchor="middle"
+                      fontWeight="bold"
+                      fontSize="12"
+                      fontFamily="Arial, Helvetica, sans-serif"
+                      fill="#000000"
+                    >
+                      (I-Hub/ LDAP)
+                    </text>
+                  </g>
+
+                  {/* BRANCH 1: Not Active */}
+                  <path d="M 340 77 L 230 77 L 230 112" stroke="#000000" strokeWidth="2.5" markerEnd="url(#arrowGqModal)" fill="none" />
+                  <text
+                    x="285"
+                    y="69"
+                    textAnchor="middle"
+                    fontWeight="bold"
+                    fontSize="11.5"
+                    fill="#ff0000"
+                    fontFamily="Arial, Helvetica, sans-serif"
+                  >
+                    Not Active
+                  </text>
+
+                  {/* Green Node: Inform to settle the bill */}
+                  <g>
+                    <rect
+                      x="145"
+                      y="112"
+                      width="170"
+                      height="44"
+                      rx="22"
+                      ry="22"
+                      fill="#5cb85c"
+                      stroke="#000000"
+                      strokeWidth="2"
+                      filter="url(#retroShadowGqModal)"
+                    />
+                    <text
+                      x="230"
+                      y="139"
+                      textAnchor="middle"
+                      fontWeight="bold"
+                      fontSize="12"
+                      fontFamily="Arial, Helvetica, sans-serif"
+                      fill="#000000"
+                    >
+                      Inform to settle the bill
+                    </text>
+                  </g>
+
+                  {/* Arrow down to END */}
+                  <path d="M 230 156 L 230 184" stroke="#000000" strokeWidth="2.5" markerEnd="url(#arrowGqModal)" />
+                  <text
+                    x="230"
+                    y="200"
+                    textAnchor="middle"
+                    fontWeight="900"
+                    fontSize="13"
+                    fill="#00b050"
+                    fontFamily="Arial, Helvetica, sans-serif"
+                  >
+                    END
+                  </text>
+
+                  {/* BRANCH 2: Active */}
+                  <path d="M 470 100 L 470 190" stroke="#000000" strokeWidth="2.5" markerEnd="url(#arrowGqModal)" />
+                  <text
+                    x="490"
+                    y="145"
+                    textAnchor="start"
+                    fontWeight="bold"
+                    fontSize="11.5"
+                    fill="#00b050"
+                    fontFamily="Arial, Helvetica, sans-serif"
+                  >
+                    Active
+                  </text>
+
+                  {/* NODE 2: Check the GB availability (VAS Portal) */}
+                  <g>
+                    <rect
+                      x="340"
+                      y="190"
+                      width="260"
+                      height="46"
+                      rx="23"
+                      ry="23"
+                      fill="#5cb85c"
+                      stroke="#000000"
+                      strokeWidth="2.5"
+                      filter="url(#retroShadowGqModal)"
+                    />
+                    <text
+                      x="470"
+                      y="210"
+                      textAnchor="middle"
+                      fontWeight="bold"
+                      fontSize="12"
+                      fontFamily="Arial, Helvetica, sans-serif"
+                      fill="#000000"
+                    >
+                      Check the GB availability
+                    </text>
+                    <text
+                      x="470"
+                      y="225"
+                      textAnchor="middle"
+                      fontWeight="bold"
+                      fontSize="12"
+                      fontFamily="Arial, Helvetica, sans-serif"
+                      fill="#000000"
+                    >
+                      (VAS Portal)
+                    </text>
+                  </g>
+
+                  {/* ================= THREE SUB-BRANCHES ================= */}
+
+                  {/* Sub-Branch 1: Throttled due to GB issue */}
+                  <path d="M 340 213 L 270 213 L 270 290" stroke="#000000" strokeWidth="2.5" markerEnd="url(#arrowGqModal)" fill="none" />
+                  <text
+                    x="220"
+                    y="245"
+                    textAnchor="middle"
+                    fontWeight="bold"
+                    fontSize="11"
+                    fill="#ff0000"
+                    fontFamily="Arial, Helvetica, sans-serif"
+                  >
+                    Throttled due to
+                  </text>
+                  <text
+                    x="220"
+                    y="259"
+                    textAnchor="middle"
+                    fontWeight="bold"
+                    fontSize="11"
+                    fill="#ff0000"
+                    fontFamily="Arial, Helvetica, sans-serif"
+                  >
+                    GB issue
+                  </text>
+
+                  {/* Green Node: Ask customer to add some extraGB. */}
+                  <g>
+                    <rect
+                      x="170"
+                      y="290"
+                      width="200"
+                      height="44"
+                      rx="22"
+                      ry="22"
+                      fill="#5cb85c"
+                      stroke="#000000"
+                      strokeWidth="2"
+                      filter="url(#retroShadowGqModal)"
+                    />
+                    <text
+                      x="270"
+                      y="310"
+                      textAnchor="middle"
+                      fontWeight="bold"
+                      fontSize="11.5"
+                      fontFamily="Arial, Helvetica, sans-serif"
+                      fill="#000000"
+                    >
+                      Ask customer to add some
+                    </text>
+                    <text
+                      x="270"
+                      y="324"
+                      textAnchor="middle"
+                      fontWeight="bold"
+                      fontSize="11.5"
+                      fontFamily="Arial, Helvetica, sans-serif"
+                      fill="#000000"
+                    >
+                      extraGB.
+                    </text>
+                  </g>
+
+                  {/* Arrow down to END */}
+                  <path d="M 270 334 L 270 365" stroke="#000000" strokeWidth="2.5" markerEnd="url(#arrowGqModal)" />
+                  <text
+                    x="270"
+                    y="382"
+                    textAnchor="middle"
+                    fontWeight="900"
+                    fontSize="13"
+                    fill="#00b050"
+                    fontFamily="Arial, Helvetica, sans-serif"
+                  >
+                    END
+                  </text>
+
+                  {/* Sub-Branch 2: Throttled due to Bill Arrears */}
+                  <path d="M 470 236 L 470 300" stroke="#000000" strokeWidth="2.5" markerEnd="url(#arrowGqModal)" />
+                  <text
+                    x="425"
+                    y="255"
+                    textAnchor="middle"
+                    fontWeight="bold"
+                    fontSize="11"
+                    fill="#ff0000"
+                    fontFamily="Arial, Helvetica, sans-serif"
+                  >
+                    Throttled due to
+                  </text>
+                  <text
+                    x="425"
+                    y="269"
+                    textAnchor="middle"
+                    fontWeight="bold"
+                    fontSize="11"
+                    fill="#ff0000"
+                    fontFamily="Arial, Helvetica, sans-serif"
+                  >
+                    Bill Arrears
+                  </text>
+
+                  {/* Green Node: Ask customer to settle the bill */}
+                  <g>
+                    <rect
+                      x="385"
+                      y="300"
+                      width="170"
+                      height="44"
+                      rx="22"
+                      ry="22"
+                      fill="#5cb85c"
+                      stroke="#000000"
+                      strokeWidth="2"
+                      filter="url(#retroShadowGqModal)"
+                    />
+                    <text
+                      x="470"
+                      y="327"
+                      textAnchor="middle"
+                      fontWeight="bold"
+                      fontSize="11.5"
+                      fontFamily="Arial, Helvetica, sans-serif"
+                      fill="#000000"
+                    >
+                      Ask customer to settle the bill
+                    </text>
+                  </g>
+
+                  {/* Lavender Note */}
+                  <g>
+                    <rect
+                      x="345"
+                      y="360"
+                      width="250"
+                      height="54"
+                      rx="24"
+                      ry="24"
+                      fill="#d8b4fe"
+                      stroke="#000000"
+                      strokeWidth="2"
+                      filter="url(#retroShadowGqModal)"
+                    />
+                    <text
+                      x="470"
+                      y="378"
+                      textAnchor="middle"
+                      fontWeight="bold"
+                      fontSize="9"
+                      fontFamily="Arial, Helvetica, sans-serif"
+                      fill="#000000"
+                    >
+                      (Note: Better if can check the package mentioned in
+                    </text>
+                    <text
+                      x="470"
+                      y="390"
+                      textAnchor="middle"
+                      fontWeight="bold"
+                      fontSize="9"
+                      fontFamily="Arial, Helvetica, sans-serif"
+                      fill="#000000"
+                    >
+                      bothLDAP & VAS portal are same. If there are any
+                    </text>
+                    <text
+                      x="470"
+                      y="402"
+                      textAnchor="middle"
+                      fontWeight="bold"
+                      fontSize="9"
+                      fontFamily="Arial, Helvetica, sans-serif"
+                      fill="#000000"
+                    >
+                      mismatches,can forward a complaint to ISP)
+                    </text>
+                  </g>
+
+                  {/* Sub-Branch 3: If GBs are available */}
+                  <path d="M 600 213 L 640 213 L 640 430" stroke="#000000" strokeWidth="2.5" markerEnd="url(#arrowGqModal)" fill="none" />
+                  <text
+                    x="650"
+                    y="320"
+                    textAnchor="start"
+                    fontWeight="bold"
+                    fontSize="11"
+                    fill="#00b050"
+                    fontFamily="Arial, Helvetica, sans-serif"
+                  >
+                    If GBs are available
+                  </text>
+
+                  {/* Green Node: Follow the next FAQ on ONT Indicators. */}
+                  <g
+                    className="cursor-pointer"
+                    onClick={() => {
+                      setShowGeneralPdfModal(false);
+                      setShowOntPdfModal(true);
+                    }}
+                  >
+                    <rect
+                      x="530"
+                      y="430"
+                      width="220"
+                      height="46"
+                      rx="23"
+                      ry="23"
+                      fill="#5cb85c"
+                      stroke="#000000"
+                      strokeWidth="2"
+                      filter="url(#retroShadowGqModal)"
+                    />
+                    <text
+                      x="640"
+                      y="450"
+                      textAnchor="middle"
+                      fontWeight="bold"
+                      fontSize="11.5"
+                      fontFamily="Arial, Helvetica, sans-serif"
+                      fill="#000000"
+                    >
+                      Follow the next FAQ
+                    </text>
+                    <text
+                      x="640"
+                      y="464"
+                      textAnchor="middle"
+                      fontWeight="bold"
+                      fontSize="11.5"
+                      fontFamily="Arial, Helvetica, sans-serif"
+                      fill="#000000"
+                    >
+                      on ONT Indicators.
                     </text>
                   </g>
 
