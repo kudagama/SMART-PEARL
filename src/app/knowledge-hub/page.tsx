@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Search,
@@ -182,6 +183,7 @@ const TEAM_MEMBERS = [
 ];
 
 export default function KnowledgeHubPage() {
+  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedItem, setSelectedItem] = useState<any | null>(null);
   const [copiedLink, setCopiedLink] = useState<string | null>(null);
@@ -295,18 +297,28 @@ export default function KnowledgeHubPage() {
                 key={tile.id}
                 whileHover={{ scale: 1.015, y: -2 }}
                 whileTap={{ scale: 0.98 }}
-                onClick={() => setSelectedItem({ ...tile, type: 'tile' })}
+                onClick={() => {
+                  if (tile.id === 'faq') {
+                    router.push('/knowledge-hub/faq');
+                  } else {
+                    setSelectedItem({ ...tile, type: 'tile' });
+                  }
+                }}
                 className={`bg-gradient-to-r ${tile.bg} text-white p-4 rounded-md shadow-sm text-center flex flex-col items-center justify-center min-h-[58px] transition-all hover:shadow-md cursor-pointer border border-white/10 relative overflow-hidden group`}
               >
                 <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
                 <h3 className="font-bold text-sm tracking-wide text-white drop-shadow-xs">
                   {tile.title}
                 </h3>
-                {tile.ruleCode && (
+                {tile.id === 'faq' ? (
+                  <span className="text-[9px] text-yellow-300 font-bold mt-0.5 flex items-center gap-1 group-hover:underline">
+                    View FAQ Portal &rarr;
+                  </span>
+                ) : tile.ruleCode ? (
                   <span className="text-[9px] text-cyan-200 font-mono mt-0.5 opacity-80 group-hover:opacity-100">
                     Active Triage Rule
                   </span>
-                )}
+                ) : null}
               </motion.button>
             ))}
           </div>
