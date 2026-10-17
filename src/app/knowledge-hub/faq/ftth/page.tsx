@@ -104,12 +104,15 @@ const FTTH_FAQ_ROWS = [
     actions: [
       {
         text: '• Wi-Fi not working (PON Steady)',
-        linkText: 'PDF',
-        type: 'pdf',
+        linkText: 'Click Here',
+        type: 'wifi_flowchart',
+        pageUrl: '/knowledge-hub/faq/ftth/wifi-not-working',
         content: {
-          title: 'Wi-Fi Not Working (PON Steady) - SOP',
-          guidance: 'When PON is steady, internet connectivity to the premises is functional. Guide customer to verify WLAN LED status on ONT.',
-          sop: '1. Check if WLAN/Wi-Fi LED on ONT is solid green.\n2. If OFF, press Wi-Fi push button on side of ONT for 3 seconds.\n3. Verify SSID broadcast on mobile device.\n4. If 5GHz band not showing, advise customer device may only support 2.4GHz.\n5. If still failing, access http://192.168.1.1 to verify WLAN Enable checkbox.'
+          title: 'Wi-Fi Not Working (PON Steady) - Official Decision Flowchart',
+          ruleCode: 'RULE_STB_ONT_ROUTER_FAULTY',
+          targetGroup: 'AREA-CPE-MTCE / CEN-CSC-TECH',
+          guidance: 'WLAN LED OFF: Press Wi-Fi button in ONT. If still OFF -> Create TT to AREA-CPE-MTCE under BB Service. WLAN LED ON: Check device wireless ON. Check internet -> If not working, check Wi-Fi config. If config correct -> Create TT to CEN-CSC-TECH under BB Service. If low coverage -> Record distance & forward to AREA-CPE-MTCE.',
+          sop: '1. Check WLAN LED (OFF/ON).\n2. If OFF, toggle physical WLAN button.\n3. If ON, verify client device Wi-Fi & test throughput.\n4. Audit SSID/WPA2 config in 192.168.1.1.'
         }
       }
     ]
@@ -378,6 +381,7 @@ export default function FTTHFAQPage() {
   const [showOntPdfModal, setShowOntPdfModal] = useState(false);
   const [showGeneralPdfModal, setShowGeneralPdfModal] = useState(false);
   const [showPonPdfModal, setShowPonPdfModal] = useState(false);
+  const [showWifiPdfModal, setShowWifiPdfModal] = useState(false);
   const [zoomLevel, setZoomLevel] = useState(100);
   const [ttCopied, setTtCopied] = useState(false);
 
@@ -568,6 +572,7 @@ export default function FTTHFAQPage() {
                         const isOntFlowchart = act.type === 'ont_pdf_flowchart' || act.text.includes('ONT not working');
                         const isGeneralFlowchart = act.type === 'general_questions_flowchart' || act.text.includes('General Questions FTTH');
                         const isPonFlowchart = act.type === 'pon_indicator_flowchart' || act.text.includes('PON indicator Red, Off, Blinking and Steady');
+                        const isWifiFlowchart = act.type === 'wifi_flowchart' || act.text.includes('Wi-Fi not working (PON Steady)');
                         return (
                           <div key={aIdx} className="space-y-1">
                             <div className="flex items-baseline flex-wrap gap-1.5 leading-relaxed">
@@ -646,6 +651,33 @@ export default function FTTHFAQPage() {
 
                                   <button
                                     onClick={() => setShowPonPdfModal(true)}
+                                    className="text-slate-500 hover:text-slate-700 hover:underline cursor-pointer ml-1 text-[11px]"
+                                    title="View SharePoint PDF viewer layout"
+                                  >
+                                    ( PDF )
+                                  </button>
+                                </>
+                              ) : isWifiFlowchart ? (
+                                <>
+                                  <Link
+                                    href="/knowledge-hub/faq/ftth/wifi-not-working"
+                                    className="font-bold text-[#005696] hover:text-[#003865] hover:underline cursor-pointer flex items-center gap-1.5"
+                                  >
+                                    <span>{act.text}</span>
+                                    <span className="px-1.5 py-0.2 rounded bg-lime-100 text-lime-900 font-bold text-[10px]">
+                                      Interactive Guide
+                                    </span>
+                                  </Link>
+
+                                  <Link
+                                    href="/knowledge-hub/faq/ftth/wifi-not-working"
+                                    className="font-bold text-[#005696] hover:text-[#003865] hover:underline cursor-pointer ml-1 inline-flex items-center gap-0.5 text-xs"
+                                  >
+                                    ( View Interactive Guide )
+                                  </Link>
+
+                                  <button
+                                    onClick={() => setShowWifiPdfModal(true)}
                                     className="text-slate-500 hover:text-slate-700 hover:underline cursor-pointer ml-1 text-[11px]"
                                     title="View SharePoint PDF viewer layout"
                                   >
@@ -2971,6 +3003,859 @@ export default function FTTHFAQPage() {
                       fill="#000000"
                     >
                       customer's reported complaint and includes all relevant troubleshooting details.
+                    </text>
+                  </g>
+
+                </svg>
+
+              </div>
+            </div>
+
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* ======================================================== */}
+      {/* 12. OFFICIAL WI-FI NOT WORKING PDF VIEWER MODAL          */}
+      {/* ======================================================== */}
+      <AnimatePresence>
+        {showWifiPdfModal && (
+          <div className="fixed inset-0 z-50 flex flex-col bg-[#262626] text-white overflow-hidden animate-in fade-in duration-200">
+            
+            {/* Top SharePoint / PDF Reader Dark Toolbar matching screenshot */}
+            <div className="bg-[#262626] border-b border-white/10 px-3 sm:px-5 py-2 flex items-center justify-between text-xs select-none shrink-0 shadow-md">
+              
+              {/* Left Icons: Sidebar toggle | Download, Star, Info, More */}
+              <div className="flex items-center gap-2 sm:gap-3 text-slate-300">
+                <button
+                  title="Document Thumbnails"
+                  className="p-1 rounded hover:bg-white/10 hover:text-white transition-colors"
+                >
+                  <FileText className="w-4 h-4" />
+                </button>
+
+                <div className="h-4 w-px bg-slate-600"></div>
+
+                <button
+                  onClick={() => window.print()}
+                  title="Download / Print PDF"
+                  className="p-1 rounded hover:bg-white/10 hover:text-white transition-colors"
+                >
+                  <Download className="w-4 h-4" />
+                </button>
+
+                <button
+                  title="Star Favorite"
+                  className="p-1 rounded hover:bg-white/10 hover:text-amber-400 transition-colors"
+                >
+                  <Star className="w-4 h-4" />
+                </button>
+
+                <button
+                  title="Document Information"
+                  className="p-1 rounded hover:bg-white/10 hover:text-white transition-colors"
+                >
+                  <AlertCircle className="w-4 h-4" />
+                </button>
+
+                <button
+                  title="More Options"
+                  className="p-1 rounded hover:bg-white/10 hover:text-white transition-colors font-bold text-sm tracking-widest px-1.5"
+                >
+                  •••
+                </button>
+              </div>
+
+              {/* Center: Red Adobe PDF badge + File Name */}
+              <div className="flex items-center gap-2 mx-2 truncate">
+                <div className="bg-red-600 text-white rounded-xs px-1.5 py-0.5 text-[10px] font-black tracking-wider flex items-center justify-center shadow-xs">
+                  PDF
+                </div>
+                <span className="text-xs sm:text-sm font-semibold text-white tracking-tight truncate">
+                  4. WiFi not working.pdf
+                </span>
+              </div>
+
+              {/* Right: Avatar, Teams chat, Viewing, Open, Share, Close */}
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <div
+                  title="User Profile: GJ"
+                  className="w-6 h-6 rounded-full bg-teal-600 border border-teal-300 flex items-center justify-center font-bold text-[10px] text-white shadow-2xs"
+                >
+                  GJ
+                </div>
+
+                <button
+                  title="Teams Conversation"
+                  className="p-1 rounded hover:bg-white/10 text-slate-300 hover:text-white transition-colors hidden sm:inline-flex"
+                >
+                  <MessageSquare className="w-4 h-4" />
+                </button>
+
+                <button
+                  className="hidden md:flex items-center gap-1 text-[11px] text-slate-200 hover:bg-white/10 px-2 py-1 rounded transition-colors"
+                >
+                  <Eye className="w-3.5 h-3.5 text-slate-300" />
+                  <span>Viewing</span>
+                  <ChevronDown className="w-3 h-3 text-slate-400" />
+                </button>
+
+                <Link
+                  href="/knowledge-hub/faq/ftth/wifi-not-working"
+                  className="hidden lg:flex items-center gap-1 text-[11px] text-lime-300 hover:text-white hover:bg-white/10 px-2.5 py-1 rounded transition-colors border border-lime-400/30"
+                  title="Open Interactive Troubleshooter in Full Page"
+                >
+                  <ExternalLink className="w-3.5 h-3.5 text-lime-300" />
+                  <span>Open Interactive SOP</span>
+                </Link>
+
+                <button
+                  className="hidden sm:flex items-center gap-1 text-[11px] text-slate-200 hover:bg-white/10 px-2 py-1 rounded transition-colors"
+                >
+                  <Share2 className="w-3.5 h-3.5 text-slate-300" />
+                  <span>Share</span>
+                  <ChevronDown className="w-3 h-3 text-slate-400" />
+                </button>
+
+                <button
+                  onClick={() => setShowWifiPdfModal(false)}
+                  title="Close PDF Viewer"
+                  className="p-1 rounded text-slate-300 hover:text-white hover:bg-red-600/40 transition-colors ml-1"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+            </div>
+
+            {/* Sub Toolbar / Zoom & TT Action Helper */}
+            <div className="bg-[#1f1f1f] px-4 py-1.5 flex items-center justify-between text-xs text-slate-400 border-b border-black/40">
+              <div className="flex items-center gap-3">
+                <span className="text-[11px] text-slate-400">Page 1 of 1</span>
+                <span className="text-slate-600">|</span>
+                <button
+                  onClick={() => setZoomLevel(Math.max(60, zoomLevel - 15))}
+                  title="Zoom Out"
+                  className="p-1 hover:text-white hover:bg-white/10 rounded"
+                >
+                  <ZoomOut className="w-3.5 h-3.5" />
+                </button>
+                <span className="text-[11px] font-mono text-slate-300 min-w-[3rem] text-center">{zoomLevel}%</span>
+                <button
+                  onClick={() => setZoomLevel(Math.min(150, zoomLevel + 15))}
+                  title="Zoom In"
+                  className="p-1 hover:text-white hover:bg-white/10 rounded"
+                >
+                  <ZoomIn className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  onClick={() => setZoomLevel(100)}
+                  className="text-[10px] uppercase font-bold px-1.5 py-0.5 bg-white/5 hover:bg-white/15 rounded text-slate-300"
+                >
+                  Reset
+                </button>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Link
+                  href="/knowledge-hub/faq/ftth/wifi-not-working"
+                  className="px-2.5 py-1 bg-lime-400 hover:bg-lime-300 text-slate-900 font-black rounded text-[11px] flex items-center gap-1 shadow-xs transition-colors"
+                >
+                  <span>Guided Triage Mode</span>
+                </Link>
+
+                <button
+                  onClick={() => {
+                    const ttText = `Target Work Group: AREA-CPE-MTCE\nService Category: BB Service\nFault Complaint: Wi-Fi Not Working (WLAN Indicator Dead / Button Non-responsive)\nAction Taken: Guided customer to press and hold WLAN button in ONT. WLAN light remains OFF. Dispatching for CPE router inspection.`;
+                    navigator.clipboard.writeText(ttText);
+                    setTtCopied(true);
+                    setTimeout(() => setTtCopied(false), 2500);
+                  }}
+                  className="px-2 py-1 bg-emerald-600/90 hover:bg-emerald-600 text-white rounded text-[11px] font-bold flex items-center gap-1 shadow-xs transition-colors"
+                >
+                  {ttCopied ? <Check className="w-3 h-3 text-emerald-300" /> : <Copy className="w-3 h-3" />}
+                  <span>Copy TT AREA-CPE</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    const ttText = `Target Work Group: CEN-CSC-TECH\nService Category: BB Service\nFault Complaint: Wi-Fi Connected but No Internet (PON Steady)\nAction Taken: Client wireless is ON, Wi-Fi config verified (SSID & Password OK). Gateway session unreachable. Escalating to CEN-CSC-TECH.`;
+                    navigator.clipboard.writeText(ttText);
+                    setTtCopied(true);
+                    setTimeout(() => setTtCopied(false), 2500);
+                  }}
+                  className="px-2 py-1 bg-blue-600/90 hover:bg-blue-600 text-white rounded text-[11px] font-bold flex items-center gap-1 shadow-xs transition-colors"
+                >
+                  {ttCopied ? <Check className="w-3 h-3 text-emerald-300" /> : <Copy className="w-3 h-3" />}
+                  <span>Copy TT CEN-CSC</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Main Viewer Body with Centered White Page */}
+            <div className="flex-1 bg-[#3c4043] overflow-y-auto p-4 sm:p-8 flex justify-center items-start">
+              <div
+                style={{ transform: `scale(${zoomLevel / 100})`, transformOrigin: 'top center' }}
+                className="bg-white text-black shadow-[0_20px_50px_rgba(0,0,0,0.7)] rounded-xs w-full max-w-[880px] min-h-[920px] p-6 sm:p-10 relative transition-transform duration-150"
+              >
+                
+                {/* SVG Vector Flowchart matching exact official diagram */}
+                <svg
+                  viewBox="0 0 920 620"
+                  className="w-full h-auto select-none font-sans"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <defs>
+                    <marker id="arrowWifiModal" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+                      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#ff0000" />
+                    </marker>
+                  </defs>
+
+                  {/* Flowchart Title */}
+                  <text
+                    x="460"
+                    y="32"
+                    textAnchor="middle"
+                    fontWeight="900"
+                    fontSize="26"
+                    fontFamily="Arial, Helvetica, sans-serif"
+                    fill="#000000"
+                  >
+                    Wi-Fi not working (PON Steady)
+                  </text>
+
+                  {/* ROOT NODE: Check the Wi-Fi or WLAN indicator is ON */}
+                  <g>
+                    <rect
+                      x="360"
+                      y="64"
+                      width="160"
+                      height="46"
+                      rx="23"
+                      ry="23"
+                      fill="#ffffb0"
+                      stroke="#000000"
+                      strokeWidth="2"
+                    />
+                    <text
+                      x="440"
+                      y="83"
+                      textAnchor="middle"
+                      fontWeight="bold"
+                      fontSize="10.5"
+                      fontFamily="Arial, Helvetica, sans-serif"
+                      fill="#000000"
+                    >
+                      Check the <tspan fontWeight="900">Wi-Fi</tspan> or
+                    </text>
+                    <text
+                      x="440"
+                      y="98"
+                      textAnchor="middle"
+                      fontWeight="bold"
+                      fontSize="10.5"
+                      fontFamily="Arial, Helvetica, sans-serif"
+                      fill="#000000"
+                    >
+                      <tspan fontWeight="900">WLAN</tspan> indicator is ON
+                    </text>
+                  </g>
+
+                  {/* BRANCH 1: Off (Left) */}
+                  <path d="M 360 87 L 295 87 L 295 130" stroke="#ff0000" strokeWidth="2" markerEnd="url(#arrowWifiModal)" fill="none" />
+                  <text
+                    x="330"
+                    y="80"
+                    textAnchor="middle"
+                    fontWeight="bold"
+                    fontSize="11"
+                    fill="#ff0000"
+                    fontFamily="Arial, Helvetica, sans-serif"
+                  >
+                    Off
+                  </text>
+
+                  {/* Node 1A: Press and switch on Wi-Fi or WLAN button in ONT */}
+                  <g>
+                    <rect
+                      x="220"
+                      y="130"
+                      width="150"
+                      height="46"
+                      fill="#ffffb0"
+                      stroke="#000000"
+                      strokeWidth="1.8"
+                    />
+                    <text
+                      x="295"
+                      y="146"
+                      textAnchor="middle"
+                      fontWeight="bold"
+                      fontSize="9.5"
+                      fontFamily="Arial, Helvetica, sans-serif"
+                      fill="#000000"
+                    >
+                      Press and switch on
+                    </text>
+                    <text
+                      x="295"
+                      y="158"
+                      textAnchor="middle"
+                      fontWeight="bold"
+                      fontSize="9.5"
+                      fontFamily="Arial, Helvetica, sans-serif"
+                      fill="#000000"
+                    >
+                      <tspan fontWeight="900">Wi-Fi</tspan> or <tspan fontWeight="900">WLAN</tspan> button
+                    </text>
+                    <text
+                      x="295"
+                      y="170"
+                      textAnchor="middle"
+                      fontWeight="bold"
+                      fontSize="9.5"
+                      fontFamily="Arial, Helvetica, sans-serif"
+                      fill="#000000"
+                    >
+                      in ONT
+                    </text>
+                  </g>
+
+                  {/* Sub-branch Off from Node 1A -> Down to Create TT to AREA-CPE-MTCE */}
+                  <path d="M 220 153 L 155 153 L 155 220" stroke="#ff0000" strokeWidth="2" markerEnd="url(#arrowWifiModal)" fill="none" />
+                  <text
+                    x="180"
+                    y="145"
+                    textAnchor="middle"
+                    fontWeight="bold"
+                    fontSize="11"
+                    fill="#ff0000"
+                    fontFamily="Arial, Helvetica, sans-serif"
+                  >
+                    Off
+                  </text>
+
+                  {/* GREEN NODE: Create a TT to AREA-CPE-MTCE Work Group under BB Service */}
+                  <g>
+                    <rect
+                      x="80"
+                      y="220"
+                      width="170"
+                      height="90"
+                      rx="30"
+                      ry="30"
+                      fill="#88c848"
+                      stroke="#000000"
+                      strokeWidth="2"
+                    />
+                    <text
+                      x="165"
+                      y="245"
+                      textAnchor="middle"
+                      fontWeight="bold"
+                      fontSize="11"
+                      fontFamily="Arial, Helvetica, sans-serif"
+                      fill="#000000"
+                    >
+                      Create a TT to
+                    </text>
+                    <text
+                      x="165"
+                      y="262"
+                      textAnchor="middle"
+                      fontWeight="900"
+                      fontSize="12"
+                      fontFamily="Arial, Helvetica, sans-serif"
+                      fill="#000000"
+                    >
+                      AREA-CPE-MTCE
+                    </text>
+                    <text
+                      x="165"
+                      y="280"
+                      textAnchor="middle"
+                      fontWeight="bold"
+                      fontSize="11"
+                      fontFamily="Arial, Helvetica, sans-serif"
+                      fill="#000000"
+                    >
+                      Work Group under BB
+                    </text>
+                    <text
+                      x="165"
+                      y="296"
+                      textAnchor="middle"
+                      fontWeight="bold"
+                      fontSize="11"
+                      fontFamily="Arial, Helvetica, sans-serif"
+                      fill="#000000"
+                    >
+                      Service
+                    </text>
+                  </g>
+
+                  {/* Sub-branch On from Node 1A -> Points Right into Check whether the Internet is working */}
+                  <path d="M 370 153 L 420 153 L 420 230" stroke="#ff0000" strokeWidth="2" markerEnd="url(#arrowWifiModal)" fill="none" />
+                  <text
+                    x="395"
+                    y="145"
+                    textAnchor="middle"
+                    fontWeight="bold"
+                    fontSize="11"
+                    fill="#ff0000"
+                    fontFamily="Arial, Helvetica, sans-serif"
+                  >
+                    On
+                  </text>
+
+                  {/* BRANCH 2: On (Right from Root Node) */}
+                  <path d="M 520 87 L 610 87 L 610 130" stroke="#ff0000" strokeWidth="2" markerEnd="url(#arrowWifiModal)" fill="none" />
+                  <text
+                    x="565"
+                    y="80"
+                    textAnchor="middle"
+                    fontWeight="bold"
+                    fontSize="11"
+                    fill="#ff0000"
+                    fontFamily="Arial, Helvetica, sans-serif"
+                  >
+                    On
+                  </text>
+
+                  {/* Node 1B: Check Wireless is on in customer's device (Eg: Laptop or Smart Phone) */}
+                  <g>
+                    <rect
+                      x="510"
+                      y="130"
+                      width="180"
+                      height="46"
+                      fill="#ffffb0"
+                      stroke="#000000"
+                      strokeWidth="1.8"
+                    />
+                    <text
+                      x="600"
+                      y="148"
+                      textAnchor="middle"
+                      fontWeight="bold"
+                      fontSize="9.5"
+                      fontFamily="Arial, Helvetica, sans-serif"
+                      fill="#000000"
+                    >
+                      Check Wireless is on in
+                    </text>
+                    <text
+                      x="600"
+                      y="160"
+                      textAnchor="middle"
+                      fontWeight="bold"
+                      fontSize="9.5"
+                      fontFamily="Arial, Helvetica, sans-serif"
+                      fill="#000000"
+                    >
+                      customer’s device
+                    </text>
+                    <text
+                      x="600"
+                      y="171"
+                      textAnchor="middle"
+                      fontWeight="bold"
+                      fontSize="8.5"
+                      fontFamily="Arial, Helvetica, sans-serif"
+                      fill="#000000"
+                    >
+                      (Eg: Laptop or Smart Phone)
+                    </text>
+                  </g>
+
+                  {/* Sub-branch No from Node 1B -> Right to Instruct customer... */}
+                  <path d="M 690 153 L 740 153" stroke="#ff0000" strokeWidth="2" markerEnd="url(#arrowWifiModal)" fill="none" />
+                  <text
+                    x="715"
+                    y="145"
+                    textAnchor="middle"
+                    fontWeight="bold"
+                    fontSize="11"
+                    fill="#ff0000"
+                    fontFamily="Arial, Helvetica, sans-serif"
+                  >
+                    No
+                  </text>
+
+                  {/* Node: Instruct customer to switch on Wi-Fi in the Device */}
+                  <g>
+                    <rect
+                      x="745"
+                      y="125"
+                      width="135"
+                      height="56"
+                      rx="28"
+                      ry="28"
+                      fill="#ffffb0"
+                      stroke="#000000"
+                      strokeWidth="1.8"
+                    />
+                    <text
+                      x="812"
+                      y="145"
+                      textAnchor="middle"
+                      fontWeight="bold"
+                      fontSize="9"
+                      fontFamily="Arial, Helvetica, sans-serif"
+                      fill="#000000"
+                    >
+                      Instruct customer
+                    </text>
+                    <text
+                      x="812"
+                      y="157"
+                      textAnchor="middle"
+                      fontWeight="bold"
+                      fontSize="9"
+                      fontFamily="Arial, Helvetica, sans-serif"
+                      fill="#000000"
+                    >
+                      to switch on Wi-Fi
+                    </text>
+                    <text
+                      x="812"
+                      y="169"
+                      textAnchor="middle"
+                      fontWeight="bold"
+                      fontSize="9"
+                      fontFamily="Arial, Helvetica, sans-serif"
+                      fill="#000000"
+                    >
+                      in the Device
+                    </text>
+                  </g>
+
+                  {/* Sub-branch Yes from Node 1B -> Down to Check Wi-Fi Configuration */}
+                  <path d="M 610 176 L 610 230" stroke="#ff0000" strokeWidth="2" markerEnd="url(#arrowWifiModal)" fill="none" />
+                  <text
+                    x="625"
+                    y="200"
+                    textAnchor="start"
+                    fontWeight="bold"
+                    fontSize="11"
+                    fill="#ff0000"
+                    fontFamily="Arial, Helvetica, sans-serif"
+                  >
+                    Yes
+                  </text>
+
+                  {/* MIDDLE NODE: Check whether the Internet is working */}
+                  <g>
+                    <rect
+                      x="380"
+                      y="230"
+                      width="145"
+                      height="46"
+                      fill="#ffffb0"
+                      stroke="#000000"
+                      strokeWidth="1.8"
+                    />
+                    <text
+                      x="452"
+                      y="249"
+                      textAnchor="middle"
+                      fontWeight="bold"
+                      fontSize="9.5"
+                      fontFamily="Arial, Helvetica, sans-serif"
+                      fill="#000000"
+                    >
+                      Check whether the
+                    </text>
+                    <text
+                      x="452"
+                      y="263"
+                      textAnchor="middle"
+                      fontWeight="bold"
+                      fontSize="9.5"
+                      fontFamily="Arial, Helvetica, sans-serif"
+                      fill="#000000"
+                    >
+                      Internet is working
+                    </text>
+                  </g>
+
+                  {/* From Internet working: Yes -> Down to End */}
+                  <path d="M 400 276 L 400 300 L 330 300 L 330 330" stroke="#ff0000" strokeWidth="2" markerEnd="url(#arrowWifiModal)" fill="none" />
+                  <text
+                    x="365"
+                    y="292"
+                    textAnchor="middle"
+                    fontWeight="bold"
+                    fontSize="11"
+                    fill="#ff0000"
+                    fontFamily="Arial, Helvetica, sans-serif"
+                  >
+                    Yes
+                  </text>
+
+                  {/* GREEN END NODE */}
+                  <g>
+                    <rect
+                      x="290"
+                      y="330"
+                      width="80"
+                      height="34"
+                      rx="17"
+                      ry="17"
+                      fill="#88c848"
+                      stroke="#000000"
+                      strokeWidth="1.8"
+                    />
+                    <text
+                      x="330"
+                      y="351"
+                      textAnchor="middle"
+                      fontWeight="bold"
+                      fontSize="12"
+                      fontFamily="Arial, Helvetica, sans-serif"
+                      fill="#000000"
+                    >
+                      End
+                    </text>
+                  </g>
+
+                  {/* From Internet working: Arrow Right into Check Wi-Fi Configuration */}
+                  <path d="M 525 253 L 555 253" stroke="#ff0000" strokeWidth="2" markerEnd="url(#arrowWifiModal)" fill="none" />
+
+                  {/* NODE: Check Wi-Fi Configuration */}
+                  <g>
+                    <rect
+                      x="555"
+                      y="230"
+                      width="120"
+                      height="46"
+                      fill="#ffffb0"
+                      stroke="#000000"
+                      strokeWidth="1.8"
+                    />
+                    <text
+                      x="615"
+                      y="250"
+                      textAnchor="middle"
+                      fontWeight="bold"
+                      fontSize="9.5"
+                      fontFamily="Arial, Helvetica, sans-serif"
+                      fill="#000000"
+                    >
+                      Check Wi-Fi
+                    </text>
+                    <text
+                      x="615"
+                      y="264"
+                      textAnchor="middle"
+                      fontWeight="bold"
+                      fontSize="9.5"
+                      fontFamily="Arial, Helvetica, sans-serif"
+                      fill="#000000"
+                    >
+                      Configuration
+                    </text>
+                  </g>
+
+                  {/* From Check Wi-Fi Config: Incorrect -> Right to Enter correct Wi-Fi settings */}
+                  <path d="M 675 253 L 735 253" stroke="#ff0000" strokeWidth="2" markerEnd="url(#arrowWifiModal)" fill="none" />
+                  <text
+                    x="705"
+                    y="245"
+                    textAnchor="middle"
+                    fontWeight="bold"
+                    fontSize="11"
+                    fill="#ff0000"
+                    fontFamily="Arial, Helvetica, sans-serif"
+                  >
+                    Incorrect
+                  </text>
+
+                  {/* Node: Enter correct Wi-Fi settings */}
+                  <g>
+                    <rect
+                      x="740"
+                      y="228"
+                      width="140"
+                      height="50"
+                      rx="25"
+                      ry="25"
+                      fill="#ffffb0"
+                      stroke="#000000"
+                      strokeWidth="1.8"
+                    />
+                    <text
+                      x="810"
+                      y="248"
+                      textAnchor="middle"
+                      fontWeight="bold"
+                      fontSize="9"
+                      fontFamily="Arial, Helvetica, sans-serif"
+                      fill="#000000"
+                    >
+                      Enter correct Wi-Fi
+                    </text>
+                    <text
+                      x="810"
+                      y="262"
+                      textAnchor="middle"
+                      fontWeight="bold"
+                      fontSize="9"
+                      fontFamily="Arial, Helvetica, sans-serif"
+                      fill="#000000"
+                    >
+                      settings
+                    </text>
+                  </g>
+
+                  {/* From Check Wi-Fi Config: Correct -> Down and Left to Create TT to CEN-CSC-TECH */}
+                  <path d="M 615 276 L 615 375 L 535 375" stroke="#ff0000" strokeWidth="2" markerEnd="url(#arrowWifiModal)" fill="none" />
+                  <text
+                    x="640"
+                    y="310"
+                    textAnchor="start"
+                    fontWeight="bold"
+                    fontSize="11"
+                    fill="#ff0000"
+                    fontFamily="Arial, Helvetica, sans-serif"
+                  >
+                    Correct
+                  </text>
+
+                  {/* GREEN NODE: Create a TT to CEN-CSC-TECH Work Group under BB Service */}
+                  <g>
+                    <rect
+                      x="370"
+                      y="330"
+                      width="165"
+                      height="90"
+                      rx="30"
+                      ry="30"
+                      fill="#88c848"
+                      stroke="#000000"
+                      strokeWidth="2"
+                    />
+                    <text
+                      x="452"
+                      y="355"
+                      textAnchor="middle"
+                      fontWeight="bold"
+                      fontSize="11"
+                      fontFamily="Arial, Helvetica, sans-serif"
+                      fill="#000000"
+                    >
+                      Create a TT to
+                    </text>
+                    <text
+                      x="452"
+                      y="372"
+                      textAnchor="middle"
+                      fontWeight="900"
+                      fontSize="12"
+                      fontFamily="Arial, Helvetica, sans-serif"
+                      fill="#000000"
+                    >
+                      CEN-CSC-TECH
+                    </text>
+                    <text
+                      x="452"
+                      y="390"
+                      textAnchor="middle"
+                      fontWeight="bold"
+                      fontSize="11"
+                      fontFamily="Arial, Helvetica, sans-serif"
+                      fill="#000000"
+                    >
+                      Work Group under BB
+                    </text>
+                    <text
+                      x="452"
+                      y="406"
+                      textAnchor="middle"
+                      fontWeight="bold"
+                      fontSize="11"
+                      fontFamily="Arial, Helvetica, sans-serif"
+                      fill="#000000"
+                    >
+                      Service
+                    </text>
+                  </g>
+
+                  {/* ======================================================== */}
+                  {/* BOTTOM PURPLE CALLOUT BOXES MATCHING EXACT SCREENSHOT    */}
+                  {/* ======================================================== */}
+                  
+                  {/* Left Callout Note: If Wi-Fi coverage is low */}
+                  <g>
+                    <path
+                      d="M 120 440 C 100 440, 100 580, 120 580 L 330 580 C 350 580, 320 510, 350 440 Z"
+                      fill="#f5e8ff"
+                      stroke="#800080"
+                      strokeWidth="2"
+                    />
+                    <text x="175" y="465" fontWeight="bold" fontSize="10" fill="#ff0000" fontFamily="Arial, Helvetica, sans-serif">
+                      Note:
+                    </text>
+                    <text x="175" y="478" fontWeight="bold" fontSize="9" fill="#ff0000" fontFamily="Arial, Helvetica, sans-serif">
+                      If Wi-Fi coverage is low,
+                    </text>
+                    <text x="190" y="495" fontWeight="bold" fontSize="9" fill="#000000" fontFamily="Arial, Helvetica, sans-serif">
+                      1. Ask the distance
+                    </text>
+                    <text x="205" y="508" fontWeight="normal" fontSize="8" fill="#000000" fontFamily="Arial, Helvetica, sans-serif">
+                      between the ONT and
+                    </text>
+                    <text x="205" y="520" fontWeight="normal" fontSize="8" fill="#000000" fontFamily="Arial, Helvetica, sans-serif">
+                      the device
+                    </text>
+                    <text x="190" y="535" fontWeight="bold" fontSize="8.5" fill="#000000" fontFamily="Arial, Helvetica, sans-serif">
+                      2. Add the distance in the
+                    </text>
+                    <text x="205" y="546" fontWeight="normal" fontSize="8" fill="#000000" fontFamily="Arial, Helvetica, sans-serif">
+                      description of the TT
+                    </text>
+                    <text x="190" y="560" fontWeight="bold" fontSize="8.5" fill="#000000" fontFamily="Arial, Helvetica, sans-serif">
+                      3. Forward such issues to
+                    </text>
+                    <text x="205" y="571" fontWeight="bold" fontSize="8.5" fill="#000000" fontFamily="Arial, Helvetica, sans-serif">
+                      AREA- CPE- MTCE
+                    </text>
+                  </g>
+
+                  {/* Right Callout Note: Refer Wi-Fi Configuration guides for ONTs */}
+                  <g>
+                    <path
+                      d="M 680 430 C 650 430, 680 500, 650 570 L 860 570 C 880 570, 880 430, 860 430 Z"
+                      fill="#f5e8ff"
+                      stroke="#800080"
+                      strokeWidth="2"
+                    />
+                    <text x="705" y="455" fontWeight="bold" fontSize="10" fill="#000000" fontFamily="Arial, Helvetica, sans-serif">
+                      <tspan fill="#ff0000">Note: </tspan>Refer Wi-Fi
+                    </text>
+                    <text x="705" y="470" fontWeight="bold" fontSize="9" fill="#000000" fontFamily="Arial, Helvetica, sans-serif">
+                      Configuration guides for
+                    </text>
+                    <text x="705" y="485" fontWeight="bold" fontSize="9" fill="#000000" fontFamily="Arial, Helvetica, sans-serif">
+                      ONTs and check SSID,
+                    </text>
+                    <text x="705" y="500" fontWeight="bold" fontSize="9" fill="#000000" fontFamily="Arial, Helvetica, sans-serif">
+                      Enable SSID,
+                    </text>
+                    <text x="705" y="515" fontWeight="bold" fontSize="9" fill="#000000" fontFamily="Arial, Helvetica, sans-serif">
+                      Encryption,
+                    </text>
+                    <text x="705" y="530" fontWeight="bold" fontSize="9" fill="#000000" fontFamily="Arial, Helvetica, sans-serif">
+                      Wireless p/w
+                    </text>
+                    <text x="705" y="546" fontWeight="bold" fontSize="9" fill="#000000" textDecoration="underline" fontFamily="Arial, Helvetica, sans-serif">
+                      Through Detail
+                    </text>
+                    <text x="705" y="559" fontWeight="bold" fontSize="8.5" fill="#000000" textDecoration="underline" fontFamily="Arial, Helvetica, sans-serif">
+                      Setup/Advance Setup or
+                    </text>
+                    <text x="705" y="571" fontWeight="bold" fontSize="8.5" fill="#000000" textDecoration="underline" fontFamily="Arial, Helvetica, sans-serif">
+                      Network
                     </text>
                   </g>
 

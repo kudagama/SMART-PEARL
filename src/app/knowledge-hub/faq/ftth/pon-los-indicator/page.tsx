@@ -1236,13 +1236,22 @@ Action Required: Technician dispatch for ONT routing table clearance, CPE hardwa
               <span>Back to FAQs - FTTH</span>
             </Link>
 
-            <Link
-              href="/knowledge-hub/faq/ftth/ont-not-working"
-              className="px-4 py-2 rounded-lg bg-[#005696] hover:bg-[#00477d] text-white font-bold text-xs flex items-center gap-2 transition-all shadow-xs"
-            >
-              <span>ONT Not Working SOP</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </Link>
+            <div className="flex items-center gap-2">
+              <Link
+                href="/knowledge-hub/faq/ftth/ont-not-working"
+                className="px-3 py-2 rounded-lg border border-slate-300 hover:bg-slate-50 text-slate-700 font-bold text-xs flex items-center gap-1.5 transition-all shadow-2xs"
+              >
+                <span>ONT Power/Working</span>
+              </Link>
+
+              <Link
+                href="/knowledge-hub/faq/ftth/wifi-not-working"
+                className="px-4 py-2 rounded-lg bg-[#005696] hover:bg-[#00477d] text-white font-bold text-xs flex items-center gap-2 transition-all shadow-xs"
+              >
+                <span>Next: Wi-Fi Not Working SOP</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
           </div>
 
         </div>

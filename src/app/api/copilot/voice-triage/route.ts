@@ -176,16 +176,21 @@ function extractFaultRulesFallback(text: string) {
 
   // 2. PON / LOS Indicator Decision Flowchart (RED / OFF / BLINKING vs STEADY)
   const isPonIndicatorIssue =
-    lower.includes('pon indicator') ||
-    lower.includes('pon red') ||
-    lower.includes('pon blinking') ||
-    lower.includes('pon steady') ||
-    lower.includes('pon off') ||
-    lower.includes('private proxy') ||
-    lower.includes('proxy switched off') ||
-    lower.includes('proxy on') ||
-    lower.includes('switch off proxy') ||
-    (lower.includes('pon') && (lower.includes('light') || lower.includes('indicator') || lower.includes('led')));
+    !lower.includes('wifi') &&
+    !lower.includes('wi-fi') &&
+    !lower.includes('wlan') &&
+    (
+      lower.includes('pon indicator') ||
+      lower.includes('pon red') ||
+      lower.includes('pon blinking') ||
+      lower.includes('pon steady') ||
+      lower.includes('pon off') ||
+      lower.includes('private proxy') ||
+      lower.includes('proxy switched off') ||
+      lower.includes('proxy on') ||
+      lower.includes('switch off proxy') ||
+      (lower.includes('pon') && (lower.includes('light') || lower.includes('indicator') || lower.includes('led')))
+    );
 
   if (isPonIndicatorIssue) {
     const isSteady = lower.includes('steady') || lower.includes('solid') || lower.includes('proxy');
@@ -225,7 +230,70 @@ function extractFaultRulesFallback(text: string) {
     };
   }
 
-  // 3. LOS red light
+  // 3. Wi-Fi Not Working (PON Steady) SOP #04
+  const isWifiFault =
+    lower.includes('wifi not working') ||
+    lower.includes('wi-fi not working') ||
+    lower.includes('wifi wada na') ||
+    lower.includes('wlan light') ||
+    lower.includes('wlan indicator') ||
+    lower.includes('wlan off') ||
+    lower.includes('wifi button') ||
+    lower.includes('wifi connect wenne na') ||
+    lower.includes('wifi coverage low') ||
+    lower.includes('wifi signal madi') ||
+    lower.includes('low wifi') ||
+    lower.includes('wifi range') ||
+    lower.includes('wlan') ||
+    (lower.includes('wifi') && (lower.includes('dead') || lower.includes('drop') || lower.includes('slow') || lower.includes('disconnect') || lower.includes('na')));
+
+  if (isWifiFault) {
+    const isWlanOff = lower.includes('wlan off') || lower.includes('light off') || lower.includes('wlan light na');
+    const isCoverageLow = lower.includes('coverage low') || lower.includes('signal madi') || lower.includes('range') || lower.includes('distance');
+
+    const targetGroup = (isWlanOff || isCoverageLow) ? 'AREA-CPE-MTCE' : 'CEN-CSC-TECH';
+
+    return {
+      transcription: text,
+      detected_language: lower.includes('eka') || lower.includes('wada') ? 'Singlish' : 'English',
+      customer_intent: 'FAULT_REPORTING',
+      asset_type: ASSET_TYPES.DATA,
+      symptom: isCoverageLow
+        ? 'Low Wi-Fi Coverage / Signal Attenuation'
+        : isWlanOff
+        ? 'WLAN Indicator is OFF (Radio Module Dead)'
+        : 'Wi-Fi Not Working (PON Steady / WAN Unreachable)',
+      technical_context: {
+        pon_status: PON_STATUS.ON,
+        measured_speed_mbps: null,
+        game_name: null,
+        ping_delay_ms: null,
+        addon_name: null,
+        error_message: null,
+        device_age_months: null,
+      },
+      billing_context: { channel_type: null, amount: null, transaction_date: null },
+      pre_check_flags: { ldap_checked: true, gb_portal_checked: true, peotv_admin_checked: false, low_pay_bill_verified: false },
+      suggested_rule_code: 'RULE_STB_ONT_ROUTER_FAULTY',
+      target_workgroup: targetGroup,
+      action_type: ACTION_TYPES.DIRECT_TT,
+      operational_advice: isWlanOff
+        ? 'Instruct customer to press Wi-Fi button on ONT (hold 3-5s). If still OFF -> Create TT to AREA-CPE-MTCE under BB Service.'
+        : isCoverageLow
+        ? 'Ask distance between ONT and device. Add distance in description of TT. Forward to AREA-CPE-MTCE under BB Service.'
+        : 'Verify client device Wi-Fi ON and router config (SSID/WPA2). If config correct but internet dead -> Create TT to CEN-CSC-TECH under BB Service.',
+      routing_reason: `Wi-Fi Not Working (PON Steady) SOP: ${isWlanOff ? 'WLAN LED Dead -> AREA-CPE-MTCE' : isCoverageLow ? 'Low coverage -> AREA-CPE-MTCE' : 'Config verified OK -> CEN-CSC-TECH'}.`,
+      knowledge_article: {
+        title: 'Wi-Fi Not Working (PON Steady) - Official Decision Flowchart',
+        url: '/knowledge-hub/faq/ftth/wifi-not-working',
+        summary: 'WLAN LED OFF: Press Wi-Fi button in ONT. Unresolved -> TT to AREA-CPE-MTCE. WLAN LED ON: Verify client device & router config. Config correct -> TT to CEN-CSC-TECH. Low coverage -> Record distance & dispatch AREA-CPE-MTCE.',
+        target_group: targetGroup,
+        badge: 'Interactive SOP'
+      }
+    };
+  }
+
+  // 4. LOS red light
   if (lower.includes('los red') || lower.includes('red light') || lower.includes('los light') || lower.includes('los blink') || lower.includes('optical loss') || lower.includes('fiber cut') || lower.includes('rathu paatai')) {
     return {
       transcription: text,
@@ -524,9 +592,9 @@ function extractFaultRulesFallback(text: string) {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { audio, audioMimeType = 'audio/webm', transcript, customerPhone = '0112445566' } = body;
+    const { audio, audioMimeType = 'audio/webm', transcript, text, query, customerPhone = '0112445566' } = body;
 
-    let recognizedText = transcript || '';
+    let recognizedText = transcript || text || query || '';
     let triageResult: any = null;
 
     const apiKey = process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY;
@@ -621,7 +689,15 @@ export async function POST(request: Request) {
       },
       knowledge_article:
         triageResult.knowledge_article ||
-        (triageResult.suggested_rule_code === 'RULE_STB_ONT_ROUTER_FAULTY'
+        (recognizedText.toLowerCase().includes('wifi') || recognizedText.toLowerCase().includes('wi-fi') || recognizedText.toLowerCase().includes('wlan')
+          ? {
+              title: 'Wi-Fi Not Working (PON Steady) - Official Decision Flowchart',
+              url: '/knowledge-hub/faq/ftth/wifi-not-working',
+              summary: 'WLAN LED OFF: Press Wi-Fi button in ONT. Unresolved -> TT to AREA-CPE-MTCE. WLAN LED ON: Verify client device & router config. Config correct -> TT to CEN-CSC-TECH. Low coverage -> Record distance & dispatch AREA-CPE-MTCE.',
+              target_group: 'AREA-CPE-MTCE',
+              badge: 'Interactive SOP'
+            }
+          : triageResult.suggested_rule_code === 'RULE_STB_ONT_ROUTER_FAULTY'
           ? {
               title: 'ONT Not Working - Interactive Diagnostic Decision Guide',
               url: '/knowledge-hub/faq/ftth/ont-not-working',
