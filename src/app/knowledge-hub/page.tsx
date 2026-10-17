@@ -1,1171 +1,565 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Database,
-  Server,
-  Layers,
   Search,
-  Filter,
-  RefreshCw,
-  CheckCircle2,
-  AlertCircle,
   ExternalLink,
+  ChevronDown,
+  ChevronRight,
+  Database,
+  Layers,
+  FileText,
+  Building,
+  Cpu,
+  X,
   Copy,
   Check,
-  Eye,
-  Sliders,
-  Sparkles,
-  Cpu,
-  ShieldCheck,
-  FileText,
-  Terminal,
-  ArrowRight,
-  ChevronRight,
-  X,
+  CheckCircle2,
+  AlertCircle,
+  HelpCircle,
+  Globe,
   Phone,
   Wifi,
-  Activity,
-  CreditCard,
-  Zap,
-  Info,
-  Clock,
-  Radio,
-  Share2,
-  Table,
-  LayoutGrid,
-  CheckSquare,
-  Wrench,
-  Building,
-  MapPin,
-  ChevronDown
+  Sparkles,
+  Server,
+  ArrowRight,
+  ShieldCheck,
+  Award,
+  Users,
+  Link as LinkIcon,
+  BookOpen,
+  Calendar,
+  Grid,
+  Maximize2
 } from 'lucide-react';
 
-type TelemetryData = {
-  databaseName: string;
-  cluster: string;
-  status: string;
-  statusLabel: string;
-  isConnectedLive: boolean;
-  connectionMessage: string;
-  responseTimeMs: number;
-  mongooseVersion: string;
-  nodeEnv: string;
-  timestamp: string;
+// Sidebar Menu Links
+const SIDEBAR_ITEMS = [
+  { id: 'home', label: 'Home', active: true },
+  { id: 'wfm', label: 'wfm - Duty Schedules' },
+  { id: 'roster', label: 'Roster - Part Time Emp...' },
+  { id: 'cca', label: 'CCA - Contract Basis' },
+  { id: 'qms', label: 'ISO 9001:2015 QMS' },
+  { id: 'tsu', label: 'CCD - TSU' },
+  { id: 'qi', label: 'Qi Related Info' },
+  { id: 'ecom', label: 'e-Communications' },
+  { id: 'bbpkg', label: 'Broadband Package Ca...' },
+  { id: 'conv', label: 'Conversations' },
+  { id: 'docs', label: 'Documents' },
+];
+
+// 19 Main Category Tiles with gradients matching SLT Portal
+const CATEGORY_TILES = [
+  { id: 'megaline', title: 'Megaline', bg: 'from-[#006e52] to-[#004f44]', desc: 'PSTN Copper Voice, Fixed Line, Fault Reporting, Line tests, Dial tone restoration', asset: 'VOICE', ruleCode: 'RULE_FIBER_VOICE_LINE_FAULT' },
+  { id: 'broadband', title: 'Broadband', bg: 'from-[#006e52] to-[#004f44]', desc: 'ADSL & FTTH Broadband Packages, Unlimited FUP, Speed issues, Thresholds', asset: 'DATA', ruleCode: 'RULE_UNLIMITED_SLOWNESS' },
+  { id: 'bill_info', title: 'Bill Info', bg: 'from-[#006175] to-[#004359]', desc: 'Tariffs, e-Bill, Bill-Com, Dispute Handling, Disconnection Policies', asset: 'BILLING', ruleCode: 'RULE_4G_RELOAD_THIRD_PARTY_CHANNELS' },
+  { id: 'faq', title: 'FAQ', bg: 'from-[#005e54] to-[#00383b]', desc: 'Customer Service Standard FAQs, Escalation Protocols, Contact Center Guide', asset: 'GENERAL', ruleCode: null },
+  { id: 'slt_fibre', title: 'SLT Fibre', bg: 'from-[#007f5f] to-[#005f52]', desc: 'Fibre To The Home (FTTH), LOS Red Indicator, ONT Router, Optical Cable Cut', asset: 'DATA', ruleCode: 'RULE_LOS_RED' },
+  { id: 'peo_tv', title: 'PEO TV', bg: 'from-[#006b7a] to-[#004c5c]', desc: 'Set-Top Box (STB), Remote Controller Warranty, Channel Packages, Video On Demand', asset: 'PEOTV', ruleCode: 'RULE_STB_ONT_ROUTER_FAULTY' },
+  { id: 'slt_apps', title: 'SLT Apps', bg: 'from-[#007f5f] to-[#005f52]', desc: 'MySLT Self-care app, mCash integration, PEO Mobile, Bill payments', asset: 'VAS', ruleCode: 'RULE_CQMS_VAS_AND_PROMOS' },
+  { id: 'qed', title: 'QED & Other Support', bg: 'from-[#005c6e] to-[#003a4d]', desc: 'Quality Enhancement Division, Customer Complaints, Escalations to Supervisor', asset: 'GENERAL', ruleCode: 'RULE_CQMS_VAS_AND_PROMOS' },
+  { id: '4g_lte', title: '4G LTE', bg: 'from-[#007f5f] to-[#005f52]', desc: 'Fixed Wireless Broadband, 4G Prepaid & Postpaid Reloads, Dealer & Bank Payments', asset: 'BILLING', ruleCode: 'RULE_4G_RELOAD_DIRECT_CHANNELS' },
+  { id: 'vas', title: 'Value Added Services', bg: 'from-[#006b7a] to-[#004c5c]', desc: 'Data Addons, Caller Ring Tunes, Voice Mail, Data Consumption Deductions', asset: 'VAS', ruleCode: 'RULE_ADDON_PROVISIONING_ERROR' },
+  { id: 'self_services', title: 'SLT Self Services', bg: 'from-[#007f5f] to-[#005f52]', desc: 'USSD codes, Web Self-Care, Auto Password Reset, SMS balance inquiry', asset: 'VAS', ruleCode: 'RULE_CQMS_VAS_AND_PROMOS' },
+  { id: 'enterprise', title: 'Enterprise Sales', bg: 'from-[#005c6e] to-[#003a4d]', desc: 'Corporate Leased Lines, MPLS, Cloud Hosting, SIP Trunking, SLA contracts', asset: 'GENERAL', ruleCode: null },
+  { id: 'promotions', title: 'Promotions', bg: 'from-[#007f5f] to-[#005f52]', desc: 'Seasonal Promotions, Free Router Upgrades, Timely Pay Discounts, Double Data', asset: 'VAS', ruleCode: 'RULE_CQMS_VAS_AND_PROMOS' },
+  { id: 'slt_mail', title: 'SLT Mail', bg: 'from-[#006b7a] to-[#004c5c]', desc: 'Customer email (mail.slt.lk), Webmail configuration, SMTP / POP3 settings', asset: 'DATA', ruleCode: null },
+  { id: 'equipment', title: 'Equipment Sales', bg: 'from-[#007f5f] to-[#005f52]', desc: 'Mesh Wi-Fi extenders, Dual-band routers, Replacement power adapters, Teleshop pricing', asset: 'ROUTER', ruleCode: 'RULE_ADSL_ROUTER_FAULTY' },
+  { id: 'staff_packages', title: 'Staff Packages', bg: 'from-[#005c6e] to-[#003a4d]', desc: 'Employee broadband concessions, staff voice quotas, HR provisioning guides', asset: 'INTERNAL', ruleCode: null },
+  { id: 'cc_systems', title: 'CC Systems', bg: 'from-[#007f5f] to-[#005f52]', desc: 'Contact Center Telephony, MINT CRM, Clarity C12, Cisco Finesse, Avaya guides', asset: 'INTERNAL', ruleCode: null },
+  { id: 'rebuilding', title: 'Rebuilding Sri Lanka', bg: 'from-[#006b7a] to-[#004c5c]', desc: 'National Digitization, e-Government initiatives, Rural connectivity, CSR Projects', asset: 'GENERAL', ruleCode: null },
+  { id: 'latest_updates', title: 'LATEST UPDATES', bg: 'from-[#008f58] to-[#006346]', desc: 'Urgent Operational Circulars, System maintenance schedules, New Triage guidelines', asset: 'CIRCULARS', ruleCode: null },
+];
+
+// COMMON LINKS Matrix organized into official SLT Portal columns
+const COMMON_LINKS = {
+  operational: {
+    title: 'Operational',
+    headerBg: 'bg-[#d8f3dc] text-[#1b4332] border-[#b7e4c7]',
+    items: [
+      { code: '(01)', name: 'MINT CRM', desc: 'Customer Relationship Management Portal for subscriber profiles, contact history, and service orders.', url: 'https://mintcrm.slt.lk' },
+      { code: '(02)', name: 'C-Log', desc: 'Customer Complaint Logging Engine for Trouble Ticket dispatching.', url: '#' },
+      { code: '(03)', name: 'C-Log Viewer', desc: 'Read-only inquiry for historical complaints and field officer visit updates.', url: '#' },
+      { code: '(04)', name: 'CQMS', desc: 'Customer Quality Management System for commercial queries and promotional escalations.', url: '#' },
+      { code: '(05)', name: 'sDesk', desc: 'Internal Service Desk for technical escalations and IT support tickets.', url: '#' },
+      { code: '(06)', name: 'Clarity C12', desc: 'Telecommunications OSS/BSS Service Provisioning & Inventory Management System.', url: '#' },
+      { code: '(07)', name: 'Railway VAS Portal', desc: 'Specialized enterprise portal for Railway communication lines and signaling circuits.', url: '#' },
+      { code: '(08)', name: 'VAS Service portal', desc: 'Management console for activating and troubleshooting Value Added Services.', url: '#' },
+      { code: '(09)', name: 'DBYD', desc: 'Dial Before You Dig - Outdoor excavation safety and underground fiber cable maps.', url: '#' },
+    ]
+  },
+  broadbandEmail1: {
+    title: 'Broadband/Email',
+    headerBg: 'bg-[#e0f2fe] text-[#0369a1] border-[#bae6fd]',
+    items: [
+      { code: '(11)', name: 'LDAP (Old)', desc: 'Directory Access Protocol verification for subscriber broadband authentication credentials.', url: '#' },
+      { code: '(12)', name: 'PW Reset', desc: 'Customer Broadband and Wi-Fi password reset utility.', url: '#' },
+      { code: '(13)', name: 'PW Reset (back-up)', desc: 'Secondary failover server for customer password resets.', url: '#' },
+      { code: '(14)', name: 'Top up (Old)', desc: 'Legacy extra data volume top-up tool for limited packages.', url: '#' },
+      { code: '(15)', name: 'Top up New', desc: 'New High-Speed extra data booster allocation portal.', url: '#' },
+      { code: '(16)', name: 'PCRF', desc: 'Policy and Charging Rules Function - Fair Usage Policy and bandwidth throttling management.', url: '#' },
+      { code: '(17)', name: 'ADSL Usage (BB VAS)', desc: 'Detailed data session logs, IP address assignments, and traffic graphs.', url: '#' },
+      { code: '(18)', name: 'ACS', desc: 'Auto Configuration Server (TR-069) for remote ONT router diagnosis and firmware updates.', url: '#' },
+      { code: '(19)', name: 'Loyalty', desc: 'SLT Mobitel customer loyalty points and tier rewards dashboard.', url: '#' },
+    ]
+  },
+  broadbandEmail2: {
+    title: 'Broadband/Email',
+    headerBg: 'bg-[#e0f2fe] text-[#0369a1] border-[#bae6fd]',
+    items: [
+      { code: '(21)', name: 'Email (slt.lk)', desc: 'Webmail login and customer email quota administration.', url: 'https://mail.slt.lk' },
+      { code: '(22)', name: 'Coverage', desc: 'National Fibre (FTTH), 4G LTE, and Copper network coverage map.', url: '#' },
+      { code: '(22)', name: 'BB Package Change-Admin', desc: 'Administrative interface for processing package upgrades and downgrades.', url: '#' },
+      { code: '(23)', name: 'BB Package Change-Customer', desc: 'Self-care flow for customer initiated package changes.', url: '#' },
+    ]
+  },
+  billing: {
+    title: 'Billing',
+    headerBg: 'bg-[#fce7f3] text-[#9d174d] border-[#fbcfe8]',
+    items: [
+      { code: '(31)', name: 'IBSIB', desc: 'Integrated Broadband & Subscriber Information Billing engine.', url: '#' },
+      { code: '(32)', name: 'I-Hub', desc: 'Integration Hub connecting bank transactions and merchant payments.', url: '#' },
+      { code: '(33)', name: 'CMS', desc: 'Credit Management System for tracking overdue invoices and credit limits.', url: '#' },
+      { code: '(34)', name: 'CMSB', desc: 'Credit Management System Billing subsidiary module.', url: '#' },
+      { code: '(35)', name: 'Bill View', desc: 'Real-time itemized bill viewer with PDF statement generator.', url: '#' },
+      { code: '(36)', name: 'Online Payments', desc: 'Direct Visa / Mastercard / LankaQR online payment settlement console.', url: '#' },
+      { code: '(37)', name: 'e-Bill Portal', desc: 'Electronic bill paperless email / SMS registration portal.', url: '#' },
+      { code: '(38)', name: 'Bill-Com', desc: 'Billing Complaints and ledger reconciliation module.', url: '#' },
+      { code: '(39)', name: 'SRS-T/L login', desc: 'Service Request System Team Leader supervisory approval login.', url: '#' },
+    ]
+  },
+  other: {
+    title: 'Other',
+    headerBg: 'bg-[#f1f5f9] text-[#334155] border-[#cbd5e1]',
+    items: [
+      { code: '(41)', name: 'Insura', desc: 'Subscriber equipment and life insurance partner policy check.', url: '#' },
+      { code: '(42)', name: 'Telehealth', desc: 'eChannelling and healthcare telemedicine directory integration.', url: '#' },
+      { code: '(43)', name: 'Ananthaya', desc: 'Corporate intranet portal for SLT Mobitel internal news.', url: '#' },
+      { code: '(44)', name: 'Railway Time schedule', desc: 'Official Sri Lanka Railways timetable reference for contact center directory queries.', url: '#' },
+      { code: '(45)', name: 'Self Service Extra GB', desc: 'Emergency extra gigabyte provisioning module.', url: '#' },
+      { code: '(46)', name: 'SLT Filmhall', desc: 'PEO TV Film Hall movie ordering and pay-per-view schedule.', url: '#' },
+      { code: '(47)', name: 'R-WFM', desc: 'Regional Workforce Management for field technician dispatch tracking.', url: '#' },
+      { code: '(48)', name: 'SISU Connect', desc: 'Student education package (Sisu Diriya) administration.', url: '#' },
+      { code: '(49)', name: 'SRM', desc: 'Supplier & Regional Maintenance escalation route.', url: '#' },
+    ]
+  },
+  internal: {
+    title: 'Internal',
+    headerBg: 'bg-[#f3e8ff] text-[#6b21a8] border-[#e9d5ff]',
+    items: [
+      { code: '(51)', name: 'AMS', desc: 'Asset Management System for equipment barcodes and serial tracking.', url: '#' },
+      { code: '(52)', name: 'e-Teacher', desc: 'Staff e-learning and contact center agent training portal.', url: '#' },
+      { code: '(53)', name: 'WFM', desc: 'Workforce Management agent shift scheduling and attendance.', url: '#' },
+      { code: '(54)', name: 'ESAT', desc: 'Employee Satisfaction & Internal Staff Survey module.', url: '#' },
+      { code: '(55)', name: 'Qi Notice board', desc: 'Quality Improvement Notice Board with real-time operational bulletins.', url: '#' },
+      { code: '(56)', name: 'MINT Dashboard', desc: 'Executive Contact Center live call volume and queue monitor.', url: '#' },
+      { code: '(57)', name: 'Meeting Manager', desc: 'Room reservation and inter-departmental meeting scheduler.', url: '#' },
+      { code: '(58)', name: 'ESS', desc: 'Employee Self Service - Leave requests, pay slips, and HR records.', url: '#' },
+      { code: '(59)', name: 'Contact Center KPI Meter', desc: 'Real-time Average Handling Time (AHT) and First Call Resolution (FCR) stats.', url: '#' },
+    ]
+  },
+  documents: {
+    title: 'Documents/Reports',
+    headerBg: 'bg-[#fef9c3] text-[#854d0e] border-[#fde047]',
+    items: [
+      { code: '(61)', name: 'SLT Quality policy', desc: 'Official ISO 9001:2015 Quality Policy and Customer Charter guidelines.', url: '#' },
+      { code: '(62)', name: 'LEA Codes/RTOMs', desc: 'Local Exchange Area (LEA) mapping and Regional Telecom Office (RTOM) zoning boundaries.', url: '#' },
+    ]
+  }
 };
 
-type MetricsData = {
-  totalRules: number;
-  activeRules: number;
-  totalReports: number;
-  totalContacts: number;
-  supportGroupDistribution: Record<string, number>;
-  assetTypeDistribution: Record<string, number>;
-  actionTypeDistribution: Record<string, number>;
-};
+// "Our Team" Contact Center Leadership & Management
+const TEAM_MEMBERS = [
+  { name: 'Sonali Dalupotha', title: 'Deputy General Manager - Contact Center', role: 'Executive Leadership', initials: 'SD', color: 'bg-emerald-600' },
+  { name: 'Nilanthi Amarasena', title: 'Manager - Contact Center Operations', role: 'Operations', initials: 'NA', color: 'bg-blue-600' },
+  { name: 'Dilhani', title: 'Manager - Contact Centre Quality', role: 'Quality & Compliance', initials: 'DL', color: 'bg-indigo-600' },
+  { name: 'Shiromi Wimalaratne', title: 'Senior Executive Assistant Manager', role: 'Executive Management', initials: 'SW', color: 'bg-purple-600' },
+  { name: 'Chathurani Rathnayake', title: 'Senior Assistant Manager (Contact Center)', role: 'Shift Operations', initials: 'CR', color: 'bg-rose-600' },
+  { name: 'Prasadi Fernando', title: 'Senior Assistant Manager (Contact Center)', role: 'Customer Experience', initials: 'PF', color: 'bg-amber-600' },
+  { name: 'Mushi', title: 'Senior Assistant Manager (Contact Center)', role: 'Technical Escalations', initials: 'MU', color: 'bg-cyan-600' },
+  { name: 'Mohamed Riyas', title: 'Contact Centre Associate - A15', role: 'Frontline Associate', initials: 'MR', color: 'bg-teal-600' },
+];
 
 export default function KnowledgeHubPage() {
-  const [loading, setLoading] = useState(true);
-  const [telemetry, setTelemetry] = useState<TelemetryData | null>(null);
-  const [metrics, setMetrics] = useState<MetricsData | null>(null);
-  const [rules, setRules] = useState<any[]>([]);
-  const [reports, setReports] = useState<any[]>([]);
-  const [contacts, setContacts] = useState<any[]>([]);
-  const [schemas, setSchemas] = useState<any[]>([]);
-
-  // Navigation & Filtering
-  const [activeTab, setActiveTab] = useState<'rules' | 'reports' | 'directory' | 'schema'>('rules');
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedAsset, setSelectedAsset] = useState<string>('ALL');
-  const [selectedGroup, setSelectedGroup] = useState<string>('ALL');
-  const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');
-  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [selectedItem, setSelectedItem] = useState<any | null>(null);
+  const [copiedLink, setCopiedLink] = useState<string | null>(null);
 
-  // Inspector Drawer & Modal
-  const [inspectItem, setInspectItem] = useState<{ data: any; type: 'rule' | 'report' | 'contact' | 'schema' } | null>(null);
-  const [drawerTab, setDrawerTab] = useState<'visual' | 'json'>('visual');
-  const [copiedId, setCopiedId] = useState<string | null>(null);
-  const [showDiagModal, setShowDiagModal] = useState(false);
-
-  // Fetch Live Knowledge Hub Data
-  const fetchData = async () => {
-    setIsRefreshing(true);
-    try {
-      const res = await fetch('/api/knowledge-hub');
-      const data = await res.json();
-      if (data.success) {
-        setTelemetry(data.telemetry);
-        setMetrics(data.metrics);
-        setRules(data.collections.rules || []);
-        setReports(data.collections.reports || []);
-        setContacts(data.collections.contacts || []);
-        setSchemas(data.collections.schemas || []);
-      }
-    } catch (err) {
-      console.error('Failed to load Knowledge Hub data:', err);
-    } finally {
-      setLoading(false);
-      setIsRefreshing(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchData();
-  }, []);
+  // Filter Categories by search
+  const filteredCategories = CATEGORY_TILES.filter(c => 
+    c.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    c.desc.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   const copyToClipboard = (text: string, id: string) => {
     navigator.clipboard.writeText(text);
-    setCopiedId(id);
-    setTimeout(() => setCopiedId(null), 2000);
+    setCopiedLink(id);
+    setTimeout(() => setCopiedLink(null), 2000);
   };
-
-  // Group styles helper
-  const getGroupBadgeStyle = (group: string) => {
-    switch (group) {
-      case 'AREA-MTCE':
-        return 'bg-amber-100 text-amber-900 border-amber-300 ring-amber-400/30';
-      case 'MDF':
-        return 'bg-cyan-100 text-cyan-900 border-cyan-300 ring-cyan-400/30';
-      case 'CEN-CSC-TECH':
-        return 'bg-purple-100 text-purple-900 border-purple-300 ring-purple-400/30';
-      case 'INT-NW-SYS-ADMIN':
-        return 'bg-indigo-100 text-indigo-900 border-indigo-300 ring-indigo-400/30';
-      case 'BSS-OPR-OCR':
-        return 'bg-emerald-100 text-emerald-900 border-emerald-300 ring-emerald-400/30';
-      case 'CEN-CSC-UI':
-        return 'bg-rose-100 text-rose-900 border-rose-300 ring-rose-400/30';
-      default:
-        return 'bg-slate-100 text-slate-800 border-slate-300 ring-slate-400/30';
-    }
-  };
-
-  // Action badge style
-  const getActionBadgeStyle = (action: string) => {
-    switch (action) {
-      case 'DIRECT_TT':
-        return 'bg-red-50 text-red-700 border-red-200';
-      case 'DONT_REPORT_TT':
-        return 'bg-zinc-100 text-zinc-700 border-zinc-300';
-      case 'BILL_SR_ONLY':
-        return 'bg-amber-50 text-amber-700 border-amber-200';
-      case 'CQMS_COMPLAINT':
-        return 'bg-blue-50 text-blue-700 border-blue-200';
-      default:
-        return 'bg-slate-50 text-slate-700 border-slate-200';
-    }
-  };
-
-  // Filter Rules
-  const filteredRules = rules.filter(r => {
-    const matchesSearch = 
-      r.rule_code.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      r.rule_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      r.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      r.target_group?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      r.symptom_patterns?.some((p: string) => p.toLowerCase().includes(searchQuery.toLowerCase()));
-    
-    const matchesAsset = selectedAsset === 'ALL' || r.asset_type === selectedAsset;
-    const matchesGroup = selectedGroup === 'ALL' || r.target_group === selectedGroup;
-
-    return matchesSearch && matchesAsset && matchesGroup;
-  });
-
-  // Filter Reports
-  const filteredReports = reports.filter(rep => {
-    const q = searchQuery.toLowerCase();
-    return (
-      rep.report_id?.toLowerCase().includes(q) ||
-      rep.customer_context?.slt_number?.includes(q) ||
-      rep.customer_context?.caller_phone?.includes(q) ||
-      rep.symptom_description?.toLowerCase().includes(q) ||
-      rep.matched_rule?.rule_name?.toLowerCase().includes(q) ||
-      rep.triage_result?.target_workgroup?.toLowerCase().includes(q)
-    );
-  });
-
-  // Filter Contacts
-  const filteredContacts = contacts.filter(c => {
-    const q = searchQuery.toLowerCase();
-    return (
-      c.name?.toLowerCase().includes(q) ||
-      c.nameSinhala?.toLowerCase().includes(q) ||
-      c.department?.toLowerCase().includes(q) ||
-      c.location?.toLowerCase().includes(q) ||
-      c.hotline?.includes(q)
-    );
-  });
 
   return (
-    <div className="flex-1 flex flex-col h-full bg-slate-50 overflow-y-auto">
+    <div className="flex-1 flex flex-col h-full bg-[#f4f7f9] overflow-hidden select-none">
       
-      {/* Top Hero Banner */}
-      <div className="relative bg-gradient-to-r from-slate-900 via-[#003865] to-[#005696] text-white px-6 py-6 border-b border-indigo-900/50 shadow-md overflow-hidden shrink-0">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,119,198,0.25),rgba(255,255,255,0))] pointer-events-none"></div>
-        <div className="absolute right-0 bottom-0 translate-x-12 translate-y-12 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none"></div>
-
-        <div className="max-w-7xl mx-auto relative z-10 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
-          <div className="space-y-1.5">
-            <div className="flex items-center gap-2.5">
-              <span className="px-2.5 py-1 rounded-md bg-white/10 text-cyan-300 text-[11px] font-black uppercase tracking-wider border border-white/15 flex items-center gap-1.5 backdrop-blur-md">
-                <Database className="w-3.5 h-3.5 text-cyan-400 animate-pulse" /> MongoDB Atlas Visualizer
-              </span>
-              <span className="text-xs text-indigo-200 font-mono">
-                Cluster: <span className="font-bold text-white">{telemetry?.cluster || 'cluster0.5ep9gwn.mongodb.net'}</span>
-              </span>
-            </div>
-            
-            <h1 className="text-2xl lg:text-3xl font-black tracking-tight text-white flex items-center gap-2.5">
-              Knowledge Hub &amp; Telecom Database
-            </h1>
-            <p className="text-xs text-indigo-100/80 max-w-2xl font-medium leading-relaxed">
-              Real-time exploration of official SLT Trouble Ticket &amp; Service Request triage rules, live customer complaint logs, enterprise directory nodes, and Mongoose architectural schemas.
-            </p>
+      {/* 1. TOP SHAREPOINT & SLT HEADER BAR */}
+      <div className="bg-[#005a9c] text-white px-4 py-2 flex items-center justify-between text-xs shadow-xs shrink-0">
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1.5 cursor-pointer hover:opacity-80">
+            <Grid className="w-4 h-4 text-white" />
+            <span className="font-bold tracking-tight text-sm">SharePoint</span>
           </div>
 
-          {/* Right Status Capsule & Action Buttons */}
-          <div className="flex flex-wrap items-center gap-3">
-            <button
-              onClick={() => setShowDiagModal(true)}
-              className="px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/15 border border-white/20 text-xs font-bold text-white flex items-center gap-2 backdrop-blur-md transition-all shadow-sm group"
-            >
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping"></span>
-              <span className="text-cyan-200 group-hover:text-white font-mono">{telemetry?.databaseName || 'KNOWLEDGEHUB'}</span>
-              <Info className="w-3.5 h-3.5 text-indigo-300 group-hover:text-white" />
-            </button>
+          <div className="relative ml-4 w-72 md:w-96">
+            <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search Knowledge Hub or Common Links..."
+              className="w-full bg-white text-slate-800 text-xs pl-8 pr-6 py-1 rounded-sm focus:outline-none focus:ring-1 focus:ring-cyan-300"
+            />
+            {searchQuery && (
+              <button onClick={() => setSearchQuery('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                <X className="w-3 h-3" />
+              </button>
+            )}
+          </div>
+        </div>
 
-            <button
-              onClick={fetchData}
-              disabled={isRefreshing}
-              className="px-4 py-2 rounded-xl bg-[#00A3E0] hover:bg-[#008ec4] text-white text-xs font-black shadow-md flex items-center gap-2 transition-all hover:scale-105 active:scale-95 disabled:opacity-50"
-            >
-              <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
-              <span>{isRefreshing ? 'Refreshing...' : 'Refresh Hub'}</span>
-            </button>
+        <div className="flex items-center gap-4 text-xs">
+          <span className="hidden sm:inline text-cyan-100 font-medium">SLT-Mobitel Intranet</span>
+          <div className="w-7 h-7 rounded-full bg-cyan-700 border border-cyan-400 flex items-center justify-center font-bold text-[11px] text-white">
+            GJ
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 py-6 space-y-6 flex-1">
+      {/* 2. SLT MOBITEL BANNER & MENU NAVIGATION */}
+      <div className="bg-white border-b border-slate-200 px-6 py-2.5 flex items-center justify-between shadow-2xs shrink-0">
+        <div className="flex items-center gap-3">
+          {/* SLT Logo & Tagline */}
+          <div className="flex items-center gap-2">
+            <div className="flex flex-col">
+              <div className="flex items-center gap-1">
+                <span className="font-black text-xl text-[#005696] tracking-tighter">SLT</span>
+                <span className="font-black text-xl text-[#22b14c] tracking-tighter">MOBITEL</span>
+              </div>
+              <span className="text-[9px] text-[#005696] font-semibold -mt-1 tracking-wider uppercase">The Connection</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Sub-menu bar */}
+        <div className="hidden lg:flex items-center gap-6 text-xs font-semibold text-slate-700">
+          <span className="text-[#005696] font-black cursor-pointer hover:underline">Home</span>
+          <span className="flex items-center gap-1 cursor-pointer hover:text-[#005696]">Groups <ChevronDown className="w-3 h-3 text-slate-400" /></span>
+          <span className="flex items-center gap-1 cursor-pointer hover:text-[#005696]">eApplications <ChevronDown className="w-3 h-3 text-slate-400" /></span>
+          <span className="flex items-center gap-1 cursor-pointer hover:text-[#005696]">General <ChevronDown className="w-3 h-3 text-slate-400" /></span>
+          <span className="flex items-center gap-1 cursor-pointer hover:text-[#005696] text-[#005696] font-bold">Knowledge Base <ChevronDown className="w-3 h-3 text-[#005696]" /></span>
+        </div>
+      </div>
+
+      {/* 3. MAIN WORKSPACE (SIDEBAR + CONTENT) */}
+      <div className="flex-1 flex overflow-hidden">
         
-        {/* KPI Telemetry Cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* Card 1: Master Rules */}
-          <motion.div 
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="p-4 rounded-2xl bg-white border border-slate-200/80 shadow-xs relative overflow-hidden group hover:border-indigo-400 transition-all"
-          >
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Master Triage Rules</span>
-              <div className="w-8 h-8 rounded-lg bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600">
-                <Layers className="w-4 h-4" />
-              </div>
-            </div>
-            <div className="flex items-baseline gap-2">
-              <p className="text-3xl font-black text-slate-900 tracking-tight">{metrics?.totalRules || 13}</p>
-              <span className="text-[11px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">100% Active</span>
-            </div>
-            <p className="text-[11px] text-slate-500 mt-1.5 font-medium">13 official SLT rule codes with dynamic PON routing</p>
-          </motion.div>
-
-          {/* Card 2: Fault Reports */}
-          <motion.div 
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.05 }}
-            className="p-4 rounded-2xl bg-white border border-slate-200/80 shadow-xs relative overflow-hidden group hover:border-cyan-400 transition-all"
-          >
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Logged Fault Reports</span>
-              <div className="w-8 h-8 rounded-lg bg-cyan-50 border border-cyan-100 flex items-center justify-center text-cyan-600">
-                <FileText className="w-4 h-4" />
-              </div>
-            </div>
-            <div className="flex items-baseline gap-2">
-              <p className="text-3xl font-black text-slate-900 tracking-tight">{metrics?.totalReports || 5}</p>
-              <span className="text-[11px] font-bold text-cyan-700 bg-cyan-50 px-1.5 py-0.5 rounded border border-cyan-200">Telemetry Log</span>
-            </div>
-            <p className="text-[11px] text-slate-500 mt-1.5 font-medium">Customer tickets dispatched with pre-check audits</p>
-          </motion.div>
-
-          {/* Card 3: Support Groups */}
-          <motion.div 
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="p-4 rounded-2xl bg-white border border-slate-200/80 shadow-xs relative overflow-hidden group hover:border-amber-400 transition-all"
-          >
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Support Workgroups</span>
-              <div className="w-8 h-8 rounded-lg bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-600">
-                <Building className="w-4 h-4" />
-              </div>
-            </div>
-            <div className="flex items-baseline gap-2">
-              <p className="text-3xl font-black text-slate-900 tracking-tight">8</p>
-              <span className="text-[11px] font-bold text-amber-800 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">Specialized</span>
-            </div>
-            <p className="text-[11px] text-slate-500 mt-1.5 font-medium">AREA-MTCE, MDF, CEN-CSC-TECH, BSS, etc.</p>
-          </motion.div>
-
-          {/* Card 4: Directory Contacts */}
-          <motion.div 
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.15 }}
-            className="p-4 rounded-2xl bg-white border border-slate-200/80 shadow-xs relative overflow-hidden group hover:border-emerald-400 transition-all"
-          >
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Directory Nodes</span>
-              <div className="w-8 h-8 rounded-lg bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600">
-                <MapPin className="w-4 h-4" />
-              </div>
-            </div>
-            <div className="flex items-baseline gap-2">
-              <p className="text-3xl font-black text-slate-900 tracking-tight">{metrics?.totalContacts || 35}+</p>
-              <span className="text-[11px] font-bold text-emerald-800 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">Nationwide</span>
-            </div>
-            <p className="text-[11px] text-slate-500 mt-1.5 font-medium">RTOs, Teleshops &amp; Enterprise Escalation</p>
-          </motion.div>
-        </div>
-
-        {/* Tab Switcher & Visual Controls Bar */}
-        <div className="bg-white border border-slate-200 rounded-2xl p-2.5 shadow-xs flex flex-col md:flex-row items-center justify-between gap-4">
-          
-          {/* Main Tabs */}
-          <div className="flex items-center gap-1.5 p-1 bg-slate-100 rounded-xl w-full md:w-auto overflow-x-auto">
-            <button
-              onClick={() => setActiveTab('rules')}
-              className={`px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap ${
-                activeTab === 'rules'
-                  ? 'bg-white text-indigo-950 shadow-sm font-black'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
-              }`}
-            >
-              <Layers className="w-3.5 h-3.5 text-indigo-600" />
-              <span>Master Triage Rules</span>
-              <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-indigo-100 text-indigo-800 font-bold">
-                {rules.length}
-              </span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('reports')}
-              className={`px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap ${
-                activeTab === 'reports'
-                  ? 'bg-white text-indigo-950 shadow-sm font-black'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
-              }`}
-            >
-              <FileText className="w-3.5 h-3.5 text-cyan-600" />
-              <span>Fault Reports Log</span>
-              <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-cyan-100 text-cyan-800 font-bold">
-                {reports.length}
-              </span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('directory')}
-              className={`px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap ${
-                activeTab === 'directory'
-                  ? 'bg-white text-indigo-950 shadow-sm font-black'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
-              }`}
-            >
-              <Building className="w-3.5 h-3.5 text-emerald-600" />
-              <span>Directory Nodes</span>
-              <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-emerald-100 text-emerald-800 font-bold">
-                {contacts.length}
-              </span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('schema')}
-              className={`px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap ${
-                activeTab === 'schema'
-                  ? 'bg-white text-indigo-950 shadow-sm font-black'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
-              }`}
-            >
-              <Cpu className="w-3.5 h-3.5 text-purple-600" />
-              <span>Mongoose Architecture</span>
-              <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-purple-100 text-purple-800 font-bold">
-                3 Schemas
-              </span>
-            </button>
-          </div>
-
-          {/* Search & Layout Toggle */}
-          <div className="flex items-center gap-2.5 w-full md:w-auto">
-            <div className="relative flex-1 md:w-64">
-              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder={`Search ${activeTab}...`}
-                className="w-full pl-9 pr-8 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all"
-              />
-              {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery('')}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              )}
-            </div>
-
-            {/* View Mode Switcher for Rules and Reports */}
-            {activeTab !== 'schema' && (
-              <div className="flex items-center bg-slate-100 p-0.5 rounded-lg border border-slate-200 shrink-0">
-                <button
-                  onClick={() => setViewMode('cards')}
-                  className={`p-1.5 rounded-md transition-all ${
-                    viewMode === 'cards' ? 'bg-white text-slate-900 shadow-2xs' : 'text-slate-500 hover:text-slate-800'
-                  }`}
-                  title="Card Grid View"
-                >
-                  <LayoutGrid className="w-3.5 h-3.5" />
-                </button>
-                <button
-                  onClick={() => setViewMode('table')}
-                  className={`p-1.5 rounded-md transition-all ${
-                    viewMode === 'table' ? 'bg-white text-slate-900 shadow-2xs' : 'text-slate-500 hover:text-slate-800'
-                  }`}
-                  title="Dense Table View"
-                >
-                  <Table className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Filters bar for Rules Tab */}
-        {activeTab === 'rules' && (
-          <div className="flex flex-wrap items-center justify-between gap-3 text-xs bg-white p-3 rounded-xl border border-slate-200 shadow-2xs">
-            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
-              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1 mr-1">
-                <Filter className="w-3 h-3 text-indigo-500" /> Asset Type:
-              </span>
-              {['ALL', 'DATA', 'VOICE', 'ROUTER', 'PEOTV', 'VAS', 'BILLING'].map((asset) => (
-                <button
-                  key={asset}
-                  onClick={() => setSelectedAsset(asset)}
-                  className={`px-2.5 py-1 rounded-lg font-bold text-[11px] transition-all ${
-                    selectedAsset === asset
-                      ? 'bg-indigo-600 text-white shadow-xs'
-                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200/80 hover:text-slate-900'
-                  }`}
-                >
-                  {asset}
-                </button>
-              ))}
-            </div>
-
-            <div className="flex items-center gap-2">
-              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Group:</span>
-              <select
-                value={selectedGroup}
-                onChange={(e) => setSelectedGroup(e.target.value)}
-                className="bg-slate-50 border border-slate-200 text-slate-700 text-xs font-semibold rounded-lg px-2.5 py-1 outline-none focus:ring-1 focus:ring-indigo-500"
+        {/* Left Blue Sidebar */}
+        <aside className="w-48 sm:w-56 bg-[#0066b2] text-white flex flex-col shrink-0 shadow-md border-r border-[#00508c] overflow-y-auto">
+          <div className="py-2">
+            {SIDEBAR_ITEMS.map((item) => (
+              <button
+                key={item.id}
+                onClick={() => setSelectedItem({ title: item.label, type: 'sidebar', desc: `SLT Internal Resource: ${item.label}. Used by Contact Center duty officers.` })}
+                className={`w-full text-left px-4 py-2 text-xs font-medium transition-colors flex items-center justify-between group ${
+                  item.active ? 'bg-[#004f8b] font-bold text-white border-l-4 border-cyan-300' : 'text-cyan-50 hover:bg-[#005a9e] hover:text-white'
+                }`}
               >
-                <option value="ALL">All Groups (8)</option>
-                <option value="AREA-MTCE">AREA-MTCE</option>
-                <option value="MDF">MDF</option>
-                <option value="CEN-CSC-TECH">CEN-CSC-TECH</option>
-                <option value="INT-NW-SYS-ADMIN">INT-NW-SYS-ADMIN</option>
-                <option value="BSS-OPR-OCR">BSS-OPR-OCR</option>
-                <option value="CEN-CSC-UI">CEN-CSC-UI</option>
-                <option value="NONE">NONE (Commercial/Self-care)</option>
-              </select>
-            </div>
-          </div>
-        )}
-
-        {/* ======================================================== */}
-        {/* TAB 1: MASTER FAULT RULES VIEW                            */}
-        {/* ======================================================== */}
-        {activeTab === 'rules' && (
-          <div>
-            {viewMode === 'cards' ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {filteredRules.map((rule, idx) => (
-                  <motion.div
-                    key={rule.rule_code || idx}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: idx * 0.03 }}
-                    className="p-4 bg-white rounded-2xl border border-slate-200/90 hover:border-indigo-400 hover:shadow-md transition-all flex flex-col justify-between group relative overflow-hidden"
-                  >
-                    <div>
-                      {/* Card Header */}
-                      <div className="flex items-start justify-between gap-2 mb-2">
-                        <span className="font-mono text-[11px] font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200/70">
-                          {rule.rule_code}
-                        </span>
-                        <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider border ring-1 ${getGroupBadgeStyle(rule.target_group)}`}>
-                          {rule.target_group}
-                        </span>
-                      </div>
-
-                      {/* Rule Name & Description */}
-                      <h3 className="text-sm font-bold text-slate-900 group-hover:text-[#005696] transition-colors leading-snug">
-                        {rule.rule_name}
-                      </h3>
-                      <p className="text-xs text-slate-500 mt-1 line-clamp-2 leading-relaxed">
-                        {rule.description}
-                      </p>
-
-                      {/* Badges: Asset & Action */}
-                      <div className="mt-3 flex items-center gap-1.5 flex-wrap">
-                        <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-bold text-[10px] border border-slate-200">
-                          {rule.asset_type}
-                        </span>
-                        <span className={`px-2 py-0.5 rounded font-black text-[10px] border ${getActionBadgeStyle(rule.action_type)}`}>
-                          {rule.action_type}
-                        </span>
-                        {rule.priority && (
-                          <span className="px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 font-mono text-[9px] font-bold border border-amber-200">
-                            P-{rule.priority}
-                          </span>
-                        )}
-                      </div>
-
-                      {/* Matched Symptom Regex Pills */}
-                      <div className="mt-3 pt-3 border-t border-slate-100">
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
-                          Symptom Keywords
-                        </span>
-                        <div className="flex flex-wrap gap-1">
-                          {rule.symptom_patterns?.slice(0, 4).map((pattern: string, pIdx: number) => (
-                            <span key={pIdx} className="px-1.5 py-0.5 bg-slate-50 text-slate-600 rounded text-[10px] font-mono border border-slate-200/80">
-                              &quot;{pattern}&quot;
-                            </span>
-                          ))}
-                          {rule.symptom_patterns?.length > 4 && (
-                            <span className="text-[10px] text-slate-400 self-center font-bold">
-                              +{rule.symptom_patterns.length - 4} more
-                            </span>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Dynamic PON note if applicable */}
-                      {rule.conditional_routing && (
-                        <div className="mt-2.5 p-2 bg-cyan-50/70 border border-cyan-200 rounded-xl text-[10px] text-cyan-950 flex items-center gap-1.5 font-semibold">
-                          <Zap className="w-3 h-3 text-cyan-600 shrink-0" />
-                          <span>Dynamic Routing: PON ON $\rightarrow$ MDF | PON OFF $\rightarrow$ AREA-MTCE</span>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Card Footer */}
-                    <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
-                      <span className="text-[10px] text-slate-400 font-medium">
-                        Pre-checks: {rule.validation_requirements?.pre_checks?.ldap_checked ? 'LDAP Required' : 'Standard'}
-                      </span>
-                      <button
-                        onClick={() => setInspectItem({ data: rule, type: 'rule' })}
-                        className="text-xs font-bold text-indigo-600 hover:text-indigo-900 flex items-center gap-1 hover:underline"
-                      >
-                        <Eye className="w-3.5 h-3.5" />
-                        <span>Inspect JSON</span>
-                      </button>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            ) : (
-              /* Dense Table View */
-              <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs">
-                    <thead>
-                      <tr className="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold uppercase tracking-wider text-[10px]">
-                        <th className="py-3 px-4">Rule Code</th>
-                        <th className="py-3 px-4">Rule Title</th>
-                        <th className="py-3 px-4">Asset</th>
-                        <th className="py-3 px-4">Action</th>
-                        <th className="py-3 px-4">Target Group</th>
-                        <th className="py-3 px-4">Priority</th>
-                        <th className="py-3 px-4 text-right">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100 font-medium">
-                      {filteredRules.map((r) => (
-                        <tr key={r.rule_code} className="hover:bg-indigo-50/40 transition-colors">
-                          <td className="py-3 px-4 font-mono font-bold text-indigo-700">
-                            {r.rule_code}
-                          </td>
-                          <td className="py-3 px-4 text-slate-900 font-semibold max-w-xs truncate">
-                            {r.rule_name}
-                          </td>
-                          <td className="py-3 px-4 text-slate-600">
-                            <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-bold text-[10px]">
-                              {r.asset_type}
-                            </span>
-                          </td>
-                          <td className="py-3 px-4">
-                            <span className={`px-2 py-0.5 rounded font-black text-[10px] border ${getActionBadgeStyle(r.action_type)}`}>
-                              {r.action_type}
-                            </span>
-                          </td>
-                          <td className="py-3 px-4">
-                            <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider border ring-1 ${getGroupBadgeStyle(r.target_group)}`}>
-                              {r.target_group}
-                            </span>
-                          </td>
-                          <td className="py-3 px-4 font-mono text-slate-500">
-                            {r.priority || 100}
-                          </td>
-                          <td className="py-3 px-4 text-right">
-                            <button
-                              onClick={() => setInspectItem({ data: r, type: 'rule' })}
-                              className="px-2.5 py-1 text-xs font-bold text-indigo-600 hover:text-indigo-900 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-colors"
-                            >
-                              Inspect
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* ======================================================== */}
-        {/* TAB 2: FAULT REPORTS LOG VIEW                            */}
-        {/* ======================================================== */}
-        {activeTab === 'reports' && (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between text-xs text-slate-500 font-medium">
-              <p>Showing {filteredReports.length} customer fault reports logged with automated triage evaluation.</p>
-              <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                100% Audit Logging
-              </span>
-            </div>
-
-            <div className="grid grid-cols-1 gap-3.5">
-              {filteredReports.map((report) => (
-                <div
-                  key={report._id || report.report_id}
-                  className="p-4 bg-white rounded-2xl border border-slate-200 hover:border-cyan-400 hover:shadow-md transition-all flex flex-col md:flex-row items-start md:items-center justify-between gap-4"
-                >
-                  <div className="space-y-1.5 flex-1">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-mono text-xs font-black text-cyan-800 bg-cyan-50 px-2.5 py-0.5 rounded border border-cyan-200">
-                        {report.report_id}
-                      </span>
-                      <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider border ring-1 ${getGroupBadgeStyle(report.triage_result?.target_workgroup)}`}>
-                        {report.triage_result?.target_workgroup}
-                      </span>
-                      <span className={`px-2 py-0.5 rounded font-black text-[10px] border ${getActionBadgeStyle(report.triage_result?.action_type)}`}>
-                        {report.triage_result?.action_type}
-                      </span>
-                      <span className="text-[11px] text-slate-400 font-medium flex items-center gap-1">
-                        <Clock className="w-3 h-3" />
-                        {new Date(report.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                      </span>
-                    </div>
-
-                    <p className="text-xs font-semibold text-slate-900 leading-relaxed italic bg-slate-50/80 p-2.5 rounded-xl border border-slate-100">
-                      &quot;{report.symptom_description}&quot;
-                    </p>
-
-                    <div className="flex items-center gap-4 text-[11px] text-slate-500 font-medium pt-1">
-                      <span>Customer: <strong className="text-slate-800">{report.customer_context?.customer_name}</strong> ({report.customer_context?.slt_number})</span>
-                      <span>Exchange: <strong className="text-slate-800">{report.customer_context?.exchange}</strong></span>
-                      <span>Rule: <strong className="text-indigo-700 font-mono">{report.matched_rule?.rule_code}</strong></span>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-2 self-end md:self-center shrink-0">
-                    <button
-                      onClick={() => setInspectItem({ data: report, type: 'report' })}
-                      className="px-3.5 py-2 text-xs font-black text-white bg-slate-800 hover:bg-slate-900 rounded-xl shadow-xs transition-all flex items-center gap-1.5"
-                    >
-                      <Eye className="w-3.5 h-3.5 text-cyan-300" />
-                      <span>Audit Ticket</span>
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* ======================================================== */}
-        {/* TAB 3: TELECOM DIRECTORY NODES                           */}
-        {/* ======================================================== */}
-        {activeTab === 'directory' && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredContacts.map((contact) => (
-              <div
-                key={contact.id}
-                className="p-4 bg-white rounded-2xl border border-slate-200 hover:border-emerald-400 hover:shadow-md transition-all flex flex-col justify-between"
-              >
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="font-mono text-[10px] font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                      {contact.id}
-                    </span>
-                    <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-700 text-[10px] font-black uppercase tracking-wider">
-                      {contact.type}
-                    </span>
-                  </div>
-
-                  <h3 className="text-xs font-bold text-slate-900 line-clamp-1">
-                    {contact.name}
-                  </h3>
-                  {contact.nameSinhala && (
-                    <p className="text-[11px] text-slate-500 font-medium line-clamp-1 mt-0.5">
-                      {contact.nameSinhala}
-                    </p>
-                  )}
-
-                  <div className="mt-3 p-3 bg-emerald-50/50 rounded-xl border border-emerald-100/80 flex items-center justify-between">
-                    <div>
-                      <span className="text-[9px] font-bold text-emerald-700 uppercase tracking-widest block">Direct Hotline</span>
-                      <p className="text-base font-black text-emerald-950 font-mono tracking-tight">{contact.hotline}</p>
-                    </div>
-                    <button
-                      onClick={() => copyToClipboard(contact.hotline, contact.id)}
-                      className="p-2 rounded-lg bg-white border border-emerald-200 text-emerald-700 hover:bg-emerald-100 transition-colors shadow-2xs"
-                      title="Copy Hotline"
-                    >
-                      {copiedId === contact.id ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-                    </button>
-                  </div>
-
-                  <div className="mt-3 text-[11px] text-slate-500 space-y-1">
-                    <p className="flex items-center gap-1.5"><MapPin className="w-3 h-3 text-slate-400 shrink-0" /> {contact.location}</p>
-                    <p className="flex items-center gap-1.5"><Clock className="w-3 h-3 text-slate-400 shrink-0" /> {contact.operatingHours}</p>
-                  </div>
-                </div>
-
-                <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-[11px]">
-                  <span className="text-slate-400 font-medium">{contact.department}</span>
-                  <button
-                    onClick={() => setInspectItem({ data: contact, type: 'contact' })}
-                    className="text-xs font-bold text-emerald-700 hover:text-emerald-900 flex items-center gap-1 hover:underline"
-                  >
-                    <span>View Node</span>
-                    <ArrowRight className="w-3 h-3" />
-                  </button>
-                </div>
-              </div>
+                <span className="truncate">{item.label}</span>
+                <ChevronRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity text-cyan-300 shrink-0" />
+              </button>
             ))}
           </div>
-        )}
 
-        {/* ======================================================== */}
-        {/* TAB 4: MONGOOSE SCHEMAS & ARCHITECTURE                   */}
-        {/* ======================================================== */}
-        {activeTab === 'schema' && (
-          <div className="space-y-6">
-            
-            {/* Visual Telecom Pipeline Architecture */}
-            <div className="p-6 bg-gradient-to-br from-indigo-950 via-slate-900 to-blue-950 rounded-2xl text-white border border-indigo-900 shadow-xl relative overflow-hidden">
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <span className="text-[10px] font-black uppercase tracking-wider text-cyan-300">System Flow</span>
-                  <h3 className="text-lg font-black text-white">Gemini Voice NLU $\rightarrow$ Mongoose Fault Engine Pipeline</h3>
-                </div>
-                <span className="px-2.5 py-1 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-400/30 text-xs font-bold">
-                  Zero Misrouting Architecture
-                </span>
-              </div>
+          <div className="mt-auto p-4 border-t border-[#005596] text-[10px] text-cyan-200/80 space-y-1">
+            <p className="font-bold text-white">Contact Center Hub</p>
+            <p>Smart PEARL Edition 2026</p>
+          </div>
+        </aside>
 
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 relative z-10 pt-2">
-                <div className="p-4 bg-white/5 border border-white/10 rounded-xl space-y-1.5 backdrop-blur-sm">
-                  <span className="text-[10px] font-mono font-bold text-indigo-300">STAGE 1: INPUT</span>
-                  <h4 className="text-sm font-bold text-white flex items-center gap-1.5">
-                    <Phone className="w-4 h-4 text-emerald-400" /> Customer Call
-                  </h4>
-                  <p className="text-xs text-indigo-200/70">
-                    Spoken complaint captured in Sinhala, Singlish, English or Tamil.
-                  </p>
-                </div>
+        {/* Right Main Content Area */}
+        <main className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6">
+          
+          {/* A. 19 MAIN CATEGORY TILES (4 COLUMNS GRID) */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {filteredCategories.map((tile) => (
+              <motion.button
+                key={tile.id}
+                whileHover={{ scale: 1.015, y: -2 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => setSelectedItem({ ...tile, type: 'tile' })}
+                className={`bg-gradient-to-r ${tile.bg} text-white p-4 rounded-md shadow-sm text-center flex flex-col items-center justify-center min-h-[58px] transition-all hover:shadow-md cursor-pointer border border-white/10 relative overflow-hidden group`}
+              >
+                <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
+                <h3 className="font-bold text-sm tracking-wide text-white drop-shadow-xs">
+                  {tile.title}
+                </h3>
+                {tile.ruleCode && (
+                  <span className="text-[9px] text-cyan-200 font-mono mt-0.5 opacity-80 group-hover:opacity-100">
+                    Active Triage Rule
+                  </span>
+                )}
+              </motion.button>
+            ))}
+          </div>
 
-                <div className="p-4 bg-white/5 border border-white/10 rounded-xl space-y-1.5 backdrop-blur-sm">
-                  <span className="text-[10px] font-mono font-bold text-cyan-300">STAGE 2: EXTRACTION</span>
-                  <h4 className="text-sm font-bold text-white flex items-center gap-1.5">
-                    <Sparkles className="w-4 h-4 text-cyan-400" /> Gemini 3.8 Flash
-                  </h4>
-                  <p className="text-xs text-indigo-200/70">
-                    Extracts asset, symptoms, PON status (ON/OFF), ping ms, and pre-check flags.
-                  </p>
-                </div>
-
-                <div className="p-4 bg-white/5 border border-white/10 rounded-xl space-y-1.5 backdrop-blur-sm">
-                  <span className="text-[10px] font-mono font-bold text-amber-300">STAGE 3: EVALUATION</span>
-                  <h4 className="text-sm font-bold text-white flex items-center gap-1.5">
-                    <Layers className="w-4 h-4 text-amber-400" /> FaultRule Schema
-                  </h4>
-                  <p className="text-xs text-indigo-200/70">
-                    Queries MongoDB master rules with priority matching and dynamic routing.
-                  </p>
-                </div>
-
-                <div className="p-4 bg-white/5 border border-white/10 rounded-xl space-y-1.5 backdrop-blur-sm">
-                  <span className="text-[10px] font-mono font-bold text-rose-300">STAGE 4: DISPATCH</span>
-                  <h4 className="text-sm font-bold text-white flex items-center gap-1.5">
-                    <CheckCircle2 className="w-4 h-4 text-rose-400" /> FaultReport Log
-                  </h4>
-                  <p className="text-xs text-indigo-200/70">
-                    Direct TT created to AREA-MTCE, MDF, CEN-CSC-TECH, etc., with audit trail.
-                  </p>
-                </div>
-              </div>
+          {/* B. COMMON LINKS TABLE */}
+          <div className="bg-white rounded-md border border-slate-300 shadow-sm overflow-hidden">
+            {/* Table Header */}
+            <div className="bg-slate-100 py-2.5 px-4 text-center border-b border-slate-300">
+              <h2 className="text-sm font-black text-slate-800 uppercase tracking-widest flex items-center justify-center gap-2">
+                <LinkIcon className="w-4 h-4 text-[#005696]" />
+                <span className="border-b-2 border-[#005696] pb-0.5">COMMON LINKS</span>
+              </h2>
             </div>
 
-            {/* Schemas List */}
-            <div className="space-y-4">
-              {schemas.map((schemaDef) => (
-                <div
-                  key={schemaDef.modelName}
-                  className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs"
+            {/* Responsive Table Columns */}
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse text-xs">
+                <thead>
+                  <tr className="border-b border-slate-300 font-bold text-center">
+                    <th className={`p-2 border-r border-slate-300 ${COMMON_LINKS.operational.headerBg}`}>Operational</th>
+                    <th className={`p-2 border-r border-slate-300 ${COMMON_LINKS.broadbandEmail1.headerBg}`} colSpan={2}>Broadband/Email</th>
+                    <th className={`p-2 border-r border-slate-300 ${COMMON_LINKS.billing.headerBg}`}>Billing</th>
+                    <th className={`p-2 border-r border-slate-300 ${COMMON_LINKS.other.headerBg}`}>Other</th>
+                    <th className={`p-2 border-r border-slate-300 ${COMMON_LINKS.internal.headerBg}`}>Internal</th>
+                    <th className={`p-2 ${COMMON_LINKS.documents.headerBg}`}>Documents/<br/>Reports</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-200">
+                  {/* Generating max 9 rows for alignment matching screenshot */}
+                  {Array.from({ length: 9 }).map((_, rIdx) => {
+                    const opItem = COMMON_LINKS.operational.items[rIdx];
+                    const bb1Item = COMMON_LINKS.broadbandEmail1.items[rIdx];
+                    const bb2Item = COMMON_LINKS.broadbandEmail2.items[rIdx];
+                    const billItem = COMMON_LINKS.billing.items[rIdx];
+                    const otherItem = COMMON_LINKS.other.items[rIdx];
+                    const intItem = COMMON_LINKS.internal.items[rIdx];
+                    const docItem = COMMON_LINKS.documents.items[rIdx];
+
+                    return (
+                      <tr key={rIdx} className="hover:bg-cyan-50/40 transition-colors">
+                        
+                        {/* 1. Operational */}
+                        <td className="p-2 border-r border-slate-200 align-top bg-[#d8f3dc]/20">
+                          {opItem && (
+                            <button
+                              onClick={() => setSelectedItem({ ...opItem, type: 'link', category: 'Operational' })}
+                              className="text-left text-[#005696] hover:text-[#003865] hover:underline font-bold text-[11px] block"
+                            >
+                              <span className="font-semibold text-slate-800">{opItem.code}</span> {opItem.name}
+                            </button>
+                          )}
+                        </td>
+
+                        {/* 2. Broadband/Email Part 1 */}
+                        <td className="p-2 border-r border-slate-200 align-top bg-[#e0f2fe]/20">
+                          {bb1Item && (
+                            <button
+                              onClick={() => setSelectedItem({ ...bb1Item, type: 'link', category: 'Broadband/Email' })}
+                              className="text-left text-[#005696] hover:text-[#003865] hover:underline font-bold text-[11px] block"
+                            >
+                              <span className="font-semibold text-slate-800">{bb1Item.code}</span> {bb1Item.name}
+                            </button>
+                          )}
+                        </td>
+
+                        {/* 3. Broadband/Email Part 2 */}
+                        <td className="p-2 border-r border-slate-200 align-top bg-[#e0f2fe]/20">
+                          {bb2Item && (
+                            <button
+                              onClick={() => setSelectedItem({ ...bb2Item, type: 'link', category: 'Broadband/Email' })}
+                              className="text-left text-[#005696] hover:text-[#003865] hover:underline font-bold text-[11px] block"
+                            >
+                              <span className="font-semibold text-slate-800">{bb2Item.code}</span> {bb2Item.name}
+                            </button>
+                          )}
+                        </td>
+
+                        {/* 4. Billing */}
+                        <td className="p-2 border-r border-slate-200 align-top bg-[#fce7f3]/20">
+                          {billItem && (
+                            <button
+                              onClick={() => setSelectedItem({ ...billItem, type: 'link', category: 'Billing' })}
+                              className="text-left text-[#005696] hover:text-[#003865] hover:underline font-bold text-[11px] block"
+                            >
+                              <span className="font-semibold text-slate-800">{billItem.code}</span> {billItem.name}
+                            </button>
+                          )}
+                        </td>
+
+                        {/* 5. Other */}
+                        <td className="p-2 border-r border-slate-200 align-top bg-[#f1f5f9]/40">
+                          {otherItem && (
+                            <button
+                              onClick={() => setSelectedItem({ ...otherItem, type: 'link', category: 'Other' })}
+                              className="text-left text-[#005696] hover:text-[#003865] hover:underline font-bold text-[11px] block"
+                            >
+                              <span className="font-semibold text-slate-800">{otherItem.code}</span> {otherItem.name}
+                            </button>
+                          )}
+                        </td>
+
+                        {/* 6. Internal */}
+                        <td className="p-2 border-r border-slate-200 align-top bg-[#f3e8ff]/20">
+                          {intItem && (
+                            <button
+                              onClick={() => setSelectedItem({ ...intItem, type: 'link', category: 'Internal' })}
+                              className="text-left text-[#005696] hover:text-[#003865] hover:underline font-bold text-[11px] block"
+                            >
+                              <span className="font-semibold text-slate-800">{intItem.code}</span> {intItem.name}
+                            </button>
+                          )}
+                        </td>
+
+                        {/* 7. Documents/Reports */}
+                        <td className="p-2 align-top bg-[#fef9c3]/30">
+                          {docItem && (
+                            <button
+                              onClick={() => setSelectedItem({ ...docItem, type: 'link', category: 'Documents/Reports' })}
+                              className="text-left text-[#005696] hover:text-[#003865] hover:underline font-bold text-[11px] block"
+                            >
+                              <span className="font-semibold text-slate-800">{docItem.code}</span> {docItem.name}
+                            </button>
+                          )}
+                        </td>
+
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* C. OUR TEAM SECTION */}
+          <div className="bg-white rounded-md border border-slate-300 p-5 shadow-sm space-y-4">
+            <div className="border-b-2 border-[#005696] pb-1.5 flex items-center justify-between">
+              <h2 className="text-sm font-bold text-slate-900 tracking-tight flex items-center gap-2">
+                <Users className="w-4 h-4 text-[#005696]" />
+                <span>Our Team</span>
+              </h2>
+              <span className="text-[10px] text-slate-500 font-medium">SLT Contact Center Leadership &amp; Operations</span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 pt-1">
+              {TEAM_MEMBERS.map((member, idx) => (
+                <div 
+                  key={idx}
+                  onClick={() => setSelectedItem({ title: member.name, desc: `${member.title} | ${member.role}`, type: 'team' })}
+                  className="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50 transition-colors border border-transparent hover:border-slate-200 cursor-pointer group"
                 >
-                  <div className="p-4 bg-slate-50 border-b border-slate-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono text-sm font-black text-indigo-900 bg-indigo-100/80 px-2.5 py-0.5 rounded border border-indigo-200">
-                          {schemaDef.modelName}
-                        </span>
-                        <span className="text-xs text-slate-500 font-mono">
-                          Collection: <code className="text-slate-800 font-bold">{schemaDef.collectionName}</code>
-                        </span>
-                      </div>
-                      <p className="text-xs text-slate-600 mt-1 font-medium">{schemaDef.description}</p>
-                    </div>
-
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Indexes:</span>
-                      {schemaDef.indexes?.map((idx: string, iIdx: number) => (
-                        <span key={iIdx} className="px-2 py-0.5 bg-white text-slate-700 text-[10px] font-mono font-bold rounded border border-slate-200 shadow-2xs">
-                          {idx}
-                        </span>
-                      ))}
-                    </div>
+                  <div className={`w-10 h-10 rounded-full ${member.color} text-white font-bold flex items-center justify-center text-xs shadow-xs shrink-0 group-hover:scale-105 transition-transform`}>
+                    {member.initials}
                   </div>
-
-                  {/* Schema Fields Table */}
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-left text-xs">
-                      <thead>
-                        <tr className="bg-slate-100/60 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider text-[10px]">
-                          <th className="py-2.5 px-4">Field Name</th>
-                          <th className="py-2.5 px-4">Type</th>
-                          <th className="py-2.5 px-4">Constraints</th>
-                          <th className="py-2.5 px-4">Description</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-100 font-medium">
-                        {schemaDef.fields?.map((field: any) => (
-                          <tr key={field.name} className="hover:bg-slate-50 transition-colors">
-                            <td className="py-2.5 px-4 font-mono font-bold text-slate-900">
-                              {field.name}
-                            </td>
-                            <td className="py-2.5 px-4 font-mono text-indigo-700">
-                              {field.type}
-                            </td>
-                            <td className="py-2.5 px-4">
-                              <div className="flex items-center gap-1.5">
-                                {field.required && (
-                                  <span className="px-1.5 py-0.2 rounded bg-rose-50 text-rose-700 font-bold text-[9px] border border-rose-200">
-                                    REQUIRED
-                                  </span>
-                                )}
-                                {field.unique && (
-                                  <span className="px-1.5 py-0.2 rounded bg-amber-50 text-amber-700 font-bold text-[9px] border border-amber-200">
-                                    UNIQUE
-                                  </span>
-                                )}
-                                {field.default !== undefined && (
-                                  <span className="px-1.5 py-0.2 rounded bg-slate-100 text-slate-600 font-mono text-[9px]">
-                                    def: {String(field.default)}
-                                  </span>
-                                )}
-                              </div>
-                            </td>
-                            <td className="py-2.5 px-4 text-slate-600">
-                              {field.description}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                  <div className="min-w-0">
+                    <p className="text-xs font-bold text-slate-800 truncate group-hover:text-[#005696] transition-colors">
+                      {member.name}
+                    </p>
+                    <p className="text-[10px] text-slate-500 truncate leading-tight">
+                      {member.title}
+                    </p>
                   </div>
                 </div>
               ))}
             </div>
           </div>
-        )}
 
+        </main>
       </div>
 
       {/* ======================================================== */}
-      {/* SLIDE-OVER DOCUMENT INSPECTOR DRAWER                     */}
+      {/* INTERACTIVE DETAIL MODAL / DRAWER                        */}
       {/* ======================================================== */}
       <AnimatePresence>
-        {inspectItem && (
-          <div className="fixed inset-0 z-50 overflow-hidden flex justify-end">
-            {/* Backdrop */}
+        {selectedItem && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
             <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setInspectItem(null)}
-              className="absolute inset-0 bg-slate-900/40 backdrop-blur-xs"
-            />
-
-            {/* Drawer Panel */}
-            <motion.div
-              initial={{ x: '100%' }}
-              animate={{ x: 0 }}
-              exit={{ x: '100%' }}
-              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="relative w-full max-w-xl bg-white h-full shadow-2xl flex flex-col z-10 border-l border-slate-200"
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              className="bg-white rounded-xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 space-y-4"
             >
-              {/* Drawer Header */}
-              <div className="p-4 bg-slate-900 text-white flex items-center justify-between border-b border-slate-800">
-                <div className="flex items-center gap-2">
-                  <div className="w-7 h-7 rounded-lg bg-indigo-600 flex items-center justify-center text-white">
-                    <Database className="w-3.5 h-3.5" />
+              {/* Modal Header */}
+              <div className="flex items-start justify-between pb-3 border-b border-slate-200">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-lg bg-[#005696] text-white flex items-center justify-center font-bold">
+                    <BookOpen className="w-4 h-4 text-cyan-200" />
                   </div>
                   <div>
-                    <p className="text-xs font-black uppercase tracking-wider text-cyan-300">
-                      Document Inspector: {inspectItem.type.toUpperCase()}
-                    </p>
-                    <p className="text-sm font-bold text-white font-mono">
-                      {inspectItem.data.rule_code || inspectItem.data.report_id || inspectItem.data.id || 'Document Details'}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => copyToClipboard(JSON.stringify(inspectItem.data, null, 2), 'drawer-copy')}
-                    className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white text-xs font-bold transition-all flex items-center gap-1"
-                    title="Copy Full JSON"
-                  >
-                    {copiedId === 'drawer-copy' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                    <span className="hidden sm:inline">Copy JSON</span>
-                  </button>
-                  <button
-                    onClick={() => setInspectItem(null)}
-                    className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-
-              {/* View Mode Switcher */}
-              <div className="flex border-b border-slate-200 bg-slate-50 p-2 gap-2 text-xs font-bold">
-                <button
-                  onClick={() => setDrawerTab('visual')}
-                  className={`px-3 py-1.5 rounded-lg transition-all ${
-                    drawerTab === 'visual' ? 'bg-white text-indigo-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
-                  }`}
-                >
-                  Human-Readable Breakdown
-                </button>
-                <button
-                  onClick={() => setDrawerTab('json')}
-                  className={`px-3 py-1.5 rounded-lg transition-all ${
-                    drawerTab === 'json' ? 'bg-white text-indigo-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
-                  }`}
-                >
-                  Raw MongoDB Document (JSON)
-                </button>
-              </div>
-
-              {/* Drawer Content Body */}
-              <div className="flex-1 overflow-y-auto p-5 space-y-4">
-                {drawerTab === 'visual' ? (
-                  <div className="space-y-4 text-xs">
-                    {/* Key Attributes Box */}
-                    <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-2.5">
-                      <h4 className="font-bold text-slate-800 uppercase tracking-wider text-[10px]">Triage Specifications</h4>
-                      <div className="grid grid-cols-2 gap-3">
-                        <div>
-                          <span className="text-[10px] text-slate-400 font-bold uppercase">Workgroup</span>
-                          <p className="font-black text-slate-900 text-sm">
-                            {inspectItem.data.target_group || inspectItem.data.triage_result?.target_workgroup || 'NONE'}
-                          </p>
-                        </div>
-                        <div>
-                          <span className="text-[10px] text-slate-400 font-bold uppercase">Action Type</span>
-                          <p className="font-black text-indigo-700 text-sm">
-                            {inspectItem.data.action_type || inspectItem.data.triage_result?.action_type || 'DIRECT_TT'}
-                          </p>
-                        </div>
-                        {inspectItem.data.asset_type && (
-                          <div>
-                            <span className="text-[10px] text-slate-400 font-bold uppercase">Asset Type</span>
-                            <p className="font-semibold text-slate-800">{inspectItem.data.asset_type}</p>
-                          </div>
-                        )}
-                        {inspectItem.data.priority && (
-                          <div>
-                            <span className="text-[10px] text-slate-400 font-bold uppercase">Priority Score</span>
-                            <p className="font-mono font-bold text-amber-700">{inspectItem.data.priority}</p>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Advice Instructions */}
-                    {inspectItem.data.advice_instructions && (
-                      <div className="p-3.5 bg-amber-50/70 border border-amber-200 rounded-xl space-y-1">
-                        <span className="text-[10px] font-black text-amber-900 uppercase tracking-wider flex items-center gap-1">
-                          <Wrench className="w-3.5 h-3.5 text-amber-600" /> Operational Field Instructions
-                        </span>
-                        <p className="text-xs text-amber-950 font-medium leading-relaxed">
-                          {inspectItem.data.advice_instructions}
-                        </p>
-                      </div>
-                    )}
-
-                    {/* Pre-check requirements */}
-                    {inspectItem.data.validation_requirements?.pre_checks && (
-                      <div className="p-3.5 bg-indigo-50/60 border border-indigo-200 rounded-xl space-y-2">
-                        <span className="text-[10px] font-black text-indigo-950 uppercase tracking-wider">
-                          Mandatory Pre-Checks
-                        </span>
-                        <div className="grid grid-cols-2 gap-2 text-[11px]">
-                          <div className="flex items-center gap-1.5 font-semibold text-slate-700">
-                            {inspectItem.data.validation_requirements.pre_checks.ldap_checked ? (
-                              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                            ) : (
-                              <AlertCircle className="w-4 h-4 text-slate-400" />
-                            )}
-                            <span>LDAP Account Verification</span>
-                          </div>
-                          <div className="flex items-center gap-1.5 font-semibold text-slate-700">
-                            {inspectItem.data.validation_requirements.pre_checks.gb_portal_checked ? (
-                              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                            ) : (
-                              <AlertCircle className="w-4 h-4 text-slate-400" />
-                            )}
-                            <span>GB Portal Optical Power</span>
-                          </div>
-                          <div className="flex items-center gap-1.5 font-semibold text-slate-700">
-                            {inspectItem.data.validation_requirements.pre_checks.low_pay_bill_verified ? (
-                              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                            ) : (
-                              <AlertCircle className="w-4 h-4 text-slate-400" />
-                            )}
-                            <span>Low Pay Bill Verification</span>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Symptom Patterns */}
-                    {inspectItem.data.symptom_patterns && (
-                      <div className="space-y-1.5">
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                          Configured Regex Patterns ({inspectItem.data.symptom_patterns.length})
-                        </span>
-                        <div className="flex flex-wrap gap-1.5">
-                          {inspectItem.data.symptom_patterns.map((p: string, pIdx: number) => (
-                            <span key={pIdx} className="px-2 py-1 bg-slate-100 text-slate-700 rounded-md font-mono text-[11px] border border-slate-200">
-                              /{p}/i
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  /* Raw JSON Code Block */
-                  <div className="relative">
-                    <pre className="p-4 bg-slate-900 text-emerald-300 font-mono text-xs rounded-xl overflow-x-auto leading-relaxed border border-slate-800 shadow-inner">
-                      {JSON.stringify(inspectItem.data, null, 2)}
-                    </pre>
-                  </div>
-                )}
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
-
-      {/* ======================================================== */}
-      {/* CONNECTION DIAGNOSTIC MODAL                              */}
-      {/* ======================================================== */}
-      <AnimatePresence>
-        {showDiagModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 space-y-4"
-            >
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-lg bg-[#005696] flex items-center justify-center text-white">
-                    <Server className="w-4 h-4 text-cyan-300" />
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-black text-slate-900">MongoDB Atlas Connection Diagnostic</h3>
-                    <p className="text-[11px] text-slate-500 font-medium">Cluster Telemetry &amp; Database State</p>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-[#005696]">
+                      {selectedItem.category || selectedItem.asset || 'Knowledge Hub Portal Item'}
+                    </span>
+                    <h3 className="text-base font-bold text-slate-900">
+                      {selectedItem.name || selectedItem.title}
+                    </h3>
                   </div>
                 </div>
                 <button
-                  onClick={() => setShowDiagModal(false)}
-                  className="text-slate-400 hover:text-slate-600"
+                  onClick={() => setSelectedItem(null)}
+                  className="p-1 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
+              {/* Modal Body */}
               <div className="space-y-3 text-xs">
-                <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-1.5">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Cluster Host</span>
-                  <p className="font-mono font-bold text-slate-900 text-xs break-all">
-                    cluster0.5ep9gwn.mongodb.net
+                <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg space-y-1">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Description &amp; Operational Purpose</span>
+                  <p className="text-slate-700 font-medium leading-relaxed">
+                    {selectedItem.desc}
                   </p>
-                  <p className="text-[11px] text-slate-500">Database Name: <strong className="text-indigo-700">KNOWLEDGEHUB</strong></p>
                 </div>
 
-                <div className="p-3 bg-indigo-50/70 border border-indigo-200 rounded-xl space-y-1">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-bold text-indigo-900 uppercase">Engine Status</span>
-                    <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold text-[10px]">
-                      {telemetry?.statusLabel || 'Active (Cloud Replica)'}
-                    </span>
+                {/* If connected to an active fault rule */}
+                {selectedItem.ruleCode && (
+                  <div className="p-3 bg-indigo-50 border border-indigo-200 rounded-lg space-y-1.5 text-indigo-950">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-bold uppercase text-indigo-700">Triage Engine Connection</span>
+                      <span className="px-2 py-0.5 rounded bg-indigo-600 text-white font-mono text-[9px] font-bold">
+                        {selectedItem.ruleCode}
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-indigo-900">
+                      This service tile is automatically monitored by Gemini Live Voice Triage for instant Trouble Ticket routing.
+                    </p>
                   </div>
-                  <p className="text-[11px] text-slate-600 font-medium">
-                    Response Latency: <strong className="text-slate-900">{telemetry?.responseTimeMs || 14} ms</strong> | Mongoose v{telemetry?.mongooseVersion || '9.11.2'}
-                  </p>
-                </div>
+                )}
 
-                <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl space-y-1 text-amber-900">
-                  <p className="font-bold text-[11px] flex items-center gap-1">
-                    <ShieldCheck className="w-3.5 h-3.5 text-amber-600" /> Security &amp; IP Whitelist Tip
-                  </p>
-                  <p className="text-[11px] leading-relaxed">
-                    If connecting from a new IP, please whitelist your IP on MongoDB Atlas (`Network Access` $\rightarrow$ `Add Current IP Address` or `0.0.0.0/0` for development).
-                  </p>
-                </div>
+                {/* If a Common Link */}
+                {selectedItem.type === 'link' && (
+                  <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-lg flex items-center justify-between text-emerald-950">
+                    <div>
+                      <span className="text-[9px] font-bold text-emerald-700 uppercase">System Reference</span>
+                      <p className="font-mono font-bold text-xs">{selectedItem.code} {selectedItem.name}</p>
+                    </div>
+                    <button
+                      onClick={() => copyToClipboard(selectedItem.name, 'modal-copy')}
+                      className="px-3 py-1.5 rounded bg-emerald-600 text-white font-bold text-[10px] hover:bg-emerald-700 transition-colors flex items-center gap-1 shadow-xs"
+                    >
+                      {copiedLink === 'modal-copy' ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                      <span>Copy Name</span>
+                    </button>
+                  </div>
+                )}
               </div>
 
-              <div className="pt-2 flex justify-end">
+              {/* Modal Footer */}
+              <div className="pt-2 flex justify-end gap-2">
                 <button
-                  onClick={() => setShowDiagModal(false)}
-                  className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition-colors"
+                  onClick={() => setSelectedItem(null)}
+                  className="px-4 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-md transition-colors"
                 >
-                  Close Diagnostic
+                  Close
                 </button>
               </div>
             </motion.div>
