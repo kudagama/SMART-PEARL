@@ -82,13 +82,14 @@ const FTTH_FAQ_ROWS = [
       {
         text: '• PON indicator Red, Off, Blinking and Steady (The customer is using the voice service/ Does not using voice service )',
         linkText: 'Click Here',
-        type: 'modal',
+        type: 'pon_indicator_flowchart',
+        pageUrl: '/knowledge-hub/faq/ftth/pon-los-indicator',
         content: {
           title: 'PON / LOS Indicator Diagnostic Matrix',
           ruleCode: 'RULE_LOS_RED / RULE_FIBER_VOICE_LINE_FAULT',
-          targetGroup: 'AREA-MTCE / MDF',
-          guidance: 'CRITICAL ROUTING MATRIX:\n- LOS RED Blinking / PON OFF: Optical transmission fault / cable cut -> Dispatch DIRECT_TT to AREA-MTCE.\n- PON STEADY ON (Voice dead/no dial tone): Optical signal is healthy. SIP port or exchange issue -> Dispatch DIRECT_TT to MDF (Main Distribution Frame).',
-          sop: 'Mandatory Pre-checks: Verify LDAP account status and GB Portal optical power (threshold: Rx between -8 dBm and -27 dBm).'
+          targetGroup: 'AREA-CPE-MTCE / AREA-MTCE / MDF',
+          guidance: 'CRITICAL ROUTING MATRIX:\n- LOS RED Blinking / PON OFF: Optical transmission fault / cable cut -> Dispatch DIRECT_TT to AREA-CPE-MTCE (or Default WG if customer unavailable).\n- PON STEADY ON: ONT Restart -> Browser check -> Device check -> Check Private Proxy. If proxy off but still not working -> Create TT to AREA-CPE-MTCE.',
+          sop: 'Mandatory Pre-checks: Verify LDAP account status and GB Portal optical power (threshold: Rx between -8 dBm and -27 dBm). TT description is mandatory.'
         }
       }
     ]
@@ -376,6 +377,7 @@ export default function FTTHFAQPage() {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [showOntPdfModal, setShowOntPdfModal] = useState(false);
   const [showGeneralPdfModal, setShowGeneralPdfModal] = useState(false);
+  const [showPonPdfModal, setShowPonPdfModal] = useState(false);
   const [zoomLevel, setZoomLevel] = useState(100);
   const [ttCopied, setTtCopied] = useState(false);
 
@@ -565,6 +567,7 @@ export default function FTTHFAQPage() {
                       {row.actions.map((act, aIdx) => {
                         const isOntFlowchart = act.type === 'ont_pdf_flowchart' || act.text.includes('ONT not working');
                         const isGeneralFlowchart = act.type === 'general_questions_flowchart' || act.text.includes('General Questions FTTH');
+                        const isPonFlowchart = act.type === 'pon_indicator_flowchart' || act.text.includes('PON indicator Red, Off, Blinking and Steady');
                         return (
                           <div key={aIdx} className="space-y-1">
                             <div className="flex items-baseline flex-wrap gap-1.5 leading-relaxed">
@@ -616,6 +619,33 @@ export default function FTTHFAQPage() {
 
                                   <button
                                     onClick={() => setShowOntPdfModal(true)}
+                                    className="text-slate-500 hover:text-slate-700 hover:underline cursor-pointer ml-1 text-[11px]"
+                                    title="View SharePoint PDF viewer layout"
+                                  >
+                                    ( PDF )
+                                  </button>
+                                </>
+                              ) : isPonFlowchart ? (
+                                <>
+                                  <Link
+                                    href="/knowledge-hub/faq/ftth/pon-los-indicator"
+                                    className="font-bold text-[#005696] hover:text-[#003865] hover:underline cursor-pointer flex items-center gap-1.5"
+                                  >
+                                    <span>{act.text}</span>
+                                    <span className="px-1.5 py-0.2 rounded bg-amber-100 text-amber-800 font-bold text-[10px]">
+                                      Interactive Guide
+                                    </span>
+                                  </Link>
+
+                                  <Link
+                                    href="/knowledge-hub/faq/ftth/pon-los-indicator"
+                                    className="font-bold text-[#005696] hover:text-[#003865] hover:underline cursor-pointer ml-1 inline-flex items-center gap-0.5 text-xs"
+                                  >
+                                    ( View Interactive Guide )
+                                  </Link>
+
+                                  <button
+                                    onClick={() => setShowPonPdfModal(true)}
                                     className="text-slate-500 hover:text-slate-700 hover:underline cursor-pointer ml-1 text-[11px]"
                                     title="View SharePoint PDF viewer layout"
                                   >
@@ -2200,6 +2230,747 @@ export default function FTTHFAQPage() {
                       fill="#000000"
                     >
                       on ONT Indicators.
+                    </text>
+                  </g>
+
+                </svg>
+
+              </div>
+            </div>
+
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* ======================================================== */}
+      {/* 11. OFFICIAL PON/LOS INDICATOR PDF VIEWER MODAL          */}
+      {/* ======================================================== */}
+      <AnimatePresence>
+        {showPonPdfModal && (
+          <div className="fixed inset-0 z-50 flex flex-col bg-[#262626] text-white overflow-hidden animate-in fade-in duration-200">
+            
+            {/* Top SharePoint / PDF Reader Dark Toolbar matching screenshot */}
+            <div className="bg-[#262626] border-b border-white/10 px-3 sm:px-5 py-2 flex items-center justify-between text-xs select-none shrink-0 shadow-md">
+              
+              {/* Left Icons: Sidebar toggle | Download, Star, Info, More */}
+              <div className="flex items-center gap-2 sm:gap-3 text-slate-300">
+                <button
+                  title="Document Thumbnails"
+                  className="p-1 rounded hover:bg-white/10 hover:text-white transition-colors"
+                >
+                  <FileText className="w-4 h-4" />
+                </button>
+
+                <div className="h-4 w-px bg-slate-600"></div>
+
+                <button
+                  onClick={() => window.print()}
+                  title="Download / Print PDF"
+                  className="p-1 rounded hover:bg-white/10 hover:text-white transition-colors"
+                >
+                  <Download className="w-4 h-4" />
+                </button>
+
+                <button
+                  title="Star Favorite"
+                  className="p-1 rounded hover:bg-white/10 hover:text-amber-400 transition-colors"
+                >
+                  <Star className="w-4 h-4" />
+                </button>
+
+                <button
+                  title="Document Information"
+                  className="p-1 rounded hover:bg-white/10 hover:text-white transition-colors"
+                >
+                  <AlertCircle className="w-4 h-4" />
+                </button>
+
+                <button
+                  title="More Options"
+                  className="p-1 rounded hover:bg-white/10 hover:text-white transition-colors font-bold text-sm tracking-widest px-1.5"
+                >
+                  •••
+                </button>
+              </div>
+
+              {/* Center: Red Adobe PDF badge + File Name */}
+              <div className="flex items-center gap-2 mx-2 truncate">
+                <div className="bg-red-600 text-white rounded-xs px-1.5 py-0.5 text-[10px] font-black tracking-wider flex items-center justify-center shadow-xs">
+                  PDF
+                </div>
+                <span className="text-xs sm:text-sm font-semibold text-white tracking-tight truncate">
+                  PON-LOS Ind... Steady.pdf
+                </span>
+              </div>
+
+              {/* Right: Avatar, Teams chat, Viewing, Open, Share, Close */}
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <div
+                  title="User Profile: GJ"
+                  className="w-6 h-6 rounded-full bg-teal-600 border border-teal-300 flex items-center justify-center font-bold text-[10px] text-white shadow-2xs"
+                >
+                  GJ
+                </div>
+
+                <button
+                  title="Teams Conversation"
+                  className="p-1 rounded hover:bg-white/10 text-slate-300 hover:text-white transition-colors hidden sm:inline-flex"
+                >
+                  <MessageSquare className="w-4 h-4" />
+                </button>
+
+                <button
+                  className="hidden md:flex items-center gap-1 text-[11px] text-slate-200 hover:bg-white/10 px-2 py-1 rounded transition-colors"
+                >
+                  <Eye className="w-3.5 h-3.5 text-slate-300" />
+                  <span>Viewing</span>
+                  <ChevronDown className="w-3 h-3 text-slate-400" />
+                </button>
+
+                <Link
+                  href="/knowledge-hub/faq/ftth/pon-los-indicator"
+                  className="hidden lg:flex items-center gap-1 text-[11px] text-cyan-200 hover:text-white hover:bg-white/10 px-2.5 py-1 rounded transition-colors border border-cyan-400/30"
+                  title="Open Interactive Troubleshooter in Full Page"
+                >
+                  <ExternalLink className="w-3.5 h-3.5 text-cyan-300" />
+                  <span>Open Interactive SOP</span>
+                </Link>
+
+                <button
+                  className="hidden sm:flex items-center gap-1 text-[11px] text-slate-200 hover:bg-white/10 px-2 py-1 rounded transition-colors"
+                >
+                  <Share2 className="w-3.5 h-3.5 text-slate-300" />
+                  <span>Share</span>
+                  <ChevronDown className="w-3 h-3 text-slate-400" />
+                </button>
+
+                <button
+                  onClick={() => setShowPonPdfModal(false)}
+                  title="Close PDF Viewer"
+                  className="p-1 rounded text-slate-300 hover:text-white hover:bg-red-600/40 transition-colors ml-1"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+            </div>
+
+            {/* Sub Toolbar / Zoom & TT Action Helper */}
+            <div className="bg-[#1f1f1f] px-4 py-1.5 flex items-center justify-between text-xs text-slate-400 border-b border-black/40">
+              <div className="flex items-center gap-3">
+                <span className="text-[11px] text-slate-400">Page 1 of 1</span>
+                <span className="text-slate-600">|</span>
+                <button
+                  onClick={() => setZoomLevel(Math.max(60, zoomLevel - 15))}
+                  title="Zoom Out"
+                  className="p-1 hover:text-white hover:bg-white/10 rounded"
+                >
+                  <ZoomOut className="w-3.5 h-3.5" />
+                </button>
+                <span className="text-[11px] font-mono text-slate-300 min-w-[3rem] text-center">{zoomLevel}%</span>
+                <button
+                  onClick={() => setZoomLevel(Math.min(150, zoomLevel + 15))}
+                  title="Zoom In"
+                  className="p-1 hover:text-white hover:bg-white/10 rounded"
+                >
+                  <ZoomIn className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  onClick={() => setZoomLevel(100)}
+                  className="text-[10px] uppercase font-bold px-1.5 py-0.5 bg-white/5 hover:bg-white/15 rounded text-slate-300"
+                >
+                  Reset
+                </button>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Link
+                  href="/knowledge-hub/faq/ftth/pon-los-indicator"
+                  className="px-2.5 py-1 bg-amber-500/90 hover:bg-amber-500 text-black font-black rounded text-[11px] flex items-center gap-1 shadow-xs transition-colors"
+                >
+                  <span>Guided Triage Mode</span>
+                </Link>
+
+                <button
+                  onClick={() => {
+                    const ttText = `Target Work Group: AREA-CPE-MTCE (or Default WG if customer unavailable)\nFault Complaint: Optical Signal / PON Indicator Fault\nDiagnostic Log:\n• Observed ONT LED Status: RED / OFF / BLINKING or STEADY (Session dead)\n• Private Proxy / Device check completed\n• Customer Availability: Confirmed on site\nAction Required: Field technician dispatch for optical link power measurement and CPE transceiver check.`;
+                    navigator.clipboard.writeText(ttText);
+                    setTtCopied(true);
+                    setTimeout(() => setTtCopied(false), 2500);
+                  }}
+                  className="px-2.5 py-1 bg-red-600/90 hover:bg-red-600 text-white rounded text-[11px] font-bold flex items-center gap-1.5 shadow-xs transition-colors"
+                >
+                  {ttCopied ? <Check className="w-3 h-3 text-emerald-300" /> : <Copy className="w-3 h-3" />}
+                  <span>{ttCopied ? 'TT Copied!' : 'Copy TT AREA-CPE-MTCE'}</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Main Viewer Body with Centered White Page */}
+            <div className="flex-1 bg-[#3c4043] overflow-y-auto p-4 sm:p-8 flex justify-center items-start">
+              <div
+                style={{ transform: `scale(${zoomLevel / 100})`, transformOrigin: 'top center' }}
+                className="bg-white text-black shadow-[0_20px_50px_rgba(0,0,0,0.7)] rounded-xs w-full max-w-[800px] min-h-[920px] p-6 sm:p-10 relative transition-transform duration-150"
+              >
+                
+                {/* Flowchart Title matching PDF */}
+                <h2 className="text-center font-black text-2xl sm:text-3xl tracking-tight text-black mb-8">
+                  PON/LOS Indicator RED,OFF, Blinking or Steady
+                </h2>
+
+                {/* SVG Vector Flowchart matching exact official diagram */}
+                <svg
+                  viewBox="0 0 800 780"
+                  className="w-full h-auto select-none font-sans"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <defs>
+                    <filter id="retroShadowPonModal" x="-15%" y="-15%" width="130%" height="130%">
+                      <feDropShadow dx="4" dy="4" stdDeviation="0" floodColor="#000000" floodOpacity="1" />
+                    </filter>
+                    <marker id="arrowPonModal" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+                      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#000000" />
+                    </marker>
+                  </defs>
+
+                  {/* ROOT NODE: Check the PON/LOS indicator in ONT */}
+                  <g>
+                    <rect
+                      x="300"
+                      y="14"
+                      width="240"
+                      height="46"
+                      rx="23"
+                      ry="23"
+                      fill="#ffffff"
+                      stroke="#000000"
+                      strokeWidth="2.5"
+                      filter="url(#retroShadowPonModal)"
+                    />
+                    <text
+                      x="420"
+                      y="34"
+                      textAnchor="middle"
+                      fontWeight="bold"
+                      fontSize="12"
+                      fontFamily="Arial, Helvetica, sans-serif"
+                      fill="#000000"
+                    >
+                      Check the PON/LOS
+                    </text>
+                    <text
+                      x="420"
+                      y="49"
+                      textAnchor="middle"
+                      fontWeight="bold"
+                      fontSize="12"
+                      fontFamily="Arial, Helvetica, sans-serif"
+                      fill="#000000"
+                    >
+                      indicator in ONT
+                    </text>
+                  </g>
+
+                  {/* BRANCH 1: RED / OFF/ BLINKING (Left) */}
+                  <path d="M 320 60 L 320 108" stroke="#000000" strokeWidth="2.5" markerEnd="url(#arrowPonModal)" />
+                  <text
+                    x="290"
+                    y="85"
+                    textAnchor="end"
+                    fontWeight="bold"
+                    fontSize="11"
+                    fill="#000000"
+                    fontFamily="Arial, Helvetica, sans-serif"
+                  >
+                    RED / OFF/ BLINKING
+                  </text>
+
+                  {/* Red Node: Create a TT to AREA-CPE-MTCE */}
+                  <g>
+                    <rect
+                      x="230"
+                      y="108"
+                      width="180"
+                      height="44"
+                      rx="22"
+                      ry="22"
+                      fill="#ff0000"
+                      stroke="#000000"
+                      strokeWidth="2.5"
+                      filter="url(#retroShadowPonModal)"
+                    />
+                    <text
+                      x="320"
+                      y="126"
+                      textAnchor="middle"
+                      fontWeight="bold"
+                      fontSize="11"
+                      fontFamily="Arial, Helvetica, sans-serif"
+                      fill="#000000"
+                    >
+                      Create a TT to
+                    </text>
+                    <text
+                      x="320"
+                      y="140"
+                      textAnchor="middle"
+                      fontWeight="bold"
+                      fontSize="11"
+                      fontFamily="Arial, Helvetica, sans-serif"
+                      fill="#000000"
+                    >
+                      AREA-CPE-MTCE
+                    </text>
+                  </g>
+
+                  {/* BRANCH 2: STEADY (Right) */}
+                  <path d="M 520 60 L 520 108" stroke="#000000" strokeWidth="2.5" markerEnd="url(#arrowPonModal)" />
+                  <text
+                    x="530"
+                    y="85"
+                    textAnchor="start"
+                    fontWeight="bold"
+                    fontSize="11"
+                    fill="#000000"
+                    fontFamily="Arial, Helvetica, sans-serif"
+                  >
+                    STEADY
+                  </text>
+
+                  {/* NODE 1: Restart the ONT ( Switch OFF & Switch On ) */}
+                  <g>
+                    <rect
+                      x="430"
+                      y="108"
+                      width="180"
+                      height="44"
+                      rx="22"
+                      ry="22"
+                      fill="#ffd24d"
+                      stroke="#000000"
+                      strokeWidth="2"
+                      filter="url(#retroShadowPonModal)"
+                    />
+                    <text
+                      x="520"
+                      y="126"
+                      textAnchor="middle"
+                      fontWeight="bold"
+                      fontSize="11"
+                      fontFamily="Arial, Helvetica, sans-serif"
+                      fill="#000000"
+                    >
+                      Restart the ONT
+                    </text>
+                    <text
+                      x="520"
+                      y="140"
+                      textAnchor="middle"
+                      fontWeight="bold"
+                      fontSize="10"
+                      fontFamily="Arial, Helvetica, sans-serif"
+                      fill="#000000"
+                    >
+                      ( Switch OFF &amp; Switch On )
+                    </text>
+                  </g>
+
+                  {/* Arrow Right to END */}
+                  <path d="M 610 130 L 670 130" stroke="#000000" strokeWidth="2.5" markerEnd="url(#arrowPonModal)" />
+                  <text
+                    x="640"
+                    y="120"
+                    textAnchor="middle"
+                    fontWeight="bold"
+                    fontSize="11"
+                    fill="#00b050"
+                    fontFamily="Arial, Helvetica, sans-serif"
+                  >
+                    Working
+                  </text>
+                  <text
+                    x="680"
+                    y="134"
+                    textAnchor="start"
+                    fontWeight="900"
+                    fontSize="13"
+                    fill="#00b050"
+                    fontFamily="Arial, Helvetica, sans-serif"
+                  >
+                    END
+                  </text>
+
+                  {/* Arrow Down to Node 2 */}
+                  <path d="M 520 152 L 520 196" stroke="#000000" strokeWidth="2.5" markerEnd="url(#arrowPonModal)" />
+                  <text
+                    x="530"
+                    y="178"
+                    textAnchor="start"
+                    fontWeight="bold"
+                    fontSize="11"
+                    fill="#ff0000"
+                    fontFamily="Arial, Helvetica, sans-serif"
+                  >
+                    Not Working
+                  </text>
+
+                  {/* NODE 2: Change the Browser and check */}
+                  <g>
+                    <rect
+                      x="430"
+                      y="196"
+                      width="180"
+                      height="44"
+                      rx="22"
+                      ry="22"
+                      fill="#ffd24d"
+                      stroke="#000000"
+                      strokeWidth="2"
+                      filter="url(#retroShadowPonModal)"
+                    />
+                    <text
+                      x="520"
+                      y="214"
+                      textAnchor="middle"
+                      fontWeight="bold"
+                      fontSize="11"
+                      fontFamily="Arial, Helvetica, sans-serif"
+                      fill="#000000"
+                    >
+                      Change the Browser
+                    </text>
+                    <text
+                      x="520"
+                      y="228"
+                      textAnchor="middle"
+                      fontWeight="bold"
+                      fontSize="11"
+                      fontFamily="Arial, Helvetica, sans-serif"
+                      fill="#000000"
+                    >
+                      and check
+                    </text>
+                  </g>
+
+                  {/* Arrow Right to END */}
+                  <path d="M 610 218 L 670 218" stroke="#000000" strokeWidth="2.5" markerEnd="url(#arrowPonModal)" />
+                  <text
+                    x="640"
+                    y="208"
+                    textAnchor="middle"
+                    fontWeight="bold"
+                    fontSize="11"
+                    fill="#00b050"
+                    fontFamily="Arial, Helvetica, sans-serif"
+                  >
+                    Working
+                  </text>
+                  <text
+                    x="680"
+                    y="222"
+                    textAnchor="start"
+                    fontWeight="900"
+                    fontSize="13"
+                    fill="#00b050"
+                    fontFamily="Arial, Helvetica, sans-serif"
+                  >
+                    END
+                  </text>
+
+                  {/* Arrow Down to Node 3 */}
+                  <path d="M 520 240 L 520 284" stroke="#000000" strokeWidth="2.5" markerEnd="url(#arrowPonModal)" />
+                  <text
+                    x="530"
+                    y="266"
+                    textAnchor="start"
+                    fontWeight="bold"
+                    fontSize="11"
+                    fill="#ff0000"
+                    fontFamily="Arial, Helvetica, sans-serif"
+                  >
+                    Not Working
+                  </text>
+
+                  {/* NODE 3: Check with another Device */}
+                  <g>
+                    <rect
+                      x="430"
+                      y="284"
+                      width="180"
+                      height="44"
+                      rx="22"
+                      ry="22"
+                      fill="#ffd24d"
+                      stroke="#000000"
+                      strokeWidth="2"
+                      filter="url(#retroShadowPonModal)"
+                    />
+                    <text
+                      x="520"
+                      y="311"
+                      textAnchor="middle"
+                      fontWeight="bold"
+                      fontSize="11"
+                      fontFamily="Arial, Helvetica, sans-serif"
+                      fill="#000000"
+                    >
+                      Check with another Device
+                    </text>
+                  </g>
+
+                  {/* Arrow Right to END */}
+                  <path d="M 610 306 L 670 306" stroke="#000000" strokeWidth="2.5" markerEnd="url(#arrowPonModal)" />
+                  <text
+                    x="640"
+                    y="296"
+                    textAnchor="middle"
+                    fontWeight="bold"
+                    fontSize="11"
+                    fill="#00b050"
+                    fontFamily="Arial, Helvetica, sans-serif"
+                  >
+                    Working
+                  </text>
+                  <text
+                    x="680"
+                    y="310"
+                    textAnchor="start"
+                    fontWeight="900"
+                    fontSize="13"
+                    fill="#00b050"
+                    fontFamily="Arial, Helvetica, sans-serif"
+                  >
+                    END
+                  </text>
+
+                  {/* Arrow Down to Node 4 */}
+                  <path d="M 520 328 L 520 372" stroke="#000000" strokeWidth="2.5" markerEnd="url(#arrowPonModal)" />
+                  <text
+                    x="530"
+                    y="354"
+                    textAnchor="start"
+                    fontWeight="bold"
+                    fontSize="11"
+                    fill="#ff0000"
+                    fontFamily="Arial, Helvetica, sans-serif"
+                  >
+                    Not Working
+                  </text>
+
+                  {/* NODE 4: Check weather using a Private Proxy */}
+                  <g>
+                    <rect
+                      x="430"
+                      y="372"
+                      width="180"
+                      height="44"
+                      rx="22"
+                      ry="22"
+                      fill="#ffd24d"
+                      stroke="#000000"
+                      strokeWidth="2"
+                      filter="url(#retroShadowPonModal)"
+                    />
+                    <text
+                      x="520"
+                      y="390"
+                      textAnchor="middle"
+                      fontWeight="bold"
+                      fontSize="11"
+                      fontFamily="Arial, Helvetica, sans-serif"
+                      fill="#000000"
+                    >
+                      Check weather using a
+                    </text>
+                    <text
+                      x="520"
+                      y="404"
+                      textAnchor="middle"
+                      fontWeight="bold"
+                      fontSize="11"
+                      fontFamily="Arial, Helvetica, sans-serif"
+                      fill="#000000"
+                    >
+                      Private Proxy
+                    </text>
+                  </g>
+
+                  {/* Path from Node 4 back up to Red TT Node! */}
+                  <path d="M 430 394 L 320 394 L 320 156" stroke="#000000" strokeWidth="2.5" markerEnd="url(#arrowPonModal)" fill="none" />
+                  <text
+                    x="330"
+                    y="375"
+                    textAnchor="start"
+                    fontWeight="bold"
+                    fontSize="10"
+                    fill="#ff0000"
+                    fontFamily="Arial, Helvetica, sans-serif"
+                  >
+                    Proxy Switched Off
+                  </text>
+                  <text
+                    x="330"
+                    y="387"
+                    textAnchor="start"
+                    fontWeight="bold"
+                    fontSize="10"
+                    fill="#ff0000"
+                    fontFamily="Arial, Helvetica, sans-serif"
+                  >
+                    but still Not Working
+                  </text>
+
+                  {/* Arrow Down to Node 5 */}
+                  <path d="M 520 416 L 520 460" stroke="#000000" strokeWidth="2.5" markerEnd="url(#arrowPonModal)" />
+                  <text
+                    x="530"
+                    y="442"
+                    textAnchor="start"
+                    fontWeight="bold"
+                    fontSize="11"
+                    fill="#ff0000"
+                    fontFamily="Arial, Helvetica, sans-serif"
+                  >
+                    Proxy On
+                  </text>
+
+                  {/* NODE 5: Ask to switch off Proxy */}
+                  <g>
+                    <rect
+                      x="430"
+                      y="460"
+                      width="180"
+                      height="44"
+                      rx="22"
+                      ry="22"
+                      fill="#ffd24d"
+                      stroke="#000000"
+                      strokeWidth="2"
+                      filter="url(#retroShadowPonModal)"
+                    />
+                    <text
+                      x="520"
+                      y="487"
+                      textAnchor="middle"
+                      fontWeight="bold"
+                      fontSize="11"
+                      fontFamily="Arial, Helvetica, sans-serif"
+                      fill="#000000"
+                    >
+                      Ask to switch off Proxy
+                    </text>
+                  </g>
+
+                  {/* Arrow Right to END */}
+                  <path d="M 610 482 L 670 482" stroke="#000000" strokeWidth="2.5" markerEnd="url(#arrowPonModal)" />
+                  <text
+                    x="640"
+                    y="472"
+                    textAnchor="middle"
+                    fontWeight="bold"
+                    fontSize="11"
+                    fill="#00b050"
+                    fontFamily="Arial, Helvetica, sans-serif"
+                  >
+                    Working
+                  </text>
+                  <text
+                    x="680"
+                    y="486"
+                    textAnchor="start"
+                    fontWeight="900"
+                    fontSize="13"
+                    fill="#00b050"
+                    fontFamily="Arial, Helvetica, sans-serif"
+                  >
+                    END
+                  </text>
+
+                  {/* ================= BOTTOM LAVENDER NOTES ================= */}
+                  {/* Note 1: If Customer Not Available at Location */}
+                  <g>
+                    <rect
+                      x="220"
+                      y="555"
+                      width="420"
+                      height="54"
+                      rx="24"
+                      ry="24"
+                      fill="#d8b4fe"
+                      stroke="#000000"
+                      strokeWidth="2"
+                      filter="url(#retroShadowPonModal)"
+                    />
+                    <text
+                      x="430"
+                      y="572"
+                      textAnchor="middle"
+                      fontWeight="bold"
+                      fontSize="10"
+                      fontFamily="Arial, Helvetica, sans-serif"
+                      fill="#000000"
+                    >
+                      If the Customer Not Available at the Location
+                    </text>
+                    <text
+                      x="430"
+                      y="585"
+                      textAnchor="middle"
+                      fontWeight="bold"
+                      fontSize="10"
+                      fontFamily="Arial, Helvetica, sans-serif"
+                      fill="#000000"
+                    >
+                      Create the TT under the Default WG.
+                    </text>
+                    <text
+                      x="430"
+                      y="598"
+                      textAnchor="middle"
+                      fontWeight="bold"
+                      fontSize="10"
+                      fontFamily="Arial, Helvetica, sans-serif"
+                      fill="#000000"
+                    >
+                      Record the customer's available date and time in the TT Description.
+                    </text>
+                  </g>
+
+                  {/* Note 2: TT Description is mandatory */}
+                  <g>
+                    <rect
+                      x="230"
+                      y="625"
+                      width="400"
+                      height="46"
+                      rx="23"
+                      ry="23"
+                      fill="#d8b4fe"
+                      stroke="#000000"
+                      strokeWidth="2"
+                      filter="url(#retroShadowPonModal)"
+                    />
+                    <text
+                      x="430"
+                      y="643"
+                      textAnchor="middle"
+                      fontWeight="bold"
+                      fontSize="10"
+                      fontFamily="Arial, Helvetica, sans-serif"
+                      fill="#000000"
+                    >
+                      TT Description is mandatory. Ensure the TT description clearly matches the
+                    </text>
+                    <text
+                      x="430"
+                      y="657"
+                      textAnchor="middle"
+                      fontWeight="bold"
+                      fontSize="10"
+                      fontFamily="Arial, Helvetica, sans-serif"
+                      fill="#000000"
+                    >
+                      customer's reported complaint and includes all relevant troubleshooting details.
                     </text>
                   </g>
 

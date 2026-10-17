@@ -170,10 +170,10 @@ Action Required: Resynchronize PCRF profile and align VAS quota with LDAP subscr
 
             <div className="flex items-center gap-2 ml-auto text-xs">
               <Link
-                href="/knowledge-hub/faq/ftth/ont-not-working"
-                className="px-3 py-1 rounded-md bg-[#5cb85c] hover:bg-[#4cae4c] text-black font-black text-xs shadow-xs flex items-center gap-1 border border-black transition-colors"
+                href="/knowledge-hub/faq/ftth/pon-los-indicator"
+                className="px-3 py-1 rounded-md bg-[#ffd24d] hover:bg-[#ffc82c] text-black font-black text-xs shadow-xs flex items-center gap-1 border border-black transition-colors"
               >
-                <span>Next SOP: ONT Indicators</span>
+                <span>Next SOP: PON/LOS Indicator</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             </div>
@@ -464,14 +464,21 @@ Action Required: Resynchronize PCRF profile and align VAS quota with LDAP subscr
                         </p>
                       </div>
 
-                      <div className="pt-2">
+                      <div className="pt-2 flex items-center flex-wrap gap-2">
                         <Link
-                          href="/knowledge-hub/faq/ftth/ont-not-working"
+                          href="/knowledge-hub/faq/ftth/pon-los-indicator"
                           className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-black text-white font-black text-xs hover:bg-slate-900 shadow-md transition-all active:scale-95"
                         >
-                          <Power className="w-4 h-4 text-emerald-400" />
-                          <span>Open ONT Indicators Decision Guide</span>
-                          <ArrowRight className="w-4 h-4 text-emerald-400 ml-1" />
+                          <Power className="w-4 h-4 text-amber-400" />
+                          <span>Open PON/LOS Indicator Decision Guide</span>
+                          <ArrowRight className="w-4 h-4 text-amber-400 ml-1" />
+                        </Link>
+
+                        <Link
+                          href="/knowledge-hub/faq/ftth/ont-not-working"
+                          className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg border border-slate-300 hover:bg-slate-100 text-slate-800 font-bold text-xs shadow-2xs transition-all"
+                        >
+                          <span>ONT Not Working SOP</span>
                         </Link>
                       </div>
                     </div>
@@ -868,7 +875,7 @@ Action Required: Resynchronize PCRF profile and align VAS quota with LDAP subscr
                   {/* Green Node: Follow the next FAQ on ONT Indicators. */}
                   <g
                     className="cursor-pointer"
-                    onClick={() => window.location.href = '/knowledge-hub/faq/ftth/ont-not-working'}
+                    onClick={() => window.location.href = '/knowledge-hub/faq/ftth/pon-los-indicator'}
                   >
                     <rect
                       x="530"
@@ -922,13 +929,22 @@ Action Required: Resynchronize PCRF profile and align VAS quota with LDAP subscr
               <span>Back to FAQs - FTTH</span>
             </Link>
 
-            <Link
-              href="/knowledge-hub/faq/ftth/ont-not-working"
-              className="px-4 py-2 rounded-lg bg-[#005696] hover:bg-[#00477d] text-white font-bold text-xs flex items-center gap-2 transition-all shadow-xs"
-            >
-              <span>Next: ONT Indicators SOP</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </Link>
+            <div className="flex items-center gap-2">
+              <Link
+                href="/knowledge-hub/faq/ftth/ont-not-working"
+                className="px-3 py-2 rounded-lg border border-slate-300 hover:bg-slate-50 text-slate-700 font-bold text-xs flex items-center gap-1.5 transition-all shadow-2xs"
+              >
+                <span>ONT Not Working SOP</span>
+              </Link>
+
+              <Link
+                href="/knowledge-hub/faq/ftth/pon-los-indicator"
+                className="px-4 py-2 rounded-lg bg-[#005696] hover:bg-[#00477d] text-white font-bold text-xs flex items-center gap-2 transition-all shadow-xs"
+              >
+                <span>Next: PON/LOS Indicator SOP</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
           </div>
 
         </div>

@@ -174,7 +174,58 @@ function extractFaultRulesFallback(text: string) {
     };
   }
 
-  // 2. LOS red light
+  // 2. PON / LOS Indicator Decision Flowchart (RED / OFF / BLINKING vs STEADY)
+  const isPonIndicatorIssue =
+    lower.includes('pon indicator') ||
+    lower.includes('pon red') ||
+    lower.includes('pon blinking') ||
+    lower.includes('pon steady') ||
+    lower.includes('pon off') ||
+    lower.includes('private proxy') ||
+    lower.includes('proxy switched off') ||
+    lower.includes('proxy on') ||
+    lower.includes('switch off proxy') ||
+    (lower.includes('pon') && (lower.includes('light') || lower.includes('indicator') || lower.includes('led')));
+
+  if (isPonIndicatorIssue) {
+    const isSteady = lower.includes('steady') || lower.includes('solid') || lower.includes('proxy');
+    return {
+      transcription: text,
+      detected_language: lower.includes('eka') || lower.includes('wada') ? 'Singlish' : 'English',
+      customer_intent: 'FAULT_REPORTING',
+      asset_type: ASSET_TYPES.DATA,
+      symptom: isSteady
+        ? 'PON Indicator Steady (Internet/LAN Unreachable / Proxy Issue)'
+        : 'PON/LOS Indicator RED, OFF or Blinking (Optical Loss)',
+      technical_context: {
+        pon_status: isSteady ? PON_STATUS.ON : PON_STATUS.OFF,
+        measured_speed_mbps: null,
+        game_name: null,
+        ping_delay_ms: null,
+        addon_name: null,
+        error_message: null,
+        device_age_months: null,
+      },
+      billing_context: { channel_type: null, amount: null, transaction_date: null },
+      pre_check_flags: { ldap_checked: true, gb_portal_checked: true, peotv_admin_checked: false, low_pay_bill_verified: false },
+      suggested_rule_code: isSteady ? 'RULE_STB_ONT_ROUTER_FAULTY' : 'RULE_LOS_RED',
+      target_workgroup: 'AREA-CPE-MTCE',
+      action_type: ACTION_TYPES.DIRECT_TT,
+      operational_advice: isSteady
+        ? 'PON is STEADY: Restart ONT -> Change Browser -> Check another Device -> Check Private Proxy. If proxy off but still not working, dispatch Trouble Ticket to AREA-CPE-MTCE. Note: If customer not at premises, use Default WG.'
+        : 'PON/LOS is RED, OFF, or BLINKING: Optical signal interrupted. Create Trouble Ticket to AREA-CPE-MTCE (or Default WG if customer unavailable). Include mandatory TT description.',
+      routing_reason: 'Official Decision SOP: PON/LOS Indicator triage matrix -> Dispatch to AREA-CPE-MTCE.',
+      knowledge_article: {
+        title: 'PON/LOS Indicator RED, OFF, Blinking or Steady - Decision Flowchart',
+        url: '/knowledge-hub/faq/ftth/pon-los-indicator',
+        summary: 'RED/OFF/BLINKING -> Dispatch TT to AREA-CPE-MTCE (or Default WG). STEADY -> Restart ONT, check browser/device/proxy. Unresolved -> TT to AREA-CPE-MTCE.',
+        target_group: 'AREA-CPE-MTCE',
+        badge: 'Interactive SOP'
+      }
+    };
+  }
+
+  // 3. LOS red light
   if (lower.includes('los red') || lower.includes('red light') || lower.includes('los light') || lower.includes('los blink') || lower.includes('optical loss') || lower.includes('fiber cut') || lower.includes('rathu paatai')) {
     return {
       transcription: text,
@@ -198,6 +249,13 @@ function extractFaultRulesFallback(text: string) {
       action_type: ACTION_TYPES.DIRECT_TT,
       operational_advice: 'Optical power loss detected. Mandatory pre-checks verified: Dispatch Trouble Ticket to AREA-MTCE for fiber restoration.',
       routing_reason: 'LOS Red Light indicates physical optical link failure -> AREA-MTCE.',
+      knowledge_article: {
+        title: 'PON/LOS Indicator RED, OFF, Blinking or Steady - Decision Flowchart',
+        url: '/knowledge-hub/faq/ftth/pon-los-indicator',
+        summary: 'RED/OFF/BLINKING -> Dispatch TT to AREA-CPE-MTCE (or Default WG). STEADY -> Restart ONT, check browser/device/proxy. Unresolved -> TT to AREA-CPE-MTCE.',
+        target_group: 'AREA-CPE-MTCE',
+        badge: 'Interactive SOP'
+      }
     };
   }
 
@@ -574,10 +632,10 @@ export async function POST(request: Request) {
           : triageResult.suggested_rule_code === 'RULE_LOS_RED'
           ? {
               title: 'PON / LOS Indicator Diagnostic Matrix',
-              url: '/knowledge-hub/faq/ftth',
-              summary: 'LOS Red indicates fiber cut/signal loss. Verify LDAP/GB Portal and dispatch to AREA-MTCE.',
-              target_group: 'AREA-MTCE',
-              badge: 'FTTH FAQ'
+              url: '/knowledge-hub/faq/ftth/pon-los-indicator',
+              summary: 'RED/OFF/BLINKING -> Dispatch TT to AREA-CPE-MTCE (or Default WG). STEADY -> Restart ONT, check browser/device/proxy. Unresolved -> TT to AREA-CPE-MTCE.',
+              target_group: 'AREA-CPE-MTCE',
+              badge: 'Interactive SOP'
             }
           : null),
       timestamp: new Date().toISOString(),

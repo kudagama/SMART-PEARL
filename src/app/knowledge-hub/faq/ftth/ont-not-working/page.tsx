@@ -1173,11 +1173,11 @@ Action Required: Technician dispatch for on-site CPE hardware swap & power adapt
             </Link>
 
             <Link
-              href="/knowledge-hub"
+              href="/knowledge-hub/faq/ftth/pon-los-indicator"
               className="px-4 py-2 rounded-lg bg-[#005696] hover:bg-[#00477d] text-white font-bold text-xs flex items-center gap-2 transition-all shadow-xs"
             >
-              <Home className="w-3.5 h-3.5" />
-              <span>Knowledge Hub Home</span>
+              <span>Next: PON/LOS Indicator SOP</span>
+              <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           </div>
 
