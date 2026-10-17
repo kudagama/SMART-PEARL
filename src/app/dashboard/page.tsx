@@ -1196,11 +1196,64 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            {/* REAL-TIME SLT CALL QUALITY STANDARDS COMPLIANCE MONITOR */}
+            {/* 1. TARGET WORKGROUP & FAULT COMPLAINT TRIAGE CARDS (PRIMARY AT TOP) */}
+            <div className="mb-6 space-y-4">
+              <AnimatePresence>
+                {suggestions.length === 0 ? (
+                  <motion.div 
+                    initial={{ opacity: 0, y: -5 }} 
+                    animate={{ opacity: 1, y: 0 }} 
+                    exit={{ opacity: 0 }}
+                    className="p-5 bg-gradient-to-br from-white via-slate-50/70 to-blue-50/30 border border-slate-200 border-dashed rounded-2xl text-center space-y-2 shadow-2xs"
+                  >
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#005696] to-cyan-600 text-white flex items-center justify-center mx-auto shadow-xs">
+                      <Target className="w-5 h-5 text-cyan-200" />
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-black text-slate-800">Target Support Group & Complaint Dispatch</h4>
+                      <p className="text-[11px] text-slate-500 font-medium max-w-sm mx-auto mt-0.5">
+                        Speak a fault or run a preset. Gemini will instantly detect the technical fault, map the rule, and surface the assigned support group (AREA-MTCE, MDF, CEN-CSC-TECH, etc.) here.
+                      </p>
+                    </div>
+                  </motion.div>
+                ) : (
+                  <div className="space-y-4">
+                    {suggestions.map((suggestion, idx) => (
+                      <motion.div
+                        key={suggestion.id}
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: idx * 0.1, type: 'spring', stiffness: 200, damping: 20 }}
+                        className="bg-white border-2 border-[#005696]/20 rounded-2xl p-5 shadow-[0_8px_30px_rgba(0,86,150,0.08)] hover:shadow-[0_12px_36px_rgba(0,86,150,0.12)] transition-all"
+                      >
+                        <div className="flex items-center justify-between mb-3 border-b border-slate-100 pb-3">
+                          <div className="flex items-center gap-2">
+                            {suggestion.type === 'product' && <Wifi className="w-4 h-4 text-purple-500" />}
+                            {suggestion.type === 'intent' && <ShieldAlert className="w-4 h-4 text-emerald-500" />}
+                            <span className="text-[10px] font-black text-[#005696] uppercase tracking-wider">
+                              {suggestion.type === 'product' ? 'Product Match' : 'Identified Fault Triage & Action'}
+                            </span>
+                          </div>
+                          <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-[#005696] border border-blue-200">
+                            Priority #1 Action
+                          </span>
+                        </div>
+                        
+                        <h3 className="text-base font-bold text-slate-800 mb-3">{suggestion.title}</h3>
+                        
+                        <div>{suggestion.content}</div>
+                      </motion.div>
+                    ))}
+                  </div>
+                )}
+              </AnimatePresence>
+            </div>
+
+            {/* 2. REAL-TIME SLT CALL QUALITY STANDARDS COMPLIANCE MONITOR (BELOW COMPLAINT AREA) */}
             <motion.div 
-              initial={{ opacity: 0, y: -10 }}
+              initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="mb-6 p-4 rounded-2xl bg-gradient-to-br from-[#005696]/5 via-indigo-50/50 to-blue-50/50 border border-indigo-200/80 shadow-xs relative overflow-hidden"
+              className="p-4 rounded-2xl bg-gradient-to-br from-[#005696]/5 via-indigo-50/50 to-blue-50/50 border border-indigo-200/80 shadow-xs relative overflow-hidden"
             >
               {/* Header */}
               <div className="flex items-center justify-between pb-2.5 mb-3 border-b border-indigo-100">
@@ -1374,44 +1427,6 @@ export default function DashboardPage() {
                 </Link>
               </div>
             </motion.div>
-
-            <AnimatePresence>
-              {suggestions.length === 0 ? (
-                <motion.div 
-                  initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                  className="flex flex-col items-center justify-center text-center p-10 bg-white/50 border border-slate-200 border-dashed rounded-2xl"
-                >
-                  <Zap className="w-10 h-10 text-slate-300 mb-3" />
-                  <p className="text-sm font-semibold text-slate-500">
-                    AI will surface products, data, and suggestions here as the customer speaks.
-                  </p>
-                </motion.div>
-              ) : (
-                <div className="space-y-4">
-                  {suggestions.map((suggestion, idx) => (
-                    <motion.div
-                      key={suggestion.id}
-                      initial={{ opacity: 0, x: 20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: idx * 0.1, type: 'spring', stiffness: 200, damping: 20 }}
-                      className="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-[0_8px_30px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgba(0,86,150,0.08)] transition-all"
-                    >
-                      <div className="flex items-center gap-2 mb-3 border-b border-slate-100 pb-3">
-                        {suggestion.type === 'product' && <Wifi className="w-4 h-4 text-purple-500" />}
-                        {suggestion.type === 'intent' && <ShieldAlert className="w-4 h-4 text-emerald-500" />}
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                          {suggestion.type === 'product' ? 'Product Match' : 'Intent Detected'}
-                        </span>
-                      </div>
-                      
-                      <h3 className="text-base font-bold text-slate-800 mb-3">{suggestion.title}</h3>
-                      
-                      <div>{suggestion.content}</div>
-                    </motion.div>
-                  ))}
-                </div>
-              )}
-            </AnimatePresence>
           </div>
         </div>
       </div>
