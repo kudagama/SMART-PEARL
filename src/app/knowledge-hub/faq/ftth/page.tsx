@@ -25,7 +25,15 @@ import {
   Download,
   PhoneCall,
   ShieldCheck,
-  Zap
+  Zap,
+  Star,
+  Eye,
+  Share2,
+  MessageSquare,
+  Maximize2,
+  Printer,
+  ZoomIn,
+  ZoomOut
 } from 'lucide-react';
 
 // Official FTTH Complaints & Symptoms/Action Matrix Data matching screenshot
@@ -61,13 +69,13 @@ const FTTH_FAQ_ROWS = [
       {
         text: '• ONT not working',
         linkText: 'Click Here',
-        type: 'modal',
+        type: 'ont_pdf_flowchart',
         content: {
-          title: 'ONT Not Working / Power Failure',
+          title: 'ONT Not Working - Official Decision Flowchart',
           ruleCode: 'RULE_STB_ONT_ROUTER_FAULTY',
-          targetGroup: 'AREA-MTCE',
-          guidance: 'Hardware or power failure on customer premises ONT. Check if power adapter LED is ON. If ONT is completely unresponsive with known working power socket, dispatch Trouble Ticket to AREA-MTCE for device swap.',
-          sop: '1. Check power adapter connection.\n2. Test alternative wall outlet.\n3. Create DIRECT_TT to AREA-MTCE.'
+          targetGroup: 'AREA-CPE-MTCE',
+          guidance: 'Hardware or power failure on customer premises ONT. Follow official decision tree: Check power indicator -> OFF (check power button & charger) / ON (restart). If unresolved, dispatch Trouble Ticket to AREA-CPE-MTCE.',
+          sop: '1. Check power indicator (OFF/ON).\n2. If OFF, press power button; verify charger adapter.\n3. If ON, perform power cycle restart.\n4. If still faulty, create TT to AREA-CPE-MTCE.'
         }
       },
       {
@@ -365,6 +373,9 @@ export default function FTTHFAQPage() {
   const [activeModalData, setActiveModalData] = useState<any | null>(null);
   const [sampleCallData, setSampleCallData] = useState<any | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [showOntPdfModal, setShowOntPdfModal] = useState(false);
+  const [zoomLevel, setZoomLevel] = useState(100);
+  const [ttCopied, setTtCopied] = useState(false);
 
   const copyToClipboard = (text: string, id: string) => {
     navigator.clipboard.writeText(text);
@@ -549,45 +560,63 @@ export default function FTTHFAQPage() {
 
                     {/* Right Column: Symptoms/Action */}
                     <td className="p-4 align-top space-y-2">
-                      {row.actions.map((act, aIdx) => (
-                        <div key={aIdx} className="space-y-1">
-                          <div className="flex items-baseline flex-wrap gap-1.5 leading-relaxed">
-                            <span className="font-semibold text-slate-800 text-xs">
-                              {act.text}
-                            </span>
-
-                            {act.redNote && (
-                              <span className="text-red-600 font-bold text-xs">
-                                {act.redNote}
+                      {row.actions.map((act, aIdx) => {
+                        const isOntFlowchart = act.type === 'ont_pdf_flowchart' || act.text.includes('ONT not working');
+                        return (
+                          <div key={aIdx} className="space-y-1">
+                            <div className="flex items-baseline flex-wrap gap-1.5 leading-relaxed">
+                              <span
+                                onClick={() => {
+                                  if (isOntFlowchart) setShowOntPdfModal(true);
+                                }}
+                                className={`font-semibold text-slate-800 text-xs ${
+                                  isOntFlowchart
+                                    ? 'cursor-pointer hover:text-[#005696] hover:underline font-bold text-[#005696]'
+                                    : ''
+                                }`}
+                              >
+                                {act.text}
                               </span>
-                            )}
 
-                            {act.linkText && (
-                              <button
-                                onClick={() => setActiveModalData(act.content)}
-                                className="font-bold text-[#005696] hover:text-[#003865] hover:underline cursor-pointer ml-1 inline-flex items-center gap-0.5"
-                              >
-                                ( {act.linkText} )
-                              </button>
-                            )}
+                              {act.redNote && (
+                                <span className="text-red-600 font-bold text-xs">
+                                  {act.redNote}
+                                </span>
+                              )}
 
-                            {act.subLinkText && (
-                              <button
-                                onClick={() => setSampleCallData(act.sampleCall)}
-                                className="font-bold text-[#005696] hover:text-[#003865] hover:underline cursor-pointer ml-1 inline-flex items-center gap-0.5"
-                              >
-                                ( {act.subLinkText} )
-                              </button>
+                              {act.linkText && (
+                                <button
+                                  onClick={() => {
+                                    if (isOntFlowchart) {
+                                      setShowOntPdfModal(true);
+                                    } else {
+                                      setActiveModalData(act.content);
+                                    }
+                                  }}
+                                  className="font-bold text-[#005696] hover:text-[#003865] hover:underline cursor-pointer ml-1 inline-flex items-center gap-0.5"
+                                >
+                                  ( {act.linkText} )
+                                </button>
+                              )}
+
+                              {act.subLinkText && (
+                                <button
+                                  onClick={() => setSampleCallData(act.sampleCall)}
+                                  className="font-bold text-[#005696] hover:text-[#003865] hover:underline cursor-pointer ml-1 inline-flex items-center gap-0.5"
+                                >
+                                  ( {act.subLinkText} )
+                                </button>
+                              )}
+                            </div>
+
+                            {act.boldNote && (
+                              <p className="font-black text-slate-900 text-xs pt-1">
+                                {act.boldNote}
+                              </p>
                             )}
                           </div>
-
-                          {act.boldNote && (
-                            <p className="font-black text-slate-900 text-xs pt-1">
-                              {act.boldNote}
-                            </p>
-                          )}
-                        </div>
-                      ))}
+                        );
+                      })}
                     </td>
 
                   </tr>
@@ -763,6 +792,797 @@ export default function FTTHFAQPage() {
                 </button>
               </div>
             </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* ======================================================== */}
+      {/* 9. OFFICIAL ONT NOT WORKING PDF VIEWER MODAL             */}
+      {/* ======================================================== */}
+      <AnimatePresence>
+        {showOntPdfModal && (
+          <div className="fixed inset-0 z-50 flex flex-col bg-[#262626] text-white overflow-hidden animate-in fade-in duration-200">
+            
+            {/* Top SharePoint / PDF Reader Dark Toolbar matching screenshot */}
+            <div className="bg-[#262626] border-b border-white/10 px-3 sm:px-5 py-2 flex items-center justify-between text-xs select-none shrink-0 shadow-md">
+              
+              {/* Left Icons: Sidebar toggle | Download, Star, Info, More */}
+              <div className="flex items-center gap-2 sm:gap-3 text-slate-300">
+                <button
+                  title="Document Thumbnails"
+                  className="p-1 rounded hover:bg-white/10 hover:text-white transition-colors"
+                >
+                  <FileText className="w-4 h-4" />
+                </button>
+
+                <div className="h-4 w-px bg-slate-600"></div>
+
+                <button
+                  onClick={() => window.print()}
+                  title="Download / Print PDF"
+                  className="p-1 rounded hover:bg-white/10 hover:text-white transition-colors"
+                >
+                  <Download className="w-4 h-4" />
+                </button>
+
+                <button
+                  title="Star Favorite"
+                  className="p-1 rounded hover:bg-white/10 hover:text-amber-400 transition-colors"
+                >
+                  <Star className="w-4 h-4" />
+                </button>
+
+                <button
+                  title="Document Information"
+                  className="p-1 rounded hover:bg-white/10 hover:text-white transition-colors"
+                >
+                  <AlertCircle className="w-4 h-4" />
+                </button>
+
+                <button
+                  title="More Options"
+                  className="p-1 rounded hover:bg-white/10 hover:text-white transition-colors font-bold text-sm tracking-widest px-1.5"
+                >
+                  •••
+                </button>
+              </div>
+
+              {/* Center: Red Adobe PDF badge + File Name */}
+              <div className="flex items-center gap-2 mx-2 truncate">
+                <div className="bg-red-600 text-white rounded-xs px-1.5 py-0.5 text-[10px] font-black tracking-wider flex items-center justify-center shadow-xs">
+                  PDF
+                </div>
+                <span className="text-xs sm:text-sm font-semibold text-white tracking-tight truncate">
+                  ONT NOT WORKING.pdf
+                </span>
+              </div>
+
+              {/* Right: Avatar, Teams chat, Viewing, Open, Share, Close */}
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <div
+                  title="User Profile: GJ"
+                  className="w-6 h-6 rounded-full bg-teal-600 border border-teal-300 flex items-center justify-center font-bold text-[10px] text-white shadow-2xs"
+                >
+                  GJ
+                </div>
+
+                <button
+                  title="Teams Conversation"
+                  className="p-1 rounded hover:bg-white/10 text-slate-300 hover:text-white transition-colors hidden sm:inline-flex"
+                >
+                  <MessageSquare className="w-4 h-4" />
+                </button>
+
+                <button
+                  className="hidden md:flex items-center gap-1 text-[11px] text-slate-200 hover:bg-white/10 px-2 py-1 rounded transition-colors"
+                >
+                  <Eye className="w-3.5 h-3.5 text-slate-300" />
+                  <span>Viewing</span>
+                  <ChevronDown className="w-3 h-3 text-slate-400" />
+                </button>
+
+                <button
+                  className="hidden lg:flex items-center gap-1 text-[11px] text-slate-200 hover:bg-white/10 px-2 py-1 rounded transition-colors"
+                >
+                  <ExternalLink className="w-3.5 h-3.5 text-slate-300" />
+                  <span>Open</span>
+                  <ChevronDown className="w-3 h-3 text-slate-400" />
+                </button>
+
+                <button
+                  className="hidden sm:flex items-center gap-1 text-[11px] text-slate-200 hover:bg-white/10 px-2 py-1 rounded transition-colors"
+                >
+                  <Share2 className="w-3.5 h-3.5 text-slate-300" />
+                  <span>Share</span>
+                  <ChevronDown className="w-3 h-3 text-slate-400" />
+                </button>
+
+                <button
+                  onClick={() => setShowOntPdfModal(false)}
+                  title="Close PDF Viewer"
+                  className="p-1 rounded text-slate-300 hover:text-white hover:bg-red-600/40 transition-colors ml-1"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+            </div>
+
+            {/* Sub Toolbar / Zoom & TT Action Helper */}
+            <div className="bg-[#1f1f1f] px-4 py-1.5 flex items-center justify-between text-xs text-slate-400 border-b border-black/40">
+              <div className="flex items-center gap-3">
+                <span className="text-[11px] text-slate-400">Page 1 of 1</span>
+                <span className="text-slate-600">|</span>
+                <button
+                  onClick={() => setZoomLevel(Math.max(60, zoomLevel - 15))}
+                  title="Zoom Out"
+                  className="p-1 hover:text-white hover:bg-white/10 rounded"
+                >
+                  <ZoomOut className="w-3.5 h-3.5" />
+                </button>
+                <span className="text-[11px] font-mono text-slate-300 min-w-[3rem] text-center">{zoomLevel}%</span>
+                <button
+                  onClick={() => setZoomLevel(Math.min(150, zoomLevel + 15))}
+                  title="Zoom In"
+                  className="p-1 hover:text-white hover:bg-white/10 rounded"
+                >
+                  <ZoomIn className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  onClick={() => setZoomLevel(100)}
+                  className="text-[10px] uppercase font-bold px-1.5 py-0.5 bg-white/5 hover:bg-white/15 rounded text-slate-300"
+                >
+                  Reset
+                </button>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => {
+                    const ttText = `Target Work Group: AREA-CPE-MTCE\nFault Complaint: ONT Not Working / Power Failure\nAction Taken: Verified Power LED indicator, guided customer to test power button and power adapter/socket. Device completely non-operational. Escalated for on-site CPE maintenance swap.`;
+                    navigator.clipboard.writeText(ttText);
+                    setTtCopied(true);
+                    setTimeout(() => setTtCopied(false), 2500);
+                  }}
+                  className="px-2.5 py-1 bg-red-600/90 hover:bg-red-600 text-white rounded text-[11px] font-bold flex items-center gap-1.5 shadow-xs transition-colors"
+                >
+                  {ttCopied ? <Check className="w-3 h-3 text-emerald-300" /> : <Copy className="w-3 h-3" />}
+                  <span>{ttCopied ? 'TT Copied to Clipboard!' : 'Copy TT AREA-CPE-MTCE'}</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Main Viewer Body with Centered White Page */}
+            <div className="flex-1 bg-[#3c4043] overflow-y-auto p-4 sm:p-8 flex justify-center items-start">
+              <div
+                style={{ transform: `scale(${zoomLevel / 100})`, transformOrigin: 'top center' }}
+                className="bg-white text-black shadow-[0_20px_50px_rgba(0,0,0,0.7)] rounded-xs w-full max-w-[800px] min-h-[920px] p-6 sm:p-10 relative transition-transform duration-150"
+              >
+                
+                {/* SVG Vector Flowchart matching exact official diagram */}
+                <svg
+                  viewBox="0 0 800 720"
+                  className="w-full h-auto select-none font-sans"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <defs>
+                    {/* Solid black drop shadow matching Visio / PowerPoint neubrutalist style */}
+                    <filter id="retroShadow" x="-15%" y="-15%" width="130%" height="130%">
+                      <feDropShadow dx="4" dy="4" stdDeviation="0" floodColor="#000000" floodOpacity="1" />
+                    </filter>
+                    <filter id="retroShadowSm" x="-15%" y="-15%" width="130%" height="130%">
+                      <feDropShadow dx="3" dy="3" stdDeviation="0" floodColor="#000000" floodOpacity="1" />
+                    </filter>
+                    {/* Sharp black arrowhead marker */}
+                    <marker id="arrow" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+                      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#000000" />
+                    </marker>
+                  </defs>
+
+                  {/* Flowchart Header */}
+                  <text
+                    x="410"
+                    y="32"
+                    textAnchor="middle"
+                    fontWeight="900"
+                    fontSize="28"
+                    fontFamily="Arial, Helvetica, sans-serif"
+                    fill="#000000"
+                    letterSpacing="0.5"
+                  >
+                    ONT NOT WORKING
+                  </text>
+
+                  {/* ROOT NODE: Check the Power indicator in ONT */}
+                  <g>
+                    <rect
+                      x="235"
+                      y="54"
+                      width="350"
+                      height="46"
+                      rx="23"
+                      ry="23"
+                      fill="#ffffff"
+                      stroke="#000000"
+                      strokeWidth="2.5"
+                      filter="url(#retroShadow)"
+                    />
+                    <text
+                      x="410"
+                      y="82"
+                      textAnchor="middle"
+                      fontWeight="bold"
+                      fontSize="14.5"
+                      fontFamily="Arial, Helvetica, sans-serif"
+                      fill="#000000"
+                    >
+                      Check the Power indicator in ONT
+                    </text>
+                  </g>
+
+                  {/* FORK ARROWS DOWN TO OFF AND ON */}
+                  <path d="M 320 100 L 320 138" stroke="#000000" strokeWidth="2.5" markerEnd="url(#arrow)" />
+                  <path d="M 520 100 L 520 138" stroke="#000000" strokeWidth="2.5" markerEnd="url(#arrow)" />
+
+                  {/* OFF NODE */}
+                  <g>
+                    <rect
+                      x="270"
+                      y="138"
+                      width="100"
+                      height="30"
+                      rx="15"
+                      ry="15"
+                      fill="#ffffff"
+                      stroke="#000000"
+                      strokeWidth="2"
+                      filter="url(#retroShadowSm)"
+                    />
+                    <text
+                      x="320"
+                      y="158"
+                      textAnchor="middle"
+                      fontWeight="bold"
+                      fontSize="13"
+                      fontFamily="Arial, Helvetica, sans-serif"
+                      fill="#000000"
+                    >
+                      OFF
+                    </text>
+                  </g>
+
+                  {/* ON NODE */}
+                  <g>
+                    <rect
+                      x="470"
+                      y="138"
+                      width="100"
+                      height="30"
+                      rx="15"
+                      ry="15"
+                      fill="#ffffff"
+                      stroke="#000000"
+                      strokeWidth="2"
+                      filter="url(#retroShadowSm)"
+                    />
+                    <text
+                      x="520"
+                      y="158"
+                      textAnchor="middle"
+                      fontWeight="bold"
+                      fontSize="13"
+                      fontFamily="Arial, Helvetica, sans-serif"
+                      fill="#000000"
+                    >
+                      ON
+                    </text>
+                  </g>
+
+                  {/* ================= LEFT BRANCH (OFF) ================= */}
+                  {/* Arrow from OFF down to Switch on by the Power button */}
+                  <path d="M 320 168 L 320 206" stroke="#000000" strokeWidth="2.5" markerEnd="url(#arrow)" />
+
+                  {/* Green Node: Switch on by the Power button in ONT */}
+                  <g>
+                    <rect
+                      x="195"
+                      y="206"
+                      width="250"
+                      height="42"
+                      rx="21"
+                      ry="21"
+                      fill="#5cb85c"
+                      stroke="#000000"
+                      strokeWidth="2"
+                      filter="url(#retroShadow)"
+                    />
+                    <text
+                      x="320"
+                      y="223"
+                      textAnchor="middle"
+                      fontWeight="bold"
+                      fontSize="11.5"
+                      fontFamily="Arial, Helvetica, sans-serif"
+                      fill="#000000"
+                    >
+                      Switch on by the Power button
+                    </text>
+                    <text
+                      x="320"
+                      y="237"
+                      textAnchor="middle"
+                      fontWeight="bold"
+                      fontSize="11.5"
+                      fontFamily="Arial, Helvetica, sans-serif"
+                      fill="#000000"
+                    >
+                      in ONT
+                    </text>
+                  </g>
+
+                  {/* Arrow Left to END */}
+                  <path d="M 195 227 L 140 227" stroke="#000000" strokeWidth="2.5" markerEnd="url(#arrow)" />
+                  <text
+                    x="170"
+                    y="218"
+                    textAnchor="middle"
+                    fontWeight="bold"
+                    fontSize="11"
+                    fill="#00b050"
+                    fontFamily="Arial, Helvetica, sans-serif"
+                  >
+                    Working
+                  </text>
+                  <text
+                    x="130"
+                    y="231"
+                    textAnchor="end"
+                    fontWeight="900"
+                    fontSize="13"
+                    fill="#00b050"
+                    fontFamily="Arial, Helvetica, sans-serif"
+                  >
+                    END
+                  </text>
+
+                  {/* Arrow Down from Switch on... to Check charger */}
+                  <path d="M 320 248 L 320 292" stroke="#000000" strokeWidth="2.5" markerEnd="url(#arrow)" />
+                  <text
+                    x="310"
+                    y="273"
+                    textAnchor="end"
+                    fontWeight="bold"
+                    fontSize="11"
+                    fill="#e11d48"
+                    fontFamily="Arial, Helvetica, sans-serif"
+                  >
+                    Not Working
+                  </text>
+
+                  {/* Green Node: Check whether the power charger is connected properly */}
+                  <g>
+                    <rect
+                      x="185"
+                      y="292"
+                      width="270"
+                      height="42"
+                      rx="21"
+                      ry="21"
+                      fill="#5cb85c"
+                      stroke="#000000"
+                      strokeWidth="2"
+                      filter="url(#retroShadow)"
+                    />
+                    <text
+                      x="320"
+                      y="309"
+                      textAnchor="middle"
+                      fontWeight="bold"
+                      fontSize="11.5"
+                      fontFamily="Arial, Helvetica, sans-serif"
+                      fill="#000000"
+                    >
+                      Check whether the power charger is
+                    </text>
+                    <text
+                      x="320"
+                      y="323"
+                      textAnchor="middle"
+                      fontWeight="bold"
+                      fontSize="11.5"
+                      fontFamily="Arial, Helvetica, sans-serif"
+                      fill="#000000"
+                    >
+                      connected properly
+                    </text>
+                  </g>
+
+                  {/* Left Branch from Check charger to Connect Power Charger properly */}
+                  <path d="M 185 313 L 130 313 L 130 348" stroke="#000000" strokeWidth="2.5" markerEnd="url(#arrow)" fill="none" />
+                  <text
+                    x="160"
+                    y="305"
+                    textAnchor="middle"
+                    fontWeight="bold"
+                    fontSize="11"
+                    fill="#e11d48"
+                    fontFamily="Arial, Helvetica, sans-serif"
+                  >
+                    No
+                  </text>
+
+                  {/* Green Node: Connect Power Charger properly */}
+                  <g>
+                    <rect
+                      x="45"
+                      y="348"
+                      width="170"
+                      height="42"
+                      rx="21"
+                      ry="21"
+                      fill="#5cb85c"
+                      stroke="#000000"
+                      strokeWidth="2"
+                      filter="url(#retroShadow)"
+                    />
+                    <text
+                      x="130"
+                      y="365"
+                      textAnchor="middle"
+                      fontWeight="bold"
+                      fontSize="11.5"
+                      fontFamily="Arial, Helvetica, sans-serif"
+                      fill="#000000"
+                    >
+                      Connect Power Charger
+                    </text>
+                    <text
+                      x="130"
+                      y="379"
+                      textAnchor="middle"
+                      fontWeight="bold"
+                      fontSize="11.5"
+                      fontFamily="Arial, Helvetica, sans-serif"
+                      fill="#000000"
+                    >
+                      properly
+                    </text>
+                  </g>
+
+                  {/* Arrow down from Connect Power Charger properly to END */}
+                  <path d="M 130 390 L 130 422" stroke="#000000" strokeWidth="2.5" markerEnd="url(#arrow)" />
+                  <text
+                    x="130"
+                    y="440"
+                    textAnchor="middle"
+                    fontWeight="900"
+                    fontSize="13"
+                    fill="#00b050"
+                    fontFamily="Arial, Helvetica, sans-serif"
+                  >
+                    END
+                  </text>
+
+                  {/* Line from Check charger to Red TT Node */}
+                  {/* Goes down from 320 to 460, right to 520, UP into bottom of red box at 414 */}
+                  <path d="M 320 334 L 320 460 L 520 460 L 520 414" stroke="#000000" strokeWidth="2.5" markerEnd="url(#arrow)" fill="none" />
+                  <text
+                    x="420"
+                    y="445"
+                    textAnchor="middle"
+                    fontWeight="bold"
+                    fontSize="11"
+                    fill="#000000"
+                    fontFamily="Arial, Helvetica, sans-serif"
+                  >
+                    Connected properly
+                  </text>
+                  <text
+                    x="420"
+                    y="457"
+                    textAnchor="middle"
+                    fontWeight="bold"
+                    fontSize="11"
+                    fill="#000000"
+                    fontFamily="Arial, Helvetica, sans-serif"
+                  >
+                    but not working
+                  </text>
+
+                  {/* ================= RIGHT BRANCH (ON) ================= */}
+                  {/* Arrow from ON down to Switch off switch on the ONT (RESTART) */}
+                  <path d="M 520 168 L 520 206" stroke="#000000" strokeWidth="2.5" markerEnd="url(#arrow)" />
+
+                  {/* Green Node: Switch off switch on the ONT (RESTART) */}
+                  <g>
+                    <rect
+                      x="395"
+                      y="206"
+                      width="250"
+                      height="42"
+                      rx="21"
+                      ry="21"
+                      fill="#5cb85c"
+                      stroke="#000000"
+                      strokeWidth="2"
+                      filter="url(#retroShadow)"
+                    />
+                    <text
+                      x="520"
+                      y="223"
+                      textAnchor="middle"
+                      fontWeight="bold"
+                      fontSize="11.5"
+                      fontFamily="Arial, Helvetica, sans-serif"
+                      fill="#000000"
+                    >
+                      Switch off switch on the ONT
+                    </text>
+                    <text
+                      x="520"
+                      y="237"
+                      textAnchor="middle"
+                      fontWeight="bold"
+                      fontSize="11.5"
+                      fontFamily="Arial, Helvetica, sans-serif"
+                      fill="#000000"
+                    >
+                      (RESTART)
+                    </text>
+                  </g>
+
+                  {/* Arrow Right to END */}
+                  <path d="M 645 227 L 700 227" stroke="#000000" strokeWidth="2.5" markerEnd="url(#arrow)" />
+                  <text
+                    x="670"
+                    y="218"
+                    textAnchor="middle"
+                    fontWeight="bold"
+                    fontSize="11"
+                    fill="#00b050"
+                    fontFamily="Arial, Helvetica, sans-serif"
+                  >
+                    Working
+                  </text>
+                  <text
+                    x="708"
+                    y="231"
+                    textAnchor="start"
+                    fontWeight="900"
+                    fontSize="13"
+                    fill="#00b050"
+                    fontFamily="Arial, Helvetica, sans-serif"
+                  >
+                    END
+                  </text>
+
+                  {/* Arrow down from RESTART to Lavender Note */}
+                  <path d="M 520 248 L 520 274" stroke="#000000" strokeWidth="2.5" markerEnd="url(#arrow)" />
+
+                  {/* Lavender Node: Restart means,Switch off and on... */}
+                  <g>
+                    <rect
+                      x="375"
+                      y="274"
+                      width="290"
+                      height="52"
+                      rx="24"
+                      ry="24"
+                      fill="#d8b4fe"
+                      stroke="#000000"
+                      strokeWidth="2"
+                      filter="url(#retroShadow)"
+                    />
+                    <text
+                      x="520"
+                      y="290"
+                      textAnchor="middle"
+                      fontWeight="bold"
+                      fontSize="10"
+                      fontFamily="Arial, Helvetica, sans-serif"
+                      fill="#000000"
+                    >
+                      Restart means,Switch off and on from the
+                    </text>
+                    <text
+                      x="520"
+                      y="303"
+                      textAnchor="middle"
+                      fontWeight="bold"
+                      fontSize="10"
+                      fontFamily="Arial, Helvetica, sans-serif"
+                      fill="#000000"
+                    >
+                      power button/power socket or unplug from
+                    </text>
+                    <text
+                      x="520"
+                      y="316"
+                      textAnchor="middle"
+                      fontWeight="bold"
+                      fontSize="10"
+                      fontFamily="Arial, Helvetica, sans-serif"
+                      fill="#000000"
+                    >
+                      the power adapter
+                    </text>
+                  </g>
+
+                  {/* Arrow down from Lavender Note to Red TT Node */}
+                  <path d="M 520 326 L 520 366" stroke="#000000" strokeWidth="2.5" markerEnd="url(#arrow)" />
+                  <text
+                    x="530"
+                    y="348"
+                    textAnchor="start"
+                    fontWeight="bold"
+                    fontSize="11"
+                    fill="#e11d48"
+                    fontFamily="Arial, Helvetica, sans-serif"
+                  >
+                    Not Working
+                  </text>
+
+                  {/* RED TARGET NODE: Create a TT to AREA-CPE-MTCE */}
+                  <g
+                    className="cursor-pointer"
+                    onClick={() => {
+                      const ttText = `Target Work Group: AREA-CPE-MTCE\nFault Complaint: ONT Not Working / Power Failure\nAction Taken: Verified Power LED indicator, guided customer to test power button and power adapter/socket. Device completely non-operational. Escalated for on-site CPE maintenance swap.`;
+                      navigator.clipboard.writeText(ttText);
+                      setTtCopied(true);
+                      setTimeout(() => setTtCopied(false), 2500);
+                    }}
+                  >
+                    <rect
+                      x="410"
+                      y="366"
+                      width="220"
+                      height="44"
+                      rx="22"
+                      ry="22"
+                      fill="#ef4444"
+                      stroke="#000000"
+                      strokeWidth="2.5"
+                      filter="url(#retroShadow)"
+                    />
+                    <text
+                      x="520"
+                      y="384"
+                      textAnchor="middle"
+                      fontWeight="900"
+                      fontSize="12.5"
+                      fontFamily="Arial, Helvetica, sans-serif"
+                      fill="#000000"
+                    >
+                      Create a TT to
+                    </text>
+                    <text
+                      x="520"
+                      y="399"
+                      textAnchor="middle"
+                      fontWeight="900"
+                      fontSize="12.5"
+                      fontFamily="Arial, Helvetica, sans-serif"
+                      fill="#000000"
+                    >
+                      AREA-CPE-MTCE
+                    </text>
+                  </g>
+
+                  {/* ================= BOTTOM NOTES ================= */}
+                  {/* Lavender Note 1: theres no power button in TENDA ONT... */}
+                  <g>
+                    <rect
+                      x="250"
+                      y="545"
+                      width="320"
+                      height="46"
+                      rx="23"
+                      ry="23"
+                      fill="#d8b4fe"
+                      stroke="#000000"
+                      strokeWidth="2"
+                      filter="url(#retroShadow)"
+                    />
+                    <text
+                      x="410"
+                      y="560"
+                      textAnchor="middle"
+                      fontWeight="bold"
+                      fontSize="10.5"
+                      fontFamily="Arial, Helvetica, sans-serif"
+                      fill="#000000"
+                    >
+                      theres no power button in TENDA ONT
+                    </text>
+                    <text
+                      x="410"
+                      y="572"
+                      textAnchor="middle"
+                      fontWeight="bold"
+                      fontSize="10.5"
+                      fontFamily="Arial, Helvetica, sans-serif"
+                      fill="#000000"
+                    >
+                      inform customer to switch off
+                    </text>
+                    <text
+                      x="410"
+                      y="584"
+                      textAnchor="middle"
+                      fontWeight="bold"
+                      fontSize="10.5"
+                      fontFamily="Arial, Helvetica, sans-serif"
+                      fill="#000000"
+                    >
+                      the power from the wall socket.
+                    </text>
+                  </g>
+
+                  {/* Lavender Note 2: TT Description is mandatory... */}
+                  <g>
+                    <rect
+                      x="200"
+                      y="608"
+                      width="420"
+                      height="64"
+                      rx="28"
+                      ry="28"
+                      fill="#d8b4fe"
+                      stroke="#000000"
+                      strokeWidth="2"
+                      filter="url(#retroShadow)"
+                    />
+                    <text
+                      x="410"
+                      y="626"
+                      textAnchor="middle"
+                      fontWeight="bold"
+                      fontSize="11"
+                      fontFamily="Arial, Helvetica, sans-serif"
+                      fill="#000000"
+                    >
+                      TT Description is mandatory. Ensure the TT
+                    </text>
+                    <text
+                      x="410"
+                      y="641"
+                      textAnchor="middle"
+                      fontWeight="bold"
+                      fontSize="11"
+                      fontFamily="Arial, Helvetica, sans-serif"
+                      fill="#000000"
+                    >
+                      description clearly matches the customer's
+                    </text>
+                    <text
+                      x="410"
+                      y="655"
+                      textAnchor="middle"
+                      fontWeight="bold"
+                      fontSize="11"
+                      fontFamily="Arial, Helvetica, sans-serif"
+                      fill="#000000"
+                    >
+                      reported complaint and includes all
+                    </text>
+                    <text
+                      x="410"
+                      y="669"
+                      textAnchor="middle"
+                      fontWeight="bold"
+                      fontSize="11"
+                      fontFamily="Arial, Helvetica, sans-serif"
+                      fill="#000000"
+                    >
+                      relevant troubleshooting details.
+                    </text>
+                  </g>
+
+                </svg>
+
+              </div>
+            </div>
+
           </div>
         )}
       </AnimatePresence>
