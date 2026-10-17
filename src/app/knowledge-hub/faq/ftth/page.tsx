@@ -565,38 +565,54 @@ export default function FTTHFAQPage() {
                         return (
                           <div key={aIdx} className="space-y-1">
                             <div className="flex items-baseline flex-wrap gap-1.5 leading-relaxed">
-                              <span
-                                onClick={() => {
-                                  if (isOntFlowchart) setShowOntPdfModal(true);
-                                }}
-                                className={`font-semibold text-slate-800 text-xs ${
-                                  isOntFlowchart
-                                    ? 'cursor-pointer hover:text-[#005696] hover:underline font-bold text-[#005696]'
-                                    : ''
-                                }`}
-                              >
-                                {act.text}
-                              </span>
+                              {isOntFlowchart ? (
+                                <>
+                                  <Link
+                                    href="/knowledge-hub/faq/ftth/ont-not-working"
+                                    className="font-bold text-[#005696] hover:text-[#003865] hover:underline cursor-pointer flex items-center gap-1.5"
+                                  >
+                                    <span>{act.text}</span>
+                                    <span className="px-1.5 py-0.2 rounded bg-blue-100 text-[#005696] font-bold text-[10px]">
+                                      Interactive Guide
+                                    </span>
+                                  </Link>
 
-                              {act.redNote && (
-                                <span className="text-red-600 font-bold text-xs">
-                                  {act.redNote}
-                                </span>
-                              )}
+                                  <Link
+                                    href="/knowledge-hub/faq/ftth/ont-not-working"
+                                    className="font-bold text-[#005696] hover:text-[#003865] hover:underline cursor-pointer ml-1 inline-flex items-center gap-0.5 text-xs"
+                                  >
+                                    ( View Interactive Guide )
+                                  </Link>
 
-                              {act.linkText && (
-                                <button
-                                  onClick={() => {
-                                    if (isOntFlowchart) {
-                                      setShowOntPdfModal(true);
-                                    } else {
-                                      setActiveModalData(act.content);
-                                    }
-                                  }}
-                                  className="font-bold text-[#005696] hover:text-[#003865] hover:underline cursor-pointer ml-1 inline-flex items-center gap-0.5"
-                                >
-                                  ( {act.linkText} )
-                                </button>
+                                  <button
+                                    onClick={() => setShowOntPdfModal(true)}
+                                    className="text-slate-500 hover:text-slate-700 hover:underline cursor-pointer ml-1 text-[11px]"
+                                    title="View SharePoint PDF viewer layout"
+                                  >
+                                    ( PDF )
+                                  </button>
+                                </>
+                              ) : (
+                                <>
+                                  <span className="font-semibold text-slate-800 text-xs">
+                                    {act.text}
+                                  </span>
+
+                                  {act.redNote && (
+                                    <span className="text-red-600 font-bold text-xs">
+                                      {act.redNote}
+                                    </span>
+                                  )}
+
+                                  {act.linkText && (
+                                    <button
+                                      onClick={() => setActiveModalData(act.content)}
+                                      className="font-bold text-[#005696] hover:text-[#003865] hover:underline cursor-pointer ml-1 inline-flex items-center gap-0.5"
+                                    >
+                                      ( {act.linkText} )
+                                    </button>
+                                  )}
+                                </>
                               )}
 
                               {act.subLinkText && (

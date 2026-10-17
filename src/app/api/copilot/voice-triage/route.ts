@@ -280,8 +280,58 @@ function extractFaultRulesFallback(text: string) {
     }
   }
 
-  // 6. Router or STB fault
-  if (lower.includes('stb') || lower.includes('router faulty') || lower.includes('router eka wada na') || lower.includes('ont router dead')) {
+  // 6. Router or STB fault / ONT Not Working
+  const isOntFault =
+    lower.includes('ont not working') ||
+    lower.includes('ont wada na') ||
+    lower.includes('ont eka dead') ||
+    lower.includes('ont dead') ||
+    lower.includes('ont eka wada na') ||
+    lower.includes('ont power') ||
+    lower.includes('power indicator') ||
+    lower.includes('tenda ont') ||
+    lower.includes('power adapter') ||
+    lower.includes('power charger') ||
+    lower.includes('ont light na') ||
+    lower.includes('ont on wenne na') ||
+    lower.includes('router eka on wenne na') ||
+    lower.includes('ont router dead') ||
+    (lower.includes('ont') && (lower.includes('off') || lower.includes('dead') || lower.includes('faulty') || lower.includes('broken')));
+
+  if (isOntFault) {
+    return {
+      transcription: text,
+      detected_language: lower.includes('eka') || lower.includes('wada') ? 'Singlish' : 'English',
+      customer_intent: 'FAULT_REPORTING',
+      asset_type: ASSET_TYPES.ROUTER,
+      symptom: 'ONT Not Working / Power Failure (Hardware Dead)',
+      technical_context: {
+        pon_status: PON_STATUS.OFF,
+        measured_speed_mbps: null,
+        game_name: null,
+        ping_delay_ms: null,
+        addon_name: null,
+        error_message: null,
+        device_age_months: null,
+      },
+      billing_context: { channel_type: null, amount: null, transaction_date: null },
+      pre_check_flags: { ldap_checked: true, gb_portal_checked: false, peotv_admin_checked: false, low_pay_bill_verified: false },
+      suggested_rule_code: 'RULE_STB_ONT_ROUTER_FAULTY',
+      target_workgroup: 'AREA-CPE-MTCE',
+      action_type: ACTION_TYPES.DIRECT_TT,
+      operational_advice: 'Follow official Decision Flowchart: Check Power LED -> Toggle power button / restart -> Verify charger connection. If device remains unresponsive, dispatch Trouble Ticket to AREA-CPE-MTCE.',
+      routing_reason: 'Confirmed premises ONT hardware/power failure -> Dispatch to AREA-CPE-MTCE for device replacement.',
+      knowledge_article: {
+        title: 'ONT Not Working - Interactive Diagnostic Decision Guide',
+        url: '/knowledge-hub/faq/ftth/ont-not-working',
+        summary: 'Step 1: Check Power LED (OFF/ON) -> Step 2: Toggle Power Button / Restart -> Step 3: Check Power Adapter -> Terminal: Escalate to AREA-CPE-MTCE.',
+        target_group: 'AREA-CPE-MTCE',
+        badge: 'Interactive SOP'
+      }
+    };
+  }
+
+  if (lower.includes('stb') || lower.includes('router faulty') || lower.includes('router eka wada na')) {
     const isAdsl = lower.includes('adsl') || lower.includes('double play');
 
     if (isAdsl) {
@@ -328,10 +378,17 @@ function extractFaultRulesFallback(text: string) {
       billing_context: { channel_type: null, amount: null, transaction_date: null },
       pre_check_flags: { ldap_checked: true, gb_portal_checked: false, peotv_admin_checked: false, low_pay_bill_verified: false },
       suggested_rule_code: 'RULE_STB_ONT_ROUTER_FAULTY',
-      target_workgroup: SUPPORT_GROUPS.AREA_MTCE,
+      target_workgroup: 'AREA-CPE-MTCE',
       action_type: ACTION_TYPES.DIRECT_TT,
-      operational_advice: 'Direct Trouble Ticket to AREA-MTCE for on-site hardware swap and premises inspection.',
-      routing_reason: 'Premises ONT/STB hardware malfunction -> AREA-MTCE field dispatch.',
+      operational_advice: 'Direct Trouble Ticket to AREA-CPE-MTCE for on-site hardware swap and premises inspection.',
+      routing_reason: 'Premises ONT/STB hardware malfunction -> AREA-CPE-MTCE field dispatch.',
+      knowledge_article: {
+        title: 'ONT Not Working - Interactive Diagnostic Decision Guide',
+        url: '/knowledge-hub/faq/ftth/ont-not-working',
+        summary: 'Step 1: Check Power LED (OFF/ON) -> Step 2: Toggle Power Button / Restart -> Step 3: Check Power Adapter -> Terminal: Escalate to AREA-CPE-MTCE.',
+        target_group: 'AREA-CPE-MTCE',
+        badge: 'Interactive SOP'
+      }
     };
   }
 
@@ -459,6 +516,25 @@ export async function POST(request: Request) {
         slt_number: customerPhone,
         service_type: 'FTTH',
       },
+      knowledge_article:
+        triageResult.knowledge_article ||
+        (triageResult.suggested_rule_code === 'RULE_STB_ONT_ROUTER_FAULTY'
+          ? {
+              title: 'ONT Not Working - Interactive Diagnostic Decision Guide',
+              url: '/knowledge-hub/faq/ftth/ont-not-working',
+              summary: 'Check Power LED: If OFF, press power button & verify charger; If ON, restart. Unresolved -> dispatch to AREA-CPE-MTCE.',
+              target_group: 'AREA-CPE-MTCE',
+              badge: 'Interactive SOP'
+            }
+          : triageResult.suggested_rule_code === 'RULE_LOS_RED'
+          ? {
+              title: 'PON / LOS Indicator Diagnostic Matrix',
+              url: '/knowledge-hub/faq/ftth',
+              summary: 'LOS Red indicates fiber cut/signal loss. Verify LDAP/GB Portal and dispatch to AREA-MTCE.',
+              target_group: 'AREA-MTCE',
+              badge: 'FTTH FAQ'
+            }
+          : null),
       timestamp: new Date().toISOString(),
     });
   } catch (error: any) {

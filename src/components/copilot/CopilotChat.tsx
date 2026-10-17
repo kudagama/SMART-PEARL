@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Bot, Sparkles, AlertCircle, Phone, Copy, CheckCircle2, MapPin, X, MessageSquare, Flag, ExternalLink, Mic, MicOff, Wrench, Target, Send } from 'lucide-react';
+import { Bot, Sparkles, AlertCircle, Phone, Copy, CheckCircle2, MapPin, X, MessageSquare, Flag, ExternalLink, Mic, MicOff, Wrench, Target, Send, BookOpen, ArrowRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 
@@ -18,6 +18,7 @@ type Message = {
     operational_advice: string;
     rule: { code: string; name: string };
     asset_type: string;
+    knowledge_article?: { title: string; url: string; summary: string; badge?: string };
   };
 };
 
@@ -132,7 +133,8 @@ export default function CopilotChat() {
               routing_reason: triageData.triage.routing_reason,
               operational_advice: triageData.triage.operational_advice,
               rule: triageData.rule,
-              asset_type: triageData.asset_type
+              asset_type: triageData.asset_type,
+              knowledge_article: triageData.knowledge_article
             }
           };
           setMessages(prev => [...prev, assistantMsg]);
@@ -234,6 +236,25 @@ export default function CopilotChat() {
                         <div className="p-2.5 bg-black/30 rounded-lg text-xs text-amber-200 border border-amber-500/30">
                           {msg.triage.operational_advice}
                         </div>
+                      )}
+                      {msg.triage.knowledge_article && (
+                        <Link
+                          href={msg.triage.knowledge_article.url}
+                          className="p-2.5 bg-cyan-950/70 hover:bg-cyan-900/80 rounded-lg border border-cyan-400/40 hover:border-cyan-300 text-cyan-200 flex items-center justify-between group transition-all text-xs"
+                        >
+                          <div className="flex items-center gap-2 overflow-hidden">
+                            <BookOpen className="w-4 h-4 text-cyan-400 shrink-0" />
+                            <div className="truncate">
+                              <span className="font-bold text-white block text-[11px] group-hover:text-cyan-200 transition-colors">
+                                {msg.triage.knowledge_article.title}
+                              </span>
+                              <span className="text-[10px] text-cyan-300/80 block truncate">
+                                {msg.triage.knowledge_article.summary}
+                              </span>
+                            </div>
+                          </div>
+                          <ArrowRight className="w-3.5 h-3.5 text-cyan-400 group-hover:translate-x-1 transition-transform shrink-0 ml-1.5" />
+                        </Link>
                       )}
                     </div>
                   )}

@@ -224,7 +224,7 @@ export default function DashboardPage() {
 
   // Render high-impact Telecom Fault Triage & Workgroup Card
   const renderFaultTriageCard = (data: any) => {
-    const { triage, rule, technical_context, billing_context, pre_check_flags, transcription, asset_type } = data;
+    const { triage, rule, technical_context, billing_context, pre_check_flags, transcription, asset_type, knowledge_article } = data;
 
     const groupStyles: Record<string, { bg: string; text: string; border: string; glow: string; badge: string }> = {
       'MDF': { bg: 'from-blue-950 via-cyan-900 to-slate-900', text: 'text-cyan-300', border: 'border-cyan-500/50', glow: 'shadow-cyan-500/20', badge: 'bg-cyan-400 text-cyan-950 font-black' },
@@ -336,6 +336,37 @@ export default function DashboardPage() {
               <p className="font-bold text-[10px] uppercase tracking-wider text-amber-800">Operational Advice / Agent Action</p>
               <p className="leading-relaxed">{triage.operational_advice}</p>
             </div>
+          )}
+
+          {/* Knowledge Hub Interactive Guide Link */}
+          {(knowledge_article || rule?.code === 'RULE_STB_ONT_ROUTER_FAULTY') && (
+            <Link
+              href={knowledge_article?.url || '/knowledge-hub/faq/ftth/ont-not-working'}
+              className="p-3 rounded-xl bg-blue-50/90 border border-blue-200 hover:border-[#005696] text-blue-950 flex items-center justify-between group transition-all shadow-xs"
+            >
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-lg bg-[#005696] text-white shrink-0 group-hover:bg-[#00477d] transition-colors">
+                  <BookOpen className="w-4 h-4" />
+                </div>
+                <div className="space-y-0.5">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-[#005696]">
+                      {knowledge_article?.badge || 'Interactive SOP Decision Tree'}
+                    </span>
+                    <span className="text-[9px] px-1.5 py-0.2 rounded bg-emerald-100 text-emerald-800 font-bold">
+                      Knowledge Hub
+                    </span>
+                  </div>
+                  <h5 className="font-bold text-xs text-slate-900 group-hover:text-[#005696] transition-colors">
+                    {knowledge_article?.title || 'ONT Not Working - Interactive Diagnostic Guide'}
+                  </h5>
+                  <p className="text-[11px] text-slate-600 line-clamp-1">
+                    {knowledge_article?.summary || 'Check Power LED: If OFF, press power button; If ON, restart. Unresolved -> dispatch to AREA-CPE-MTCE.'}
+                  </p>
+                </div>
+              </div>
+              <ArrowRight className="w-4 h-4 text-[#005696] group-hover:translate-x-1 transition-transform shrink-0 ml-2" />
+            </Link>
           )}
 
           {/* One-click Action Button */}
