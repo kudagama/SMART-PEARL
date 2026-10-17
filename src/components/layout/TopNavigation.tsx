@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import { Search, Globe, User, HelpCircle, LayoutDashboard, Phone, Signal, Activity } from 'lucide-react';
+import { Search, Globe, User, HelpCircle, LayoutDashboard, Phone, Signal, Activity, Database, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
@@ -11,6 +11,9 @@ export default function TopNavigation() {
   const isEscalation = pathname === '/escalation';
   const isAdmin = pathname?.startsWith('/admin');
   const isLogin = pathname === '/';
+  const isDashboard = pathname === '/dashboard';
+  const isEvaluations = pathname === '/evaluations';
+  const isKnowledgeHub = pathname === '/knowledge-hub';
 
   const toggleLanguage = () => {
     const langs = ['EN', 'SI', 'TA'];
@@ -24,7 +27,7 @@ export default function TopNavigation() {
     <header className="h-14 bg-white border-b border-slate-200 flex items-center justify-between px-4 sm:px-6 shadow-sm z-10 shrink-0">
       {/* Left: Branding & Status */}
       <div className="flex items-center gap-3">
-        <Link href="/dashboard" className="w-8 h-8 bg-[#005696] rounded-md flex items-center justify-center text-white font-bold tracking-tighter hover:bg-[#00407a] transition-colors">
+        <Link href="/dashboard" className="w-8 h-8 bg-[#005696] rounded-md flex items-center justify-center text-white font-bold tracking-tighter hover:bg-[#00407a] transition-colors shadow-xs">
           SLT
         </Link>
         <div>
@@ -73,17 +76,44 @@ export default function TopNavigation() {
       )}
 
       {/* Right: Actions */}
-      <div className="flex items-center gap-3 sm:gap-4">
+      <div className="flex items-center gap-2 sm:gap-3">
         {/* Navigation Links */}
-        <nav className="hidden md:flex items-center gap-4 mr-2">
-          <Link href="/dashboard" className="text-sm font-medium text-slate-600 hover:text-[#005696] transition-colors flex items-center gap-1.5">
-            <Search className="w-4 h-4" />
-            PEARL
+        <nav className="flex items-center gap-1.5 sm:gap-2 mr-1">
+          <Link 
+            href="/dashboard" 
+            className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
+              isDashboard 
+                ? 'bg-[#005696]/10 text-[#005696] border border-[#005696]/20' 
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+            }`}
+          >
+            <Search className="w-3.5 h-3.5" />
+            <span>PEARL</span>
           </Link>
 
-          <Link href="/evaluations" className="text-sm font-medium text-slate-600 hover:text-[#005696] transition-colors flex items-center gap-1.5">
-            <Activity className="w-4 h-4" />
-            Performance
+          <Link 
+            href="/evaluations" 
+            className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
+              isEvaluations 
+                ? 'bg-[#005696]/10 text-[#005696] border border-[#005696]/20' 
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+            }`}
+          >
+            <Activity className="w-3.5 h-3.5" />
+            <span>Performance</span>
+          </Link>
+
+          <Link 
+            href="/knowledge-hub" 
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 shadow-2xs ${
+              isKnowledgeHub 
+                ? 'bg-gradient-to-r from-indigo-600 to-[#005696] text-white shadow-sm ring-2 ring-indigo-300/50' 
+                : 'bg-indigo-50/70 text-indigo-700 hover:bg-indigo-100 border border-indigo-200/80 hover:text-indigo-900'
+            }`}
+          >
+            <Database className={`w-3.5 h-3.5 ${isKnowledgeHub ? 'text-cyan-200 animate-pulse' : 'text-indigo-600'}`} />
+            <span className="font-black tracking-tight">Knowledge Hub</span>
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
           </Link>
         </nav>
 
