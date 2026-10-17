@@ -517,13 +517,16 @@ export default function FAQPage() {
                 Broadband
               </h3>
               <div className="space-y-2.5">
-                <button
-                  onClick={() => openFaq('FAQ-FTTH')}
-                  className="w-full py-2.5 px-3 bg-white hover:bg-cyan-50 text-[#005696] font-bold text-xs rounded-md shadow-md text-left flex items-center gap-2 transition-all hover:scale-[1.02] active:scale-95 border border-slate-200"
+                <Link
+                  href="/knowledge-hub/faq/ftth"
+                  className="w-full py-2.5 px-3 bg-white hover:bg-cyan-50 text-[#005696] font-bold text-xs rounded-md shadow-md text-left flex items-center justify-between transition-all hover:scale-[1.02] active:scale-95 border border-slate-200 group"
                 >
-                  <Globe className="w-4 h-4 text-cyan-600 shrink-0" />
-                  <span>FAQ- FTTH</span>
-                </button>
+                  <span className="flex items-center gap-2">
+                    <Globe className="w-4 h-4 text-cyan-600 shrink-0" />
+                    <span>FAQ- FTTH</span>
+                  </span>
+                  <span className="text-[10px] text-cyan-700 font-semibold opacity-0 group-hover:opacity-100 transition-opacity">Open &rarr;</span>
+                </Link>
 
                 <button
                   onClick={() => openFaq('FAQ-ADSL')}
@@ -676,13 +679,16 @@ export default function FAQPage() {
               </h3>
 
               <div className="space-y-2.5">
-                <button
-                  onClick={() => openFaq('RouterConfig-FTTH')}
-                  className="w-full py-2.5 px-3 bg-white hover:bg-cyan-50 text-[#005696] font-bold text-xs rounded-md shadow-md text-left flex items-center gap-2 transition-all hover:scale-[1.02] active:scale-95"
+                <Link
+                  href="/knowledge-hub/faq/ftth"
+                  className="w-full py-2.5 px-3 bg-white hover:bg-cyan-50 text-[#005696] font-bold text-xs rounded-md shadow-md text-left flex items-center justify-between transition-all hover:scale-[1.02] active:scale-95 group"
                 >
-                  <Globe className="w-4 h-4 text-cyan-600 shrink-0" />
-                  <span>Router Configuration - FTTH</span>
-                </button>
+                  <span className="flex items-center gap-2">
+                    <Globe className="w-4 h-4 text-cyan-600 shrink-0" />
+                    <span>Router Configuration - FTTH</span>
+                  </span>
+                  <span className="text-[10px] text-cyan-700 font-semibold opacity-0 group-hover:opacity-100 transition-opacity">Open &rarr;</span>
+                </Link>
 
                 <button
                   onClick={() => openFaq('RouterConfig-ADSL')}
