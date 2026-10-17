@@ -362,7 +362,158 @@ function extractFaultRulesFallback(text: string) {
     };
   }
 
-  // 4. Unlimited Slowness
+  // 4. Browsing Slow SOP #05 (Official Flowchart: 5. Browzing slow.pdf)
+  const isBrowsingSlow =
+    lower.includes('browsing slow') ||
+    lower.includes('browzing slow') ||
+    lower.includes('browsing eka slow') ||
+    lower.includes('browsing') ||
+    lower.includes('ogb-dc') ||
+    lower.includes('ogb dc') ||
+    lower.includes('usage limit') ||
+    lower.includes('extra gb') ||
+    lower.includes('data iwarai') ||
+    lower.includes('quota exceeded') ||
+    (lower.includes('voice') && lower.includes('noisy'));
+
+  if (isBrowsingSlow) {
+    const isOgbDc = lower.includes('ogb-dc') || lower.includes('ogb dc') || lower.includes('bill arrears') || lower.includes('disconnect bill');
+    const isVoiceNoisy = lower.includes('noisy') || (lower.includes('voice') && (lower.includes('noise') || lower.includes('static') || lower.includes('karas')));
+    const isLimitExceeded = lower.includes('usage limit') || lower.includes('limit exceeded') || lower.includes('extra gb') || lower.includes('data iwarai') || lower.includes('quota exceeded');
+
+    if (isOgbDc) {
+      return {
+        transcription: text,
+        detected_language: lower.includes('eka') ? 'Singlish' : 'English',
+        customer_intent: 'FAULT_REPORTING',
+        asset_type: ASSET_TYPES.DATA,
+        symptom: 'Browsing Slow - Connection Status OGB-DC (Bill Settle Required)',
+        technical_context: {
+          pon_status: PON_STATUS.ON,
+          measured_speed_mbps: null,
+          game_name: null,
+          ping_delay_ms: null,
+          addon_name: null,
+          error_message: null,
+          device_age_months: null,
+        },
+        billing_context: { channel_type: null, amount: null, transaction_date: null },
+        pre_check_flags: { ldap_checked: true, gb_portal_checked: true, peotv_admin_checked: false, low_pay_bill_verified: false },
+        suggested_rule_code: 'RULE_UNLIMITED_SLOWNESS',
+        target_workgroup: 'CUSTOMER_CARE',
+        action_type: ACTION_TYPES.CUSTOMER_SELF_CARE,
+        operational_advice: 'Check connection status in I-Hub/CRM: Status is OGB-DC. Inform Customer to settle the Outstanding bill (END).',
+        routing_reason: 'Browsing Slow SOP: Connection Status is OGB-DC -> Customer bill settlement mandatory.',
+        knowledge_article: {
+          title: 'Browsing Slow - Official Decision Flowchart',
+          url: '/knowledge-hub/faq/ftth/browsing-slow',
+          summary: 'Check OGB-DC -> Settle bill. Voice noisy -> TT under Voice to Default WG with remarks. Quota exceeded: No -> Restart ONT & TT to CEN-CSC-TECH. Quota exceeded: Yes -> Add extra GB via QED or instruct self-care via MySLT app/portal/0112121212 IVR.',
+          target_group: 'Bill Settlement',
+          badge: 'Interactive SOP'
+        }
+      };
+    }
+
+    if (isVoiceNoisy) {
+      return {
+        transcription: text,
+        detected_language: lower.includes('eka') ? 'Singlish' : 'English',
+        customer_intent: 'FAULT_REPORTING',
+        asset_type: ASSET_TYPES.DATA,
+        symptom: 'Browsing Slow with Voice Line Noise / Static',
+        technical_context: {
+          pon_status: PON_STATUS.ON,
+          measured_speed_mbps: null,
+          game_name: null,
+          ping_delay_ms: null,
+          addon_name: null,
+          error_message: null,
+          device_age_months: null,
+        },
+        billing_context: { channel_type: null, amount: null, transaction_date: null },
+        pre_check_flags: { ldap_checked: true, gb_portal_checked: true, peotv_admin_checked: false, low_pay_bill_verified: false },
+        suggested_rule_code: 'RULE_FIBER_VOICE_LINE_FAULT',
+        target_workgroup: 'Default Work Group',
+        action_type: ACTION_TYPES.DIRECT_TT,
+        operational_advice: 'Voice line noisy detected. Create a TT under Voice Service to Default Work Group with remarks.',
+        routing_reason: 'Browsing Slow SOP: Voice line noisy -> Dispatch TT under Voice Service to Default Work Group.',
+        knowledge_article: {
+          title: 'Browsing Slow - Official Decision Flowchart',
+          url: '/knowledge-hub/faq/ftth/browsing-slow',
+          summary: 'Check OGB-DC -> Settle bill. Voice noisy -> TT under Voice to Default WG with remarks. Quota exceeded: No -> Restart ONT & TT to CEN-CSC-TECH. Quota exceeded: Yes -> Add extra GB via QED or instruct self-care via MySLT app/portal/0112121212 IVR.',
+          target_group: 'Default Work Group (Voice)',
+          badge: 'Interactive SOP'
+        }
+      };
+    }
+
+    if (isLimitExceeded) {
+      return {
+        transcription: text,
+        detected_language: lower.includes('eka') ? 'Singlish' : 'English',
+        customer_intent: 'FAULT_REPORTING',
+        asset_type: ASSET_TYPES.DATA,
+        symptom: 'Browsing Slow - Usage Limit Exceeded (Extra GB Top-up)',
+        technical_context: {
+          pon_status: PON_STATUS.ON,
+          measured_speed_mbps: null,
+          game_name: null,
+          ping_delay_ms: null,
+          addon_name: null,
+          error_message: null,
+          device_age_months: null,
+        },
+        billing_context: { channel_type: null, amount: null, transaction_date: null },
+        pre_check_flags: { ldap_checked: true, gb_portal_checked: true, peotv_admin_checked: false, low_pay_bill_verified: false },
+        suggested_rule_code: 'RULE_UNLIMITED_SLOWNESS',
+        target_workgroup: 'QED / SELF-CARE',
+        action_type: ACTION_TYPES.CUSTOMER_SELF_CARE,
+        operational_advice: 'Ask if customer wishes to add Extra GB. If Yes: Check extra GB field in I-HUB/CRM -> If Yes: Follow QED instructions and Add Extra GB. If No: Don’t add extra GB through 1212 but instruct customer to add extra GBs via My SLT App, My SLT portal & 0112121212 IVR.',
+        routing_reason: 'Browsing Slow SOP: Usage Limit exceeded -> Add Extra GB via QED or Self-Care channels.',
+        knowledge_article: {
+          title: 'Browsing Slow - Official Decision Flowchart',
+          url: '/knowledge-hub/faq/ftth/browsing-slow',
+          summary: 'Check OGB-DC -> Settle bill. Voice noisy -> TT under Voice to Default WG with remarks. Quota exceeded: No -> Restart ONT & TT to CEN-CSC-TECH. Quota exceeded: Yes -> Add extra GB via QED or instruct self-care via MySLT app/portal/0112121212 IVR.',
+          target_group: 'QED Extra GB / Self-Care',
+          badge: 'Interactive SOP'
+        }
+      };
+    }
+
+    // Default Browsing Slow (Usage Limit NOT exceeded -> ONT Restart -> TT to CEN-CSC-TECH)
+    return {
+      transcription: text,
+      detected_language: lower.includes('eka') ? 'Singlish' : 'English',
+      customer_intent: 'FAULT_REPORTING',
+      asset_type: ASSET_TYPES.DATA,
+      symptom: 'Browsing Slow (Usage Limit Unexhausted / Speed Degradation)',
+      technical_context: {
+        pon_status: PON_STATUS.ON,
+        measured_speed_mbps: 18,
+        game_name: null,
+        ping_delay_ms: null,
+        addon_name: null,
+        error_message: null,
+        device_age_months: null,
+      },
+      billing_context: { channel_type: null, amount: null, transaction_date: null },
+      pre_check_flags: { ldap_checked: true, gb_portal_checked: true, peotv_admin_checked: false, low_pay_bill_verified: true },
+      suggested_rule_code: 'RULE_UNLIMITED_SLOWNESS',
+      target_workgroup: 'CEN-CSC-TECH',
+      action_type: ACTION_TYPES.DIRECT_TT,
+      operational_advice: 'Instruct customer to restart the ONT and create a TT to CEN-CSC-TECH work group under BB Service.',
+      routing_reason: 'Browsing Slow SOP: Usage Limit not exceeded & ONT restart completed -> Dispatch TT to CEN-CSC-TECH.',
+      knowledge_article: {
+        title: 'Browsing Slow - Official Decision Flowchart',
+        url: '/knowledge-hub/faq/ftth/browsing-slow',
+        summary: 'Check OGB-DC -> Settle bill. Voice noisy -> TT under Voice to Default WG with remarks. Quota exceeded: No -> Restart ONT & TT to CEN-CSC-TECH. Quota exceeded: Yes -> Add extra GB via QED or instruct self-care via MySLT app/portal/0112121212 IVR.',
+        target_group: 'CEN-CSC-TECH',
+        badge: 'Interactive SOP'
+      }
+    };
+  }
+
+  // 5. Unlimited Slowness (Generic Fallback)
   if (lower.includes('slowness') || lower.includes('slow') || lower.includes('speed') || lower.includes('unlimited slow') || lower.includes('speed bahi') || lower.includes('speed madi')) {
     const speedMatch = text.match(/(\d+)\s*mbps/i) || text.match(/speed\s*(?:is|eka)?\s*(\d+)/i);
     const speed = speedMatch ? parseInt(speedMatch[1], 10) : 18;
@@ -392,6 +543,13 @@ function extractFaultRulesFallback(text: string) {
           ? `Measured speed is ${speed} Mbps (< 40 Mbps threshold) and low pay bill verified. Direct Trouble Ticket to AREA-MTCE.`
           : `Measured speed is ${speed} Mbps (>= 40 Mbps). Ticket dispatch to AREA-MTCE prohibited. Advise package usage.`,
       routing_reason: `Measured speed: ${speed} Mbps, Threshold: 40 Mbps.`,
+      knowledge_article: {
+        title: 'Browsing Slow - Official Decision Flowchart',
+        url: '/knowledge-hub/faq/ftth/browsing-slow',
+        summary: 'Check OGB-DC -> Settle bill. Voice noisy -> TT under Voice to Default WG with remarks. Quota exceeded: No -> Restart ONT & TT to CEN-CSC-TECH. Quota exceeded: Yes -> Add extra GB via QED or instruct self-care via MySLT app/portal/0112121212 IVR.',
+        target_group: 'CEN-CSC-TECH',
+        badge: 'Interactive SOP'
+      }
     };
   }
 
@@ -711,6 +869,14 @@ export async function POST(request: Request) {
               url: '/knowledge-hub/faq/ftth/pon-los-indicator',
               summary: 'RED/OFF/BLINKING -> Dispatch TT to AREA-CPE-MTCE (or Default WG). STEADY -> Restart ONT, check browser/device/proxy. Unresolved -> TT to AREA-CPE-MTCE.',
               target_group: 'AREA-CPE-MTCE',
+              badge: 'Interactive SOP'
+            }
+          : (triageResult.suggested_rule_code === 'RULE_UNLIMITED_SLOWNESS' || recognizedText.toLowerCase().includes('slow') || recognizedText.toLowerCase().includes('browsing'))
+          ? {
+              title: 'Browsing Slow - Official Decision Flowchart',
+              url: '/knowledge-hub/faq/ftth/browsing-slow',
+              summary: 'Check OGB-DC -> Settle bill. Voice noisy -> TT under Voice to Default WG with remarks. Quota exceeded: No -> Restart ONT & TT to CEN-CSC-TECH. Quota exceeded: Yes -> Add extra GB via QED or instruct self-care via MySLT app/portal/0112121212 IVR.',
+              target_group: 'Default WG / CEN-CSC-TECH / QED',
               badge: 'Interactive SOP'
             }
           : null),

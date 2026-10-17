@@ -1522,13 +1522,22 @@ Action Required: Central technical assistance for IP session reset, DHCP pool ve
               <span>Previous: PON/LOS Indicator SOP</span>
             </Link>
 
-            <Link
-              href="/knowledge-hub/faq/ftth"
-              className="px-4 py-2 rounded-lg bg-[#005696] hover:bg-[#00477d] text-white font-bold text-xs flex items-center gap-2 transition-all shadow-xs"
-            >
-              <span>Back to FAQs - FTTH</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </Link>
+            <div className="flex items-center gap-3">
+              <Link
+                href="/knowledge-hub/faq/ftth"
+                className="px-4 py-2 rounded-lg border border-slate-300 hover:bg-slate-50 text-slate-700 font-bold text-xs flex items-center gap-2 transition-all shadow-2xs"
+              >
+                <span>Back to FAQs - FTTH</span>
+              </Link>
+
+              <Link
+                href="/knowledge-hub/faq/ftth/browsing-slow"
+                className="px-4 py-2 rounded-lg bg-[#005696] hover:bg-[#00477d] text-white font-bold text-xs flex items-center gap-2 transition-all shadow-xs"
+              >
+                <span>Next: Browsing Slow SOP</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
           </div>
 
         </div>

@@ -127,14 +127,15 @@ const FTTH_FAQ_ROWS = [
     actions: [
       {
         text: '• Browsing slow',
-        linkText: 'PDF',
-        type: 'pdf',
+        linkText: 'Click Here',
+        type: 'browsing_slow_flowchart',
+        pageUrl: '/knowledge-hub/faq/ftth/browsing-slow',
         content: {
-          title: 'Browsing Slow Standard Troubleshooting',
+          title: 'Browsing Slow - Official Decision Flowchart',
           ruleCode: 'RULE_UNLIMITED_SLOWNESS',
-          targetGroup: 'AREA-MTCE',
-          guidance: 'Condition: Speed < 40 Mbps on unlimited package AND Low Pay Bill verified. If speed >= 40 Mbps, DO NOT dispatch Trouble Ticket.',
-          sop: '1. Instruct customer to run Ookla Speedtest connected via LAN cable.\n2. Check for active background downloads or torrents.\n3. Check Low Pay Bill status on billing system.\n4. If speed < 40 Mbps, dispatch Trouble Ticket to AREA-MTCE.'
+          targetGroup: 'Default WG (Voice) / CEN-CSC-TECH / QED Extra GB',
+          guidance: 'Check OGB-DC -> Settle bill. Voice noisy -> TT under Voice to Default WG with remarks. Quota exceeded: No -> Restart ONT & TT to CEN-CSC-TECH. Quota exceeded: Yes -> Add extra GB via QED or instruct self-care via MySLT app/portal/0112121212 IVR.',
+          sop: '1. Check OGB-DC in I-Hub.\n2. Verify Voice Line noise.\n3. Check monthly quota usage in VAS Portal.\n4. Route to CEN-CSC-TECH or QED Extra GB.'
         }
       },
       {
@@ -382,6 +383,7 @@ export default function FTTHFAQPage() {
   const [showGeneralPdfModal, setShowGeneralPdfModal] = useState(false);
   const [showPonPdfModal, setShowPonPdfModal] = useState(false);
   const [showWifiPdfModal, setShowWifiPdfModal] = useState(false);
+  const [showBrowsingSlowPdfModal, setShowBrowsingSlowPdfModal] = useState(false);
   const [zoomLevel, setZoomLevel] = useState(100);
   const [ttCopied, setTtCopied] = useState(false);
 
@@ -573,6 +575,7 @@ export default function FTTHFAQPage() {
                         const isGeneralFlowchart = act.type === 'general_questions_flowchart' || act.text.includes('General Questions FTTH');
                         const isPonFlowchart = act.type === 'pon_indicator_flowchart' || act.text.includes('PON indicator Red, Off, Blinking and Steady');
                         const isWifiFlowchart = act.type === 'wifi_flowchart' || act.text.includes('Wi-Fi not working (PON Steady)');
+                        const isBrowsingSlowFlowchart = act.type === 'browsing_slow_flowchart' || (act.text.includes('Browsing slow') && !act.text.includes('ACS'));
                         return (
                           <div key={aIdx} className="space-y-1">
                             <div className="flex items-baseline flex-wrap gap-1.5 leading-relaxed">
@@ -678,6 +681,33 @@ export default function FTTHFAQPage() {
 
                                   <button
                                     onClick={() => setShowWifiPdfModal(true)}
+                                    className="text-slate-500 hover:text-slate-700 hover:underline cursor-pointer ml-1 text-[11px]"
+                                    title="View SharePoint PDF viewer layout"
+                                  >
+                                    ( PDF )
+                                  </button>
+                                </>
+                              ) : isBrowsingSlowFlowchart ? (
+                                <>
+                                  <Link
+                                    href="/knowledge-hub/faq/ftth/browsing-slow"
+                                    className="font-bold text-[#005696] hover:text-[#003865] hover:underline cursor-pointer flex items-center gap-1.5"
+                                  >
+                                    <span>{act.text}</span>
+                                    <span className="px-1.5 py-0.2 rounded bg-purple-100 text-purple-900 font-bold text-[10px]">
+                                      Interactive Guide
+                                    </span>
+                                  </Link>
+
+                                  <Link
+                                    href="/knowledge-hub/faq/ftth/browsing-slow"
+                                    className="font-bold text-[#005696] hover:text-[#003865] hover:underline cursor-pointer ml-1 inline-flex items-center gap-0.5 text-xs"
+                                  >
+                                    ( View Interactive Guide )
+                                  </Link>
+
+                                  <button
+                                    onClick={() => setShowBrowsingSlowPdfModal(true)}
                                     className="text-slate-500 hover:text-slate-700 hover:underline cursor-pointer ml-1 text-[11px]"
                                     title="View SharePoint PDF viewer layout"
                                   >
@@ -3856,6 +3886,502 @@ export default function FTTHFAQPage() {
                     </text>
                     <text x="705" y="571" fontWeight="bold" fontSize="8.5" fill="#000000" textDecoration="underline" fontFamily="Arial, Helvetica, sans-serif">
                       Network
+                    </text>
+                  </g>
+
+                </svg>
+
+              </div>
+            </div>
+
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* ======================================================== */}
+      {/* 11. BROWSING SLOW SHAREPOINT PDF VIEWER MODAL             */}
+      {/* ======================================================== */}
+      <AnimatePresence>
+        {showBrowsingSlowPdfModal && (
+          <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-xs flex flex-col justify-between animate-in fade-in duration-200">
+            
+            {/* Top Toolbar matching modern SharePoint / Edge PDF viewer */}
+            <div className="bg-[#2d3134] text-white px-4 py-2.5 flex items-center justify-between text-xs border-b border-black/50 select-none shrink-0 shadow-md">
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
+                  <span className="p-1.5 bg-red-600 rounded text-white font-bold text-[10px] tracking-wider">
+                    PDF
+                  </span>
+                  <span className="font-semibold text-slate-100 text-xs sm:text-sm">
+                    5. Browzing slow.pdf
+                  </span>
+                </div>
+              </div>
+
+              {/* Center / Action controls */}
+              <div className="flex items-center gap-2">
+                <button
+                  className="hidden md:flex items-center gap-1 text-[11px] text-slate-200 hover:bg-white/10 px-2.5 py-1 rounded transition-colors"
+                >
+                  <Eye className="w-3.5 h-3.5 text-slate-300" />
+                  <span>Viewing</span>
+                  <ChevronDown className="w-3 h-3 text-slate-400" />
+                </button>
+
+                <Link
+                  href="/knowledge-hub/faq/ftth/browsing-slow"
+                  className="hidden lg:flex items-center gap-1 text-[11px] text-purple-300 hover:text-white hover:bg-white/10 px-2.5 py-1 rounded transition-colors border border-purple-400/30"
+                  title="Open Interactive Troubleshooter in Full Page"
+                >
+                  <ExternalLink className="w-3.5 h-3.5 text-purple-300" />
+                  <span>Open Interactive SOP</span>
+                </Link>
+
+                <button
+                  className="hidden sm:flex items-center gap-1 text-[11px] text-slate-200 hover:bg-white/10 px-2 py-1 rounded transition-colors"
+                >
+                  <Share2 className="w-3.5 h-3.5 text-slate-300" />
+                  <span>Share</span>
+                  <ChevronDown className="w-3 h-3 text-slate-400" />
+                </button>
+
+                <button
+                  onClick={() => setShowBrowsingSlowPdfModal(false)}
+                  title="Close PDF Viewer"
+                  className="p-1 rounded text-slate-300 hover:text-white hover:bg-red-600/40 transition-colors ml-1"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+            </div>
+
+            {/* Sub Toolbar / Zoom & TT Action Helper */}
+            <div className="bg-[#1f1f1f] px-4 py-1.5 flex items-center justify-between text-xs text-slate-400 border-b border-black/40">
+              <div className="flex items-center gap-3">
+                <span className="text-[11px] text-slate-400">Page 1 of 1</span>
+                <span className="text-slate-600">|</span>
+                <button
+                  onClick={() => setZoomLevel(Math.max(60, zoomLevel - 15))}
+                  title="Zoom Out"
+                  className="p-1 hover:text-white hover:bg-white/10 rounded"
+                >
+                  <ZoomOut className="w-3.5 h-3.5" />
+                </button>
+                <span className="text-[11px] font-mono text-slate-300 min-w-[3rem] text-center">{zoomLevel}%</span>
+                <button
+                  onClick={() => setZoomLevel(Math.min(150, zoomLevel + 15))}
+                  title="Zoom In"
+                  className="p-1 hover:text-white hover:bg-white/10 rounded"
+                >
+                  <ZoomIn className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  onClick={() => setZoomLevel(100)}
+                  className="text-[10px] uppercase font-bold px-1.5 py-0.5 bg-white/5 hover:bg-white/15 rounded text-slate-300"
+                >
+                  Reset
+                </button>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Link
+                  href="/knowledge-hub/faq/ftth/browsing-slow"
+                  className="px-2.5 py-1 bg-purple-400 hover:bg-purple-300 text-slate-900 font-black rounded text-[11px] flex items-center gap-1 shadow-xs transition-colors"
+                >
+                  <span>Guided Triage Mode</span>
+                </Link>
+
+                <button
+                  onClick={() => {
+                    const ttText = `Target Work Group: Default Work Group\nService Category: Voice Service\nFault Complaint: Voice Line Noisy / Severe Static with FTTH Slowness\nAction Required: Technician dispatch to inspect fiber drop cable, optical splitter, and VoIP telephone port impedance.`;
+                    navigator.clipboard.writeText(ttText);
+                    setTtCopied(true);
+                    setTimeout(() => setTtCopied(false), 2500);
+                  }}
+                  className="px-2 py-1 bg-emerald-600/90 hover:bg-emerald-600 text-white rounded text-[11px] font-bold flex items-center gap-1 shadow-xs transition-colors"
+                >
+                  {ttCopied ? <Check className="w-3 h-3 text-emerald-300" /> : <Copy className="w-3 h-3" />}
+                  <span>Copy TT Voice Default WG</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    const ttText = `Target Work Group: CEN-CSC-TECH\nService Category: BB Service (Broadband)\nFault Complaint: Browsing Slow (Usage Limit Unexhausted / Speed Degradation)\nAction Taken: Customer guided to power cycle/restart ONT router. Data remaining in VAS Portal. Speed below SLA.\nAction Required: Technical investigation for gateway peering congestion, BNG session re-authentication, or IP profile speed restoration.`;
+                    navigator.clipboard.writeText(ttText);
+                    setTtCopied(true);
+                    setTimeout(() => setTtCopied(false), 2500);
+                  }}
+                  className="px-2 py-1 bg-blue-600/90 hover:bg-blue-600 text-white rounded text-[11px] font-bold flex items-center gap-1 shadow-xs transition-colors"
+                >
+                  {ttCopied ? <Check className="w-3 h-3 text-emerald-300" /> : <Copy className="w-3 h-3" />}
+                  <span>Copy TT CEN-CSC-TECH</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Main Viewer Body with Centered White Page */}
+            <div className="flex-1 bg-[#3c4043] overflow-y-auto p-4 sm:p-8 flex justify-center items-start">
+              <div
+                style={{ transform: `scale(${zoomLevel / 100})`, transformOrigin: 'top center' }}
+                className="bg-white text-black shadow-2xl rounded-sm p-6 sm:p-10 max-w-[960px] w-full transition-transform duration-150 border border-slate-300 my-auto"
+              >
+                
+                {/* SVG High-Fidelity Flowchart matching 5. Browzing slow.pdf */}
+                <svg
+                  viewBox="0 0 920 640"
+                  className="w-full h-auto select-none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <defs>
+                    <marker
+                      id="arrowSlowModal"
+                      viewBox="0 0 10 10"
+                      refX="6"
+                      refY="5"
+                      markerWidth="6"
+                      markerHeight="6"
+                      orient="auto-start-reverse"
+                    >
+                      <path d="M 0 1 L 10 5 L 0 9 z" fill="#ff0000" />
+                    </marker>
+                  </defs>
+
+                  {/* Flowchart Title */}
+                  <text
+                    x="460"
+                    y="32"
+                    textAnchor="middle"
+                    fontWeight="900"
+                    fontSize="22"
+                    fontFamily="Arial, Helvetica, sans-serif"
+                    fill="#000000"
+                  >
+                    Browsing Slow
+                  </text>
+
+                  {/* ROOT NODE: Check whether the connection status is OGB -DC */}
+                  <g>
+                    <rect
+                      x="390"
+                      y="54"
+                      width="140"
+                      height="54"
+                      rx="27"
+                      ry="27"
+                      fill="#88c848"
+                      stroke="#000000"
+                      strokeWidth="2"
+                    />
+                    <text x="460" y="70" textAnchor="middle" fontWeight="bold" fontSize="9.5" fontFamily="Arial, Helvetica, sans-serif" fill="#000000">
+                      Check whether the
+                    </text>
+                    <text x="460" y="82" textAnchor="middle" fontWeight="bold" fontSize="9.5" fontFamily="Arial, Helvetica, sans-serif" fill="#000000">
+                      connection status is
+                    </text>
+                    <text x="460" y="96" textAnchor="middle" fontWeight="900" fontSize="10.5" fontFamily="Arial, Helvetica, sans-serif" fill="#000000">
+                      OGB -DC
+                    </text>
+                  </g>
+
+                  {/* Root Node: Left Branch (Yes) -> Inform Customer to settle the Outstanding bill */}
+                  <path d="M 390 81 L 285 81" stroke="#ff0000" strokeWidth="2" markerEnd="url(#arrowSlowModal)" fill="none" />
+                  <text x="337" y="74" textAnchor="middle" fontWeight="bold" fontSize="11" fill="#ff0000" fontFamily="Arial, Helvetica, sans-serif">
+                    Yes
+                  </text>
+
+                  {/* Node: Inform Customer to settle the Outstanding bill */}
+                  <g>
+                    <rect
+                      x="130"
+                      y="58"
+                      width="155"
+                      height="46"
+                      rx="23"
+                      ry="23"
+                      fill="#88c848"
+                      stroke="#000000"
+                      strokeWidth="2"
+                    />
+                    <text x="207" y="77" textAnchor="middle" fontWeight="bold" fontSize="9.5" fontFamily="Arial, Helvetica, sans-serif" fill="#000000">
+                      Inform Customer to settle the
+                    </text>
+                    <text x="207" y="91" textAnchor="middle" fontWeight="900" fontSize="10.5" fontFamily="Arial, Helvetica, sans-serif" fill="#000000">
+                      Outstanding bill
+                    </text>
+                  </g>
+
+                  {/* Root Node: Down Branch (No) -> Check whether the voice line is noisy */}
+                  <path d="M 460 108 L 460 148" stroke="#ff0000" strokeWidth="2" markerEnd="url(#arrowSlowModal)" fill="none" />
+                  <text x="475" y="130" textAnchor="start" fontWeight="bold" fontSize="11" fill="#ff0000" fontFamily="Arial, Helvetica, sans-serif">
+                    No
+                  </text>
+
+                  {/* NODE 2: Check whether the voice line is noisy */}
+                  <g>
+                    <rect
+                      x="395"
+                      y="148"
+                      width="130"
+                      height="46"
+                      rx="23"
+                      ry="23"
+                      fill="#ffffb0"
+                      stroke="#000000"
+                      strokeWidth="1.8"
+                    />
+                    <text x="460" y="167" textAnchor="middle" fontWeight="bold" fontSize="9.5" fontFamily="Arial, Helvetica, sans-serif" fill="#000000">
+                      Check whether the
+                    </text>
+                    <text x="460" y="181" textAnchor="middle" fontWeight="bold" fontSize="9.5" fontFamily="Arial, Helvetica, sans-serif" fill="#000000">
+                      voice line is noisy
+                    </text>
+                  </g>
+
+                  {/* Node 2: Right Branch (Yes) -> Create a TT under Voice Service to Default Work Group with remarks */}
+                  <path d="M 525 171 L 620 171" stroke="#ff0000" strokeWidth="2" markerEnd="url(#arrowSlowModal)" fill="none" />
+                  <text x="572" y="163" textAnchor="middle" fontWeight="bold" fontSize="11" fill="#ff0000" fontFamily="Arial, Helvetica, sans-serif">
+                    Yes
+                  </text>
+
+                  {/* Node: Create a TT under Voice Service to Default Work Group with remarks */}
+                  <g>
+                    <rect
+                      x="620"
+                      y="140"
+                      width="160"
+                      height="62"
+                      rx="25"
+                      ry="25"
+                      fill="#88c848"
+                      stroke="#000000"
+                      strokeWidth="2"
+                    />
+                    <text x="700" y="158" textAnchor="middle" fontWeight="bold" fontSize="9" fontFamily="Arial, Helvetica, sans-serif" fill="#000000">
+                      Create a TT <tspan fontWeight="900">under Voice</tspan>
+                    </text>
+                    <text x="700" y="171" textAnchor="middle" fontWeight="900" fontSize="10" fontFamily="Arial, Helvetica, sans-serif" fill="#000000">
+                      Service to Default Work
+                    </text>
+                    <text x="700" y="184" textAnchor="middle" fontWeight="bold" fontSize="9" fontFamily="Arial, Helvetica, sans-serif" fill="#000000">
+                      <tspan fontWeight="900">Group</tspan> with remarks
+                    </text>
+                  </g>
+
+                  {/* Node 2: Down Branch (No) -> Check Usage Limit is exceeded by customer */}
+                  <path d="M 460 194 L 460 234" stroke="#ff0000" strokeWidth="2" markerEnd="url(#arrowSlowModal)" fill="none" />
+                  <text x="475" y="216" textAnchor="start" fontWeight="bold" fontSize="11" fill="#ff0000" fontFamily="Arial, Helvetica, sans-serif">
+                    No
+                  </text>
+
+                  {/* NODE 3: Check Usage Limit is exceeded by customer */}
+                  <g>
+                    <rect
+                      x="395"
+                      y="234"
+                      width="130"
+                      height="46"
+                      fill="#88c848"
+                      stroke="#000000"
+                      strokeWidth="1.8"
+                    />
+                    <text x="460" y="249" textAnchor="middle" fontWeight="bold" fontSize="9" fontFamily="Arial, Helvetica, sans-serif" fill="#000000">
+                      Check Usage Limit is
+                    </text>
+                    <text x="460" y="261" textAnchor="middle" fontWeight="bold" fontSize="9" fontFamily="Arial, Helvetica, sans-serif" fill="#000000">
+                      exceeded by
+                    </text>
+                    <text x="460" y="272" textAnchor="middle" fontWeight="bold" fontSize="9" fontFamily="Arial, Helvetica, sans-serif" fill="#000000">
+                      customer
+                    </text>
+                  </g>
+
+                  {/* Node 3: Left Branch (No) -> Instruct customer to restart the ONT and create a TT to CEN-CSC-TECH work group */}
+                  <path d="M 395 257 L 310 257" stroke="#ff0000" strokeWidth="2" markerEnd="url(#arrowSlowModal)" fill="none" />
+                  <text x="350" y="250" textAnchor="middle" fontWeight="bold" fontSize="11" fill="#ff0000" fontFamily="Arial, Helvetica, sans-serif">
+                    No
+                  </text>
+
+                  {/* Node: Instruct customer to restart the ONT and create a TT to CEN-CSC-TECH work group */}
+                  <g>
+                    <rect
+                      x="140"
+                      y="226"
+                      width="170"
+                      height="62"
+                      rx="25"
+                      ry="25"
+                      fill="#88c848"
+                      stroke="#000000"
+                      strokeWidth="2"
+                    />
+                    <text x="225" y="244" textAnchor="middle" fontWeight="bold" fontSize="8.5" fontFamily="Arial, Helvetica, sans-serif" fill="#000000">
+                      Instruct customer to restart the
+                    </text>
+                    <text x="225" y="256" textAnchor="middle" fontWeight="bold" fontSize="8.5" fontFamily="Arial, Helvetica, sans-serif" fill="#000000">
+                      ONT and create a TT to
+                    </text>
+                    <text x="225" y="270" textAnchor="middle" fontWeight="900" fontSize="10" fontFamily="Arial, Helvetica, sans-serif" fill="#000000">
+                      CEN-CSC-TECH <tspan fontWeight="bold" fontSize="8.5">work group</tspan>
+                    </text>
+                  </g>
+
+                  {/* Node 3: Down Branch (Yes) -> Ask if customer wishes to add Extra GB */}
+                  <path d="M 460 280 L 460 324" stroke="#ff0000" strokeWidth="2" markerEnd="url(#arrowSlowModal)" fill="none" />
+                  <text x="475" y="304" textAnchor="start" fontWeight="bold" fontSize="11" fill="#ff0000" fontFamily="Arial, Helvetica, sans-serif">
+                    Yes
+                  </text>
+
+                  {/* NODE 4: Ask if customer wishes to add Extra GB */}
+                  <g>
+                    <rect
+                      x="395"
+                      y="324"
+                      width="130"
+                      height="46"
+                      fill="#ffffb0"
+                      stroke="#000000"
+                      strokeWidth="1.8"
+                    />
+                    <text x="460" y="342" textAnchor="middle" fontWeight="bold" fontSize="9" fontFamily="Arial, Helvetica, sans-serif" fill="#000000">
+                      Ask if customer wishes
+                    </text>
+                    <text x="460" y="356" textAnchor="middle" fontWeight="bold" fontSize="9" fontFamily="Arial, Helvetica, sans-serif" fill="#000000">
+                      to add Extra GB
+                    </text>
+                  </g>
+
+                  {/* Node 4: Right Branch (No) -> End */}
+                  <path d="M 525 347 L 640 347" stroke="#ff0000" strokeWidth="2" markerEnd="url(#arrowSlowModal)" fill="none" />
+                  <text x="580" y="340" textAnchor="middle" fontWeight="bold" fontSize="11" fill="#ff0000" fontFamily="Arial, Helvetica, sans-serif">
+                    No
+                  </text>
+
+                  {/* GREEN END NODE */}
+                  <g>
+                    <rect
+                      x="640"
+                      y="330"
+                      width="75"
+                      height="34"
+                      rx="17"
+                      ry="17"
+                      fill="#88c848"
+                      stroke="#000000"
+                      strokeWidth="1.8"
+                    />
+                    <text x="677" y="351" textAnchor="middle" fontWeight="bold" fontSize="11" fontFamily="Arial, Helvetica, sans-serif" fill="#000000">
+                      End
+                    </text>
+                  </g>
+
+                  {/* Node 4: Down Branch (Yes) -> Check extra GB field in I HUB/CRM */}
+                  <path d="M 460 370 L 460 410" stroke="#ff0000" strokeWidth="2" markerEnd="url(#arrowSlowModal)" fill="none" />
+                  <text x="475" y="392" textAnchor="start" fontWeight="bold" fontSize="11" fill="#ff0000" fontFamily="Arial, Helvetica, sans-serif">
+                    Yes
+                  </text>
+
+                  {/* NODE 5: Check extra GB field in I HUB/CRM */}
+                  <g>
+                    <rect
+                      x="395"
+                      y="410"
+                      width="130"
+                      height="46"
+                      fill="#88c848"
+                      stroke="#000000"
+                      strokeWidth="1.8"
+                    />
+                    <text x="460" y="429" textAnchor="middle" fontWeight="bold" fontSize="9" fontFamily="Arial, Helvetica, sans-serif" fill="#000000">
+                      Check extra GB field
+                    </text>
+                    <text x="460" y="443" textAnchor="middle" fontWeight="bold" fontSize="9" fontFamily="Arial, Helvetica, sans-serif" fill="#000000">
+                      in I HUB/CRM
+                    </text>
+                  </g>
+
+                  {/* Node 5: Left Branch (Yes) -> Follow the QED instructions and Add Extra GB */}
+                  <path d="M 395 433 L 295 433" stroke="#ff0000" strokeWidth="2" markerEnd="url(#arrowSlowModal)" fill="none" />
+                  <text x="345" y="425" textAnchor="middle" fontWeight="bold" fontSize="11" fill="#ff0000" fontFamily="Arial, Helvetica, sans-serif">
+                    Yes
+                  </text>
+
+                  {/* Node: Follow the QED instructions and Add Extra GB */}
+                  <g>
+                    <rect
+                      x="145"
+                      y="410"
+                      width="150"
+                      height="46"
+                      rx="23"
+                      ry="23"
+                      fill="#88c848"
+                      stroke="#000000"
+                      strokeWidth="2"
+                    />
+                    <text x="220" y="429" textAnchor="middle" fontWeight="bold" fontSize="9" fontFamily="Arial, Helvetica, sans-serif" fill="#000000">
+                      Follow the QED instructions
+                    </text>
+                    <text x="220" y="443" textAnchor="middle" fontWeight="900" fontSize="9.5" fontFamily="Arial, Helvetica, sans-serif" fill="#000000">
+                      and Add Extra GB
+                    </text>
+                  </g>
+
+                  {/* Node 5: Right Branch (No) -> Don't add extra GB through 1212 but instruct customer... */}
+                  <path d="M 525 433 L 645 433" stroke="#ff0000" strokeWidth="2" markerEnd="url(#arrowSlowModal)" fill="none" />
+                  <text x="585" y="425" textAnchor="middle" fontWeight="bold" fontSize="11" fill="#ff0000" fontFamily="Arial, Helvetica, sans-serif">
+                    No
+                  </text>
+
+                  {/* Node: Don't add extra GB through 1212... */}
+                  <g>
+                    <rect
+                      x="645"
+                      y="404"
+                      width="235"
+                      height="58"
+                      rx="29"
+                      ry="29"
+                      fill="#ffffb0"
+                      stroke="#000000"
+                      strokeWidth="1.8"
+                    />
+                    <text x="762" y="423" textAnchor="middle" fontWeight="bold" fontSize="8" fontFamily="Arial, Helvetica, sans-serif" fill="#000000">
+                      Don’t add extra GB through 1212 but instruct
+                    </text>
+                    <text x="762" y="435" textAnchor="middle" fontWeight="bold" fontSize="8" fontFamily="Arial, Helvetica, sans-serif" fill="#000000">
+                      customer add extra GBs by using My SLT App,
+                    </text>
+                    <text x="762" y="447" textAnchor="middle" fontWeight="900" fontSize="8.5" fontFamily="Arial, Helvetica, sans-serif" fill="#000000">
+                      My SLT portal &amp; 0112121212 IVR
+                    </text>
+                  </g>
+
+                  {/* Purple Callout Note */}
+                  <g>
+                    <path
+                      d="M 50 490 C 30 490, 30 610, 50 610 L 160 610 C 180 610, 155 550, 180 490 Z"
+                      fill="#f5e8ff"
+                      stroke="#800080"
+                      strokeWidth="2"
+                    />
+                    <text x="90" y="515" fontWeight="bold" fontSize="9.5" fill="#ff0000" fontFamily="Arial, Helvetica, sans-serif">
+                      Note:
+                    </text>
+                    <text x="90" y="530" fontWeight="bold" fontSize="8.5" fill="#000000" fontFamily="Arial, Helvetica, sans-serif">
+                      Please follow QED
+                    </text>
+                    <text x="90" y="543" fontWeight="bold" fontSize="8.5" fill="#000000" fontFamily="Arial, Helvetica, sans-serif">
+                      for Process of Adding
+                    </text>
+                    <text x="90" y="556" fontWeight="bold" fontSize="8.5" fill="#000000" fontFamily="Arial, Helvetica, sans-serif">
+                      Extra GB for
+                    </text>
+                    <text x="90" y="569" fontWeight="bold" fontSize="8.5" fill="#000000" fontFamily="Arial, Helvetica, sans-serif">
+                      Broadband
+                    </text>
+                    <text x="90" y="582" fontWeight="bold" fontSize="8.5" fill="#000000" fontFamily="Arial, Helvetica, sans-serif">
+                      Customers
                     </text>
                   </g>
 
