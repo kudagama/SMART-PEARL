@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Copy, PhoneCall, CheckCircle2, Clock, MapPin, Building2, ChevronDown, Mic, ExternalLink, Search, Sparkles } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { normalizeTelecomSpeech } from '@/lib/telecomVoiceNormalizer';
 
 interface Contact {
   id: string;
@@ -58,7 +59,8 @@ export default function ContactGrid() {
       for (let i = 0; i < event.results.length; ++i) {
         fullTranscript += event.results[i][0].transcript + ' ';
       }
-      setQuery(fullTranscript.trim());
+      const normalized = normalizeTelecomSpeech(fullTranscript);
+      setQuery(normalized);
     };
 
     recognition.onend = () => {

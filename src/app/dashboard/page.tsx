@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Phone, PhoneOff, User, Bot, Zap, Wifi, CheckCircle2, AlertCircle, Play, Pause, Activity, ShieldAlert, Cpu, X, Star, TrendingUp, AlertTriangle, Target, PhoneCall, Mic, MicOff, Volume2, Sparkles, Send, Check, Copy, ArrowRight, ShieldCheck, Wrench, CreditCard, Radio, Award, BookOpen } from 'lucide-react';
 import { evaluateCallQuality, QualityStandardResult, OFFICIAL_SLT_STANDARDS } from '@/lib/qualityStandards';
+import { normalizeTelecomSpeech } from '@/lib/telecomVoiceNormalizer';
 
 type TranscriptMessage = {
   id: string;
@@ -396,8 +397,9 @@ export default function DashboardPage() {
 
   // Commit the full coherent utterance once speaker pauses or finishes speaking
   const commitUtterance = (textToCommit: string) => {
-    const clean = textToCommit.trim();
-    if (!clean || clean.length < 3) return;
+    const rawClean = textToCommit.trim();
+    if (!rawClean || rawClean.length < 3) return;
+    const clean = normalizeTelecomSpeech(rawClean, voiceLangRef.current);
 
     // Check if this exact text was already committed right before to avoid accidental duplicate
     setTranscript((prev) => {
@@ -469,10 +471,12 @@ export default function DashboardPage() {
       const trimmed = fullSentence.trim();
       if (!trimmed) return;
 
+      const normalized = normalizeTelecomSpeech(trimmed, voiceLangRef.current);
+
       // Update live stream in place without creating multiple fragmented messages
-      setLiveMicText(trimmed);
-      liveMicTextRef.current = trimmed;
-      setMicTranscript(trimmed);
+      setLiveMicText(normalized);
+      liveMicTextRef.current = normalized;
+      setMicTranscript(normalized);
 
       // Debounce: when speaker pauses for ~1300ms, finalize the sentence into the conversation!
       if (silenceTimerRef.current) {

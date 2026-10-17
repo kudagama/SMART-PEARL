@@ -1,9 +1,10 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Bot, Sparkles, AlertCircle, Phone, Copy, CheckCircle2, MapPin, X, MessageSquare, Flag, ExternalLink, Mic, MicOff, Wrench, Target, Send, BookOpen, ArrowRight } from 'lucide-react';
+import { Bot, Sparkles, AlertCircle, Phone, Copy, CheckCircle2, MapPin, X, MessageSquare, Flag, ExternalLink, Mic, MicOff, Wrench, Target, Send, BookOpen, ArrowRight, Languages } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
+import { normalizeTelecomSpeech } from '@/lib/telecomVoiceNormalizer';
 
 type Message = {
   id: string;
@@ -36,6 +37,7 @@ export default function CopilotChat() {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isListening, setIsListening] = useState(false);
+  const [voiceLang, setVoiceLang] = useState<'en-US' | 'si-LK'>('en-US');
 
   const toggleListening = () => {
     if (isListening) {
@@ -54,7 +56,7 @@ export default function CopilotChat() {
 
     recognition.continuous = false;
     recognition.interimResults = true;
-    recognition.lang = 'en-US';
+    recognition.lang = voiceLang;
 
     recognition.onstart = () => {
       setIsListening(true);
@@ -66,7 +68,8 @@ export default function CopilotChat() {
       for (let i = 0; i < event.results.length; ++i) {
         fullTranscript += event.results[i][0].transcript + ' ';
       }
-      setInput(fullTranscript.trim());
+      const normalized = normalizeTelecomSpeech(fullTranscript, voiceLang);
+      setInput(normalized);
     };
 
     recognition.onend = () => {
@@ -295,7 +298,41 @@ export default function CopilotChat() {
       </div>
 
       {/* Input Area */}
-      <div className="p-4 border-t border-slate-200 bg-white">
+      <div className="p-3.5 border-t border-slate-200 bg-white space-y-2">
+        {/* Voice Language Selector Bar */}
+        <div className="flex items-center justify-between px-1">
+          <div className="flex items-center gap-1.5 text-[11px] font-bold text-slate-500">
+            <Languages className="w-3.5 h-3.5 text-[#005696]" />
+            <span>Voice Mode:</span>
+          </div>
+          <div className="flex items-center gap-1 bg-slate-100 p-0.5 rounded-lg border border-slate-200">
+            <button
+              type="button"
+              onClick={() => setVoiceLang('en-US')}
+              className={`px-2.5 py-0.5 rounded text-[10px] font-bold transition-all ${
+                voiceLang === 'en-US'
+                  ? 'bg-[#005696] text-white shadow-xs'
+                  : 'text-slate-600 hover:text-black'
+              }`}
+              title="Speak in English or Singlish (Auto-normalizes telecom terms)"
+            >
+              🌐 English / Singlish
+            </button>
+            <button
+              type="button"
+              onClick={() => setVoiceLang('si-LK')}
+              className={`px-2.5 py-0.5 rounded text-[10px] font-bold transition-all ${
+                voiceLang === 'si-LK'
+                  ? 'bg-[#005696] text-white shadow-xs'
+                  : 'text-slate-600 hover:text-black'
+              }`}
+              title="සිංහල භාෂාවෙන් කතා කරන්න"
+            >
+              🇱🇰 සිංහල
+            </button>
+          </div>
+        </div>
+
         <div className="relative">
           <textarea
             value={input}
