@@ -71,17 +71,177 @@ const TELECOM_PHONETIC_RULES: PhoneticRule[] = [
   { pattern: /\b(?:double\s*ticket|trouble\s*ticket|t\s*t)\b/gi, replacement: 'Trouble Ticket' }
 ];
 
+export interface CustomAccentRule {
+  id: string;
+  misheard: string;       // What speech recognition heard (e.g. "phone light", "ෆෝන් ලයිට්", "laws red")
+  correct: string;        // Correct technical term or phrase (e.g. "PON Light", "LOS Red")
+  category?: 'telecom' | 'sinhala' | 'general';
+  learnedAt: number;      // Unix timestamp
+  timesUsed: number;      // How many times this rule matched
+}
+
+// Built-in starter accent calibrations tuned for Sri Lankan spoken English & Singlish
+export const DEFAULT_ACCENT_RULES: CustomAccentRule[] = [
+  { id: 'def-1', misheard: 'phone light', correct: 'PON light', category: 'telecom', learnedAt: 1710000000000, timesUsed: 14 },
+  { id: 'def-2', misheard: 'ෆෝන් ලයිට්', correct: 'PON ලයිට්', category: 'sinhala', learnedAt: 1710000000000, timesUsed: 9 },
+  { id: 'def-3', misheard: 'laws red', correct: 'LOS Red', category: 'telecom', learnedAt: 1710000000000, timesUsed: 22 },
+  { id: 'def-4', misheard: 'ලෝස් රෙඩ්', correct: 'LOS Red', category: 'sinhala', learnedAt: 1710000000000, timesUsed: 18 },
+  { id: 'def-5', misheard: 'fire router', correct: 'fiber router', category: 'telecom', learnedAt: 1710000000000, timesUsed: 7 },
+  { id: 'def-6', misheard: 'water now', correct: 'wada na', category: 'telecom', learnedAt: 1710000000000, timesUsed: 11 },
+  { id: 'def-7', misheard: 'pure tv', correct: 'PEOTV', category: 'telecom', learnedAt: 1710000000000, timesUsed: 16 },
+  { id: 'def-8', misheard: 'anti router', correct: 'ONT router', category: 'telecom', learnedAt: 1710000000000, timesUsed: 12 },
+  { id: 'def-9', misheard: 'bro sing', correct: 'browsing', category: 'telecom', learnedAt: 1710000000000, timesUsed: 5 },
+  { id: 'def-10', misheard: 'og bdc', correct: 'OGB-DC', category: 'telecom', learnedAt: 1710000000000, timesUsed: 8 },
+  { id: 'def-11', misheard: 'double ticket', correct: 'Trouble Ticket', category: 'telecom', learnedAt: 1710000000000, timesUsed: 6 }
+];
+
+const STORAGE_KEY = 'slt_learned_accent_rules';
+
 /**
- * Normalizes speech recognition output using telecom phonetic rules.
+ * Retrieves learned accent rules from localStorage, falling back to defaults.
+ */
+export function getStoredAccentRules(): CustomAccentRule[] {
+  if (typeof window === 'undefined') {
+    return DEFAULT_ACCENT_RULES;
+  }
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULT_ACCENT_RULES));
+      return DEFAULT_ACCENT_RULES;
+    }
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) && parsed.length > 0 ? parsed : DEFAULT_ACCENT_RULES;
+  } catch (e) {
+    console.error('Error reading learned accent rules from storage:', e);
+    return DEFAULT_ACCENT_RULES;
+  }
+}
+
+/**
+ * Saves a new or updated accent rule to local storage.
+ */
+export function saveLearnedAccentRule(
+  misheard: string,
+  correct: string,
+  category: 'telecom' | 'sinhala' | 'general' = 'telecom'
+): CustomAccentRule[] {
+  if (!misheard || !correct) return getStoredAccentRules();
+  const cleanMisheard = misheard.trim();
+  const cleanCorrect = correct.trim();
+
+  const current = getStoredAccentRules();
+  // Check if an existing rule exists for this misheard phrase
+  const existingIdx = current.findIndex(
+    (r) => r.misheard.toLowerCase() === cleanMisheard.toLowerCase()
+  );
+
+  let updated: CustomAccentRule[];
+  if (existingIdx >= 0) {
+    updated = [...current];
+    updated[existingIdx] = {
+      ...updated[existingIdx],
+      correct: cleanCorrect,
+      category,
+      learnedAt: Date.now(),
+      timesUsed: updated[existingIdx].timesUsed + 1
+    };
+  } else {
+    const newRule: CustomAccentRule = {
+      id: `accent-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      misheard: cleanMisheard,
+      correct: cleanCorrect,
+      category,
+      learnedAt: Date.now(),
+      timesUsed: 1
+    };
+    updated = [newRule, ...current];
+  }
+
+  if (typeof window !== 'undefined') {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+    } catch (e) {
+      console.error('Error writing learned accent rules to storage:', e);
+    }
+  }
+
+  return updated;
+}
+
+/**
+ * Removes a learned accent rule by ID.
+ */
+export function removeAccentRule(id: string): CustomAccentRule[] {
+  const current = getStoredAccentRules();
+  const updated = current.filter((r) => r.id !== id);
+  if (typeof window !== 'undefined') {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+    } catch (e) {}
+  }
+  return updated;
+}
+
+/**
+ * Resets accent rules to factory default calibrations.
+ */
+export function resetAccentRulesToDefault(): CustomAccentRule[] {
+  if (typeof window !== 'undefined') {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULT_ACCENT_RULES));
+    } catch (e) {}
+  }
+  return DEFAULT_ACCENT_RULES;
+}
+
+/**
+ * Escapes regex special characters.
+ */
+function escapeRegex(str: string): string {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/**
+ * Normalizes speech recognition output using user-trained accent rules AND telecom phonetic rules.
  * @param rawText Raw transcript from SpeechRecognition engine
  * @param lang Current recognition language ('en-US', 'si-LK', etc.)
+ * @param customRules Optional list of learned accent rules (defaults to storage/cached)
  * @returns Cleaned and telecom-normalized text string
  */
-export function normalizeTelecomSpeech(rawText: string, lang: string = 'en-US'): string {
+export function normalizeTelecomSpeech(
+  rawText: string,
+  lang: string = 'en-US',
+  customRules?: CustomAccentRule[]
+): string {
   if (!rawText) return '';
   let cleaned = rawText.trim();
 
-  // Apply all phonetic corrections
+  // 1. First Priority: Apply User-Trained Custom Accent Rules
+  const rulesToApply = customRules || (typeof window !== 'undefined' ? getStoredAccentRules() : DEFAULT_ACCENT_RULES);
+
+  for (const rule of rulesToApply) {
+    if (!rule.misheard || !rule.correct) continue;
+    try {
+      const escaped = escapeRegex(rule.misheard.trim());
+      // Boundary match when possible, or unicode-safe pattern
+      const regex = new RegExp(`(^|\\s|[.,!?])${escaped}($|\\s|[.,!?])`, 'gi');
+      if (regex.test(cleaned)) {
+        cleaned = cleaned.replace(regex, (match, prefix, suffix) => {
+          return `${prefix}${rule.correct}${suffix}`;
+        });
+      }
+    } catch (e) {
+      // Fallback simple replace
+      const cleanLower = cleaned.toLowerCase();
+      const misheardLower = rule.misheard.toLowerCase();
+      if (cleanLower.includes(misheardLower)) {
+        cleaned = cleaned.replace(new RegExp(rule.misheard, 'gi'), rule.correct);
+      }
+    }
+  }
+
+  // 2. Second Priority: Apply Built-in Standard Telecom Phonetic Rules
   for (const rule of TELECOM_PHONETIC_RULES) {
     cleaned = cleaned.replace(rule.pattern, rule.replacement);
   }

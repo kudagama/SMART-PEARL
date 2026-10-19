@@ -692,7 +692,15 @@ function extractFaultRulesFallback(text: string) {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { audio, audioMimeType = 'audio/webm', transcript, text, query, customerPhone = '0112445566' } = body;
+    const {
+      audio,
+      audioMimeType = 'audio/webm',
+      transcript,
+      text,
+      query,
+      customerPhone = '0112445566',
+      customAccentRules,
+    } = body;
 
     let recognizedText = transcript || text || query || '';
     let triageResult: any = null;
@@ -716,6 +724,17 @@ export async function POST(request: Request) {
         });
 
         const promptContent: any[] = [{ text: GEMINI_SYSTEM_PROMPT }];
+
+        // Inject agent-specific trained accent calibration mappings
+        if (customAccentRules && Array.isArray(customAccentRules) && customAccentRules.length > 0) {
+          const customVocabulary = customAccentRules
+            .slice(0, 25)
+            .map((r: any) => `"${r.misheard}" -> "${r.correct}"`)
+            .join(', ');
+          promptContent.push({
+            text: `Agent Accent Calibration & Phonetic Memory:\nThe user/agent has specifically trained the system to interpret their Sri Lankan accent with these phonetic mappings: [${customVocabulary}]. If the audio or text contains any of these patterns, resolve them to the calibrated term.`,
+          });
+        }
 
         if (audio) {
           // Clean base64 string

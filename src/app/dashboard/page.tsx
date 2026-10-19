@@ -3,9 +3,15 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Phone, PhoneOff, User, Bot, Zap, Wifi, CheckCircle2, AlertCircle, Play, Pause, Activity, ShieldAlert, Cpu, X, Star, TrendingUp, AlertTriangle, Target, PhoneCall, Mic, MicOff, Volume2, Sparkles, Send, Check, Copy, ArrowRight, ShieldCheck, Wrench, CreditCard, Radio, Award, BookOpen } from 'lucide-react';
+import { Phone, PhoneOff, User, Bot, Zap, Wifi, CheckCircle2, AlertCircle, Play, Pause, Activity, ShieldAlert, Cpu, X, Star, TrendingUp, AlertTriangle, Target, PhoneCall, Mic, MicOff, Volume2, Sparkles, Send, Check, Copy, ArrowRight, ShieldCheck, Wrench, CreditCard, Radio, Award, BookOpen, Sliders, Headphones } from 'lucide-react';
 import { evaluateCallQuality, QualityStandardResult, OFFICIAL_SLT_STANDARDS } from '@/lib/qualityStandards';
-import { normalizeTelecomSpeech } from '@/lib/telecomVoiceNormalizer';
+import {
+  normalizeTelecomSpeech,
+  getStoredAccentRules,
+  saveLearnedAccentRule,
+  CustomAccentRule,
+} from '@/lib/telecomVoiceNormalizer';
+import VoiceAccentTrainerModal from '@/components/voice/VoiceAccentTrainerModal';
 
 type TranscriptMessage = {
   id: string;
@@ -144,6 +150,18 @@ export default function DashboardPage() {
   const [voiceLang, setVoiceLang] = useState<'en-US' | 'si-LK'>('en-US');
   const [dispatchedTicket, setDispatchedTicket] = useState<{ number: string; group: string; time: string } | null>(null);
 
+  // Voice Accent Learning & Interactive Verification
+  const [isAccentModalOpen, setIsAccentModalOpen] = useState(false);
+  const [learnedRules, setLearnedRules] = useState<CustomAccentRule[]>([]);
+  const [requireVoiceConfirmation, setRequireVoiceConfirmation] = useState(true);
+  const [pendingVerification, setPendingVerification] = useState<{
+    raw: string;
+    normalized: string;
+  } | null>(null);
+  const [isEditingPending, setIsEditingPending] = useState(false);
+  const [pendingCorrectionText, setPendingCorrectionText] = useState('');
+  const [learnedToast, setLearnedToast] = useState<string | null>(null);
+
   const transcriptRef = useRef<HTMLDivElement>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const scriptTimers = useRef<NodeJS.Timeout[]>([]);
@@ -152,6 +170,14 @@ export default function DashboardPage() {
   const liveMicTextRef = useRef<string>('');
   const silenceTimerRef = useRef<NodeJS.Timeout | null>(null);
   const voiceLangRef = useRef<'en-US' | 'si-LK'>('en-US');
+  const learnedRulesRef = useRef<CustomAccentRule[]>([]);
+
+  // Load learned accent rules on mount
+  useEffect(() => {
+    const stored = getStoredAccentRules();
+    setLearnedRules(stored);
+    learnedRulesRef.current = stored;
+  }, []);
 
   // SLT Quality Standards Compliance State
   const [qualityResult, setQualityResult] = useState<QualityStandardResult>(() => evaluateCallQuality([]));
@@ -208,7 +234,8 @@ export default function DashboardPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           transcript: spokenText,
-          customerPhone: '0112445566'
+          customerPhone: '0112445566',
+          customAccentRules: learnedRulesRef.current
         })
       });
 
@@ -522,8 +549,8 @@ function FaultTriageCardContent({
   // Commit the full coherent utterance once speaker pauses or finishes speaking
   const commitUtterance = (textToCommit: string) => {
     const rawClean = textToCommit.trim();
-    if (!rawClean || rawClean.length < 3) return;
-    const clean = normalizeTelecomSpeech(rawClean, voiceLangRef.current);
+    if (!rawClean || rawClean.length < 2) return;
+    const clean = normalizeTelecomSpeech(rawClean, voiceLangRef.current, learnedRulesRef.current);
 
     // Check if this exact text was already committed right before to avoid accidental duplicate
     setTranscript((prev) => {
@@ -545,6 +572,54 @@ function FaultTriageCardContent({
     triggerVoiceTriage(clean);
   };
 
+  const handleUtteranceReady = (rawText: string, normalizedText: string) => {
+    if (!normalizedText || normalizedText.trim().length < 2) return;
+    const clean = normalizeTelecomSpeech(normalizedText, voiceLangRef.current, learnedRulesRef.current);
+
+    if (requireVoiceConfirmation) {
+      isListeningActiveRef.current = false;
+      if (recognitionRef.current) {
+        try { recognitionRef.current.stop(); } catch (e) {}
+      }
+      setIsMicListening(false);
+      setPendingVerification({
+        raw: rawText.trim(),
+        normalized: clean,
+      });
+      setPendingCorrectionText(clean);
+      setIsEditingPending(false);
+    } else {
+      commitUtterance(clean);
+    }
+  };
+
+  const handleConfirmVerification = () => {
+    if (!pendingVerification) return;
+    commitUtterance(pendingVerification.normalized);
+    setPendingVerification(null);
+    setIsEditingPending(false);
+  };
+
+  const handleSaveCorrectionAndTrain = () => {
+    if (!pendingVerification || !pendingCorrectionText.trim()) return;
+
+    const rawSaid = pendingVerification.raw;
+    const corrected = pendingCorrectionText.trim();
+
+    // Save learned rule to user's personal accent dictionary
+    const updated = saveLearnedAccentRule(rawSaid, corrected, 'telecom');
+    setLearnedRules(updated);
+    learnedRulesRef.current = updated;
+
+    setLearnedToast(`✨ Model trained on your accent! "${rawSaid}" ➔ "${corrected}" saved to memory.`);
+    setTimeout(() => setLearnedToast(null), 5000);
+
+    // Commit the corrected text to ticket triage
+    commitUtterance(corrected);
+    setPendingVerification(null);
+    setIsEditingPending(false);
+  };
+
   const stopMicListening = () => {
     isListeningActiveRef.current = false;
     if (silenceTimerRef.current) {
@@ -552,7 +627,7 @@ function FaultTriageCardContent({
       silenceTimerRef.current = null;
     }
     if (liveMicTextRef.current) {
-      commitUtterance(liveMicTextRef.current);
+      handleUtteranceReady(liveMicTextRef.current, liveMicTextRef.current);
     }
     if (recognitionRef.current) {
       try {
@@ -595,7 +670,7 @@ function FaultTriageCardContent({
       const trimmed = fullSentence.trim();
       if (!trimmed) return;
 
-      const normalized = normalizeTelecomSpeech(trimmed, voiceLangRef.current);
+      const normalized = normalizeTelecomSpeech(trimmed, voiceLangRef.current, learnedRulesRef.current);
 
       // Update live stream in place without creating multiple fragmented messages
       setLiveMicText(normalized);
@@ -608,7 +683,7 @@ function FaultTriageCardContent({
       }
       silenceTimerRef.current = setTimeout(() => {
         if (liveMicTextRef.current) {
-          commitUtterance(liveMicTextRef.current);
+          handleUtteranceReady(trimmed, liveMicTextRef.current);
         }
       }, 1300);
     };
@@ -1092,44 +1167,87 @@ function FaultTriageCardContent({
                   </span>
                 </div>
 
-                {/* Recognition Language Selector */}
-                <div className="flex items-center justify-between text-xs bg-indigo-50/80 p-2 px-3 rounded-xl border border-indigo-100 shadow-2xs">
-                  <span className="text-[11px] font-bold text-slate-700 flex items-center gap-1.5">
-                    <Volume2 className="w-3.5 h-3.5 text-[#005696]" /> Voice Language:
-                  </span>
-                  <div className="flex gap-1 bg-white p-0.5 rounded-lg border border-slate-200 shadow-2xs text-[10px]">
-                    <button
-                      onClick={() => {
-                        setVoiceLang('en-US');
-                        if (isMicListening) {
-                          stopMicListening();
-                        }
-                      }}
-                      className={`px-2.5 py-1 rounded-md font-black transition-all ${
-                        voiceLang === 'en-US'
-                          ? 'bg-[#005696] text-white shadow-xs'
-                          : 'text-slate-600 hover:text-slate-900'
-                      }`}
-                    >
-                      🌐 Singlish / English
-                    </button>
-                    <button
-                      onClick={() => {
-                        setVoiceLang('si-LK');
-                        if (isMicListening) {
-                          stopMicListening();
-                        }
-                      }}
-                      className={`px-2.5 py-1 rounded-md font-black transition-all ${
-                        voiceLang === 'si-LK'
-                          ? 'bg-[#005696] text-white shadow-xs'
-                          : 'text-slate-600 hover:text-slate-900'
-                      }`}
-                    >
-                      🇱🇰 සිංහල (si-LK)
-                    </button>
+                {/* Recognition Language Selector & Accent Calibration Studio */}
+                <div className="space-y-2">
+                  <div className="flex flex-wrap items-center justify-between gap-2 text-xs bg-indigo-50/80 p-2 px-3 rounded-xl border border-indigo-100 shadow-2xs">
+                    <span className="text-[11px] font-bold text-slate-700 flex items-center gap-1.5">
+                      <Volume2 className="w-3.5 h-3.5 text-[#005696]" /> Voice Language:
+                    </span>
+                    <div className="flex items-center gap-1.5">
+                      <div className="flex gap-1 bg-white p-0.5 rounded-lg border border-slate-200 shadow-2xs text-[10px]">
+                        <button
+                          onClick={() => {
+                            setVoiceLang('en-US');
+                            if (isMicListening) {
+                              stopMicListening();
+                            }
+                          }}
+                          className={`px-2.5 py-1 rounded-md font-black transition-all ${
+                            voiceLang === 'en-US'
+                              ? 'bg-[#005696] text-white shadow-xs'
+                              : 'text-slate-600 hover:text-slate-900'
+                          }`}
+                        >
+                          🌐 Singlish / English
+                        </button>
+                        <button
+                          onClick={() => {
+                            setVoiceLang('si-LK');
+                            if (isMicListening) {
+                              stopMicListening();
+                            }
+                          }}
+                          className={`px-2.5 py-1 rounded-md font-black transition-all ${
+                            voiceLang === 'si-LK'
+                              ? 'bg-[#005696] text-white shadow-xs'
+                              : 'text-slate-600 hover:text-slate-900'
+                          }`}
+                        >
+                          🇱🇰 සිංහල (si-LK)
+                        </button>
+                      </div>
+
+                      <button
+                        onClick={() => setIsAccentModalOpen(true)}
+                        className="px-2.5 py-1 rounded-lg text-[10px] font-black flex items-center gap-1.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:brightness-105 text-white shadow-2xs transition-all"
+                        title="Voice Accent Calibration & Training Studio"
+                      >
+                        <Sparkles className="w-3 h-3 text-amber-200" />
+                        <span>🎯 Accent Studio ({learnedRules.length})</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Active Verification Mode Toggle */}
+                  <div className="flex items-center justify-between px-2 text-[11px]">
+                    <label className="flex items-center gap-1.5 cursor-pointer text-slate-600 hover:text-slate-900 select-none">
+                      <input
+                        type="checkbox"
+                        checked={requireVoiceConfirmation}
+                        onChange={(e) => setRequireVoiceConfirmation(e.target.checked)}
+                        className="rounded text-[#005696] focus:ring-0 w-3.5 h-3.5 cursor-pointer"
+                      />
+                      <span className="font-bold">
+                        {requireVoiceConfirmation ? '🎓 Active Accent Verification Mode (Verify & Train)' : '⚡ Express Mode (Direct Dispatch)'}
+                      </span>
+                    </label>
+                    <span className="text-[10px] text-slate-400 font-medium">
+                      {requireVoiceConfirmation ? 'Asks "හරිද?" to adapt' : 'Auto-dispatches on pause'}
+                    </span>
                   </div>
                 </div>
+
+                {/* Celebratory Learning Toast */}
+                {learnedToast && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="p-3 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-xl text-xs font-bold flex items-center gap-2 shadow-md"
+                  >
+                    <Sparkles className="w-4 h-4 text-emerald-200 shrink-0 animate-spin" />
+                    <span>{learnedToast}</span>
+                  </motion.div>
+                )}
 
                 {/* Primary Live Microphone Button */}
                 <div className="space-y-2">
@@ -1184,8 +1302,96 @@ function FaultTriageCardContent({
                       </div>
 
                       <p className="text-[10px] text-slate-500 font-medium">
-                        💡 Pause for 1 second when finished speaking to auto-commit and send to Gemini.
+                        💡 Pause for 1 second when finished speaking to {requireVoiceConfirmation ? 'verify & train' : 'auto-commit to Gemini'}.
                       </p>
+                    </motion.div>
+                  )}
+
+                  {/* Interactive Accent Verification & Training Card */}
+                  {pendingVerification && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.97 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      className="p-4 bg-gradient-to-r from-blue-50 via-indigo-50 to-cyan-50 border-2 border-[#005696]/40 rounded-2xl shadow-md space-y-3 text-left"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Sparkles className="w-4 h-4 text-[#005696] animate-pulse" />
+                          <span className="text-xs font-black uppercase text-[#005696] tracking-wider">
+                            🎙️ Voice Verification & Accent Training
+                          </span>
+                        </div>
+                        <button
+                          onClick={() => setPendingVerification(null)}
+                          className="text-slate-400 hover:text-slate-700 p-1"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
+                        <div className="p-2.5 bg-white/95 rounded-xl border border-slate-200">
+                          <span className="text-[10px] font-bold text-slate-400 block mb-0.5">1. Raw Captured Speech:</span>
+                          <p className="font-mono text-slate-700 italic text-[11px]">"{pendingVerification.raw}"</p>
+                        </div>
+                        <div className="p-2.5 bg-emerald-50/90 rounded-xl border border-emerald-200">
+                          <span className="text-[10px] font-bold text-emerald-700 block mb-0.5">2. Normalizer Output:</span>
+                          <p className="font-bold text-emerald-900 text-[11px]">"{pendingVerification.normalized}"</p>
+                        </div>
+                      </div>
+
+                      {!isEditingPending ? (
+                        <div className="pt-2 border-t border-blue-200/60 flex flex-wrap items-center justify-between gap-2">
+                          <span className="text-xs font-bold text-slate-700">Did I hear you correctly? (මේක හරියටම හරිද?)</span>
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={handleConfirmVerification}
+                              className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-black flex items-center gap-1.5 shadow-2xs transition-colors"
+                            >
+                              <Check className="w-4 h-4" />
+                              <span>Yes, Correct! (හරි)</span>
+                            </button>
+                            <button
+                              onClick={() => setIsEditingPending(true)}
+                              className="px-3.5 py-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-xs font-black flex items-center gap-1.5 shadow-2xs transition-colors"
+                            >
+                              <Sliders className="w-4 h-4" />
+                              <span>✏️ No, Fix & Train Accent</span>
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="pt-2 border-t border-amber-300/80 space-y-2.5">
+                          <div>
+                            <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                              Type the correct telecom wording (නිවැරදි වචනය):
+                            </label>
+                            <input
+                              type="text"
+                              value={pendingCorrectionText}
+                              onChange={(e) => setPendingCorrectionText(e.target.value)}
+                              className="w-full px-3 py-2 bg-white border border-amber-400 rounded-xl text-xs font-bold text-[#005696] focus:ring-2 focus:ring-amber-500 outline-hidden"
+                              placeholder="e.g. රවුටරේ PON light එක off වෙලා"
+                            />
+                          </div>
+
+                          <div className="flex items-center justify-between">
+                            <button
+                              onClick={() => setIsEditingPending(false)}
+                              className="text-xs font-bold text-slate-500 hover:text-slate-800"
+                            >
+                              Back
+                            </button>
+                            <button
+                              onClick={handleSaveCorrectionAndTrain}
+                              className="px-4 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:brightness-105 text-white rounded-xl text-xs font-black flex items-center gap-2 shadow-sm transition-all"
+                            >
+                              <Sparkles className="w-4 h-4" />
+                              <span>Save & Train Model (හුරු කර Dispatch කරන්න)</span>
+                            </button>
+                          </div>
+                        </div>
+                      )}
                     </motion.div>
                   )}
                 </div>
@@ -1756,6 +1962,17 @@ function FaultTriageCardContent({
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Voice Accent Training & Calibration Studio Modal */}
+      <VoiceAccentTrainerModal
+        isOpen={isAccentModalOpen}
+        onClose={() => setIsAccentModalOpen(false)}
+        voiceLang={voiceLang}
+        onRulesUpdated={(updated) => {
+          setLearnedRules(updated);
+          learnedRulesRef.current = updated;
+        }}
+      />
     </div>
   );
 }
