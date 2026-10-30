@@ -102,300 +102,352 @@ const QUICK_SOPS = [
   },
 ];
 
-// 19 Main Categories with modern icon assignments, tags, and theme styling
-const CATEGORY_TILES = [
+// 4 Main SLT Product Pillars (Fiber, Megaline, PEO TV, Trio)
+// Each Main Card contains 5 Inner Sub-Cards: Voice, Broadband, PEO TV, VAS, and FAQ
+const MAIN_PRODUCT_TILES = [
   {
-    id: 'faq',
-    title: 'Interactive SOPs & FAQs',
-    pillar: 'operations',
-    icon: HelpCircle,
-    gradient: 'from-amber-500 via-orange-500 to-rose-500',
-    cardBorder: 'border-amber-300 shadow-amber-500/10',
-    badge: '⭐ Primary Guide',
-    badgeStyle: 'bg-amber-100 text-amber-900 border-amber-200',
-    desc: 'Interactive decision trees, troubleshooting flowcharts, customer inquiry SOPs & Escalation Matrix.',
-    asset: 'GENERAL',
-    ruleCode: null,
-    isSpecial: true,
-    route: '/knowledge-hub/faq'
-  },
-  {
-    id: 'slt_fibre',
-    title: 'SLT Fibre (FTTH)',
-    pillar: 'connectivity',
+    id: 'fiber',
+    title: 'Fiber',
+    fullName: 'SLT Fibre (FTTH Broadband & Voice)',
+    pillar: 'fiber',
     icon: Wifi,
-    gradient: 'from-cyan-600 via-blue-600 to-indigo-700',
-    cardBorder: 'border-cyan-300 shadow-cyan-500/10',
-    badge: 'Rule 1: LOS Red',
+    gradient: 'from-[#003B66] via-[#005696] to-cyan-600',
+    cardBorder: 'border-cyan-300 shadow-cyan-500/10 hover:border-cyan-500 hover:shadow-cyan-500/20',
+    badge: '1Gbps FTTH Optical',
     badgeStyle: 'bg-cyan-100 text-cyan-900 border-cyan-200',
-    desc: 'Fibre To The Home, LOS Red Indicator, ONT Router replacements, Optical fiber cable cuts & GB portal pre-checks.',
-    asset: 'DATA',
+    desc: 'Ultra high-speed optical fiber connectivity, GPON ONT router triage, Wi-Fi 6 diagnostics, LOS red alarms, and direct Trouble Ticket dispatch to AREA-MTCE.',
+    asset: 'DATA / FTTH',
     ruleCode: 'RULE_LOS_RED',
-    route: '/knowledge-hub/faq/ftth'
-  },
-  {
-    id: 'broadband',
-    title: 'Broadband & High-Speed Data',
-    pillar: 'connectivity',
-    icon: Globe,
-    gradient: 'from-blue-600 to-indigo-700',
-    cardBorder: 'border-blue-300 shadow-blue-500/10',
-    badge: 'Rule 4: Slowness',
-    badgeStyle: 'bg-blue-100 text-blue-900 border-blue-200',
-    desc: 'ADSL & FTTH Broadband Packages, Unlimited FUP thresholds, speed tests, and AREA-MTCE dispatch guidelines.',
-    asset: 'DATA',
-    ruleCode: 'RULE_UNLIMITED_SLOWNESS'
-  },
-  {
-    id: 'peo_tv',
-    title: 'PEO TV (IPTV Service)',
-    pillar: 'multimedia',
-    icon: Tv,
-    gradient: 'from-purple-600 to-violet-700',
-    cardBorder: 'border-purple-300 shadow-purple-500/10',
-    badge: 'Rule 2 & 5: STB/Remote',
-    badgeStyle: 'bg-purple-100 text-purple-900 border-purple-200',
-    desc: 'Set-Top Box (STB) hardware issues, Remote controller 6-month warranty validation, Channel lineup & VOD.',
-    asset: 'PEOTV',
-    ruleCode: 'RULE_STB_ONT_ROUTER_FAULTY'
+    route: '/knowledge-hub/faq/ftth',
+    ctaText: 'Open Fiber Decision Trees',
+    subCards: [
+      {
+        id: 'fiber-voice',
+        title: 'Voice',
+        badge: 'SIP / Dial Tone',
+        badgeStyle: 'bg-teal-50 text-teal-800 border-teal-200',
+        icon: Phone,
+        iconBg: 'bg-gradient-to-br from-teal-500 to-emerald-600',
+        desc: 'ONT Phone LED status, SIP registration, dial tone loss, and exchange MDF dispatch (Rule 11).',
+        ruleCode: 'RULE_FIBER_VOICE_LINE_FAULT',
+        ttTemplate: 'SERVICE: FTTH Voice\nFAULT: No Dial Tone / Voice Line Inoperable\nONT PON STATUS: Steady Green (Normal Transmission)\nDIAGNOSIS: Optical signal healthy. Voice line inactive on SIP port.\nACTION: Dispatch TT to MDF for SIP port reactivation.',
+        route: '/knowledge-hub/faq/ftth'
+      },
+      {
+        id: 'fiber-broadband',
+        title: 'Broadband',
+        badge: '1Gbps / GPON & Wi-Fi',
+        badgeStyle: 'bg-cyan-50 text-cyan-800 border-cyan-200',
+        icon: Globe,
+        iconBg: 'bg-gradient-to-br from-cyan-500 to-blue-600',
+        desc: 'LOS Red fiber cut alarm, Wi-Fi 2.4/5GHz disconnects, ONT replacement, and speed drop triage.',
+        ruleCode: 'RULE_LOS_RED',
+        ttTemplate: 'SERVICE: FTTH Broadband\nFAULT: LOS Indicator Red / Optical Signal Lost\nPRE-CHECKS: Verified subscriber account on LDAP. GB Portal Rx power unavailable.\nACTION: Dispatch Direct TT to AREA-MTCE for outdoor fiber cut restoration.',
+        route: '/knowledge-hub/faq/ftth'
+      },
+      {
+        id: 'fiber-peotv',
+        title: 'PEO TV',
+        badge: 'VLAN 30 / Port 4',
+        badgeStyle: 'bg-purple-50 text-purple-800 border-purple-200',
+        icon: Tv,
+        iconBg: 'bg-gradient-to-br from-purple-500 to-indigo-600',
+        desc: 'ONT LAN Port 4 binding, IGMP Snooping, STB pixelation, HDMI handshakes, and HD channel streams.',
+        ruleCode: 'RULE_STB_ONT_ROUTER_FAULTY',
+        ttTemplate: 'SERVICE: PEO TV on FTTH\nFAULT: STB Hardware Defect / Screen Freezing\nONT CONFIG: LAN 4 bound to VLAN 30. IGMP Snooping enabled.\nACTION: Dispatch TT to AREA-MTCE for premises visit and STB replacement.',
+        route: '/knowledge-hub/faq'
+      },
+      {
+        id: 'fiber-vas',
+        title: 'VAS',
+        badge: 'Addons & Static IP',
+        badgeStyle: 'bg-amber-50 text-amber-800 border-amber-200',
+        icon: Sparkles,
+        iconBg: 'bg-gradient-to-br from-amber-500 to-orange-600',
+        desc: 'Extra GB booster add-on errors, Static IP configuration, Caller Ring Back Tunes (CRBT), and Webmail.',
+        ruleCode: 'RULE_ADDON_PROVISIONING_ERROR',
+        ttTemplate: 'SERVICE: FTTH VAS\nFAULT: Extra GB Data Addon Purchased but not deducting from PCRF bucket\nACTION: Escalate Trouble Ticket to INT-NW-SYS-ADMIN for quota bucket sync.',
+        route: '/knowledge-hub/faq'
+      },
+      {
+        id: 'fiber-faq',
+        title: 'FAQ',
+        badge: 'Interactive SOPs',
+        badgeStyle: 'bg-emerald-50 text-emerald-800 border-emerald-200',
+        icon: HelpCircle,
+        iconBg: 'bg-gradient-to-br from-emerald-500 to-teal-600',
+        desc: 'Visual decision trees for Wi-Fi, LOS Red, Speed drop, and ONT dead hardware triage.',
+        ruleCode: null,
+        ttTemplate: 'KNOWLEDGE BASE: FTTH Interactive SOPs & Decision Trees\nURL: /knowledge-hub/faq/ftth\nACTION: Follow step-by-step visual resolution flowcharts.',
+        route: '/knowledge-hub/faq/ftth'
+      }
+    ]
   },
   {
     id: 'megaline',
-    title: 'Megaline PSTN Voice',
-    pillar: 'connectivity',
+    title: 'Megaline',
+    fullName: 'SLT Megaline (PSTN Copper & ADSL)',
+    pillar: 'megaline',
     icon: Phone,
-    gradient: 'from-teal-600 to-emerald-700',
-    cardBorder: 'border-teal-300 shadow-teal-500/10',
-    badge: 'Rule 11: Voice MDF',
+    gradient: 'from-emerald-700 via-teal-700 to-cyan-800',
+    cardBorder: 'border-teal-300 shadow-teal-500/10 hover:border-teal-500 hover:shadow-teal-500/20',
+    badge: 'Copper Wireline Voice',
     badgeStyle: 'bg-teal-100 text-teal-900 border-teal-200',
-    desc: 'PSTN Copper Voice, FTTH telephone dial tone faults, PON steady vs off routing, Line tests & MDF dispatch.',
-    asset: 'VOICE',
-    ruleCode: 'RULE_FIBER_VOICE_LINE_FAULT'
+    desc: 'Traditional copper wireline voice telephone, ADSL broadband double-play, line noise / crackling, SNR & loop resistance diagnostics, and MDF exchange dispatch.',
+    asset: 'VOICE / COPPER',
+    ruleCode: 'RULE_FIBER_VOICE_LINE_FAULT',
+    route: '/knowledge-hub/faq',
+    ctaText: 'Open Megaline SOPs',
+    subCards: [
+      {
+        id: 'megaline-voice',
+        title: 'Voice',
+        badge: 'PSTN / MDF',
+        badgeStyle: 'bg-teal-50 text-teal-800 border-teal-200',
+        icon: Phone,
+        iconBg: 'bg-gradient-to-br from-teal-500 to-emerald-600',
+        desc: 'No dial tone on copper pair, heavy line noise / crackling, loop resistance testing, and MDF frame dispatch.',
+        ruleCode: 'RULE_FIBER_VOICE_LINE_FAULT',
+        ttTemplate: 'SERVICE: Megaline PSTN\nFAULT: No dial tone / Line noise detected\nLINE TEST: DC Loop resistance abnormal.\nACTION: Dispatch TT to MDF / AREA-MTCE for copper pair restoration.',
+        route: '/knowledge-hub/faq'
+      },
+      {
+        id: 'megaline-broadband',
+        title: 'Broadband',
+        badge: 'ADSL2+ Copper',
+        badgeStyle: 'bg-cyan-50 text-cyan-800 border-cyan-200',
+        icon: Globe,
+        iconBg: 'bg-gradient-to-br from-cyan-500 to-blue-600',
+        desc: 'ADSL router faulty (Rule 3: RTO walk-in replacement), SNR margin drop, and copper speed degradation.',
+        ruleCode: 'RULE_ADSL_ROUTER_FAULTY',
+        ttTemplate: 'SERVICE: Megaline ADSL Broadband\nFAULT: Defective ADSL Modem / Power failure\nRULE: RULE_ADSL_ROUTER_FAULTY\nADVICE: DO NOT LOG TT. Customer advised to bring modem + adapter to nearest RTO.',
+        route: '/knowledge-hub/faq'
+      },
+      {
+        id: 'megaline-peotv',
+        title: 'PEO TV',
+        badge: 'Copper IPTV',
+        badgeStyle: 'bg-purple-50 text-purple-800 border-purple-200',
+        icon: Tv,
+        iconBg: 'bg-gradient-to-br from-purple-500 to-indigo-600',
+        desc: 'Copper ADSL IPTV synchronization, channel freeze due to SNR margin, and 6-month remote warranty.',
+        ruleCode: 'RULE_REMOTE_CONTROLLER_WARRANTY',
+        ttTemplate: 'SERVICE: PEO TV (Copper Double Play)\nFAULT: STB Remote Controller Defective\nRULE: RULE_REMOTE_CONTROLLER_WARRANTY\nADVICE: Customer directed to Regional Telecom Office with faulty remote & STB.',
+        route: '/knowledge-hub/faq'
+      },
+      {
+        id: 'megaline-vas',
+        title: 'VAS',
+        badge: 'Calling Features',
+        badgeStyle: 'bg-amber-50 text-amber-800 border-amber-200',
+        icon: Sparkles,
+        iconBg: 'bg-gradient-to-br from-amber-500 to-orange-600',
+        desc: 'Call waiting, call forwarding, CLI, 3-way conference, and telephone ring tones on copper wire.',
+        ruleCode: 'RULE_CQMS_VAS_AND_PROMOS',
+        ttTemplate: 'SERVICE: Megaline VAS\nFAULT: PSTN Calling Feature (CLI / Call Waiting) activation inquiry\nACTION: Query subscriber profile on MINT CRM and escalate to CQMS.',
+        route: '/knowledge-hub/faq'
+      },
+      {
+        id: 'megaline-faq',
+        title: 'FAQ',
+        badge: 'PSTN SOPs',
+        badgeStyle: 'bg-emerald-50 text-emerald-800 border-emerald-200',
+        icon: HelpCircle,
+        iconBg: 'bg-gradient-to-br from-emerald-500 to-teal-600',
+        desc: 'Copper line testing protocols, ADSL modem VPI/VCI settings (8/35), and rainy season outage rules.',
+        ruleCode: null,
+        ttTemplate: 'KNOWLEDGE BASE: Megaline PSTN & ADSL Guides\nURL: /knowledge-hub/faq\nACTION: Follow official copper line triage guidelines.',
+        route: '/knowledge-hub/faq'
+      }
+    ]
   },
   {
-    id: '4g_lte',
-    title: '4G LTE Fixed Wireless',
-    pillar: 'connectivity',
-    icon: Radio,
-    gradient: 'from-emerald-600 to-teal-700',
-    cardBorder: 'border-emerald-300 shadow-emerald-500/10',
-    badge: 'Rule 9 & 10: 4G Reload',
-    badgeStyle: 'bg-emerald-100 text-emerald-900 border-emerald-200',
-    desc: 'Fixed Wireless Broadband, 4G Prepaid & Postpaid Reloads, Dealer mCash vs Third-party Bank refund advice.',
-    asset: 'BILLING',
-    ruleCode: 'RULE_4G_RELOAD_DIRECT_CHANNELS'
+    id: 'peo_tv',
+    title: 'PEO TV',
+    fullName: 'SLT PEO TV (Interactive IPTV Platform)',
+    pillar: 'peo_tv',
+    icon: Tv,
+    gradient: 'from-indigo-800 via-purple-700 to-pink-700',
+    cardBorder: 'border-purple-300 shadow-purple-500/10 hover:border-purple-400 hover:shadow-purple-500/20',
+    badge: 'Digital IPTV & VOD',
+    badgeStyle: 'bg-purple-100 text-purple-900 border-purple-200',
+    desc: 'High-definition digital IPTV streaming, Set-Top Box (STB) hardware failure triage, remote controller 6-month warranty checks, VLAN 30 port binding, and PEO Mobile.',
+    asset: 'PEOTV / IPTV',
+    ruleCode: 'RULE_STB_ONT_ROUTER_FAULTY',
+    route: '/knowledge-hub/faq',
+    ctaText: 'Open PEO TV Guides',
+    subCards: [
+      {
+        id: 'peotv-voice',
+        title: 'Voice',
+        badge: 'Tandem Voice',
+        badgeStyle: 'bg-teal-50 text-teal-800 border-teal-200',
+        icon: Phone,
+        iconBg: 'bg-gradient-to-br from-teal-500 to-emerald-600',
+        desc: 'Tandem voice line verification when PEO TV operates alongside landline voice.',
+        ruleCode: 'RULE_FIBER_VOICE_LINE_FAULT',
+        ttTemplate: 'SERVICE: PEO TV / Voice Tandem\nFAULT: Voice line disturbance while PEO TV is streaming\nACTION: Microfilter check & dispatch to MDF.',
+        route: '/knowledge-hub/faq'
+      },
+      {
+        id: 'peotv-broadband',
+        title: 'Broadband',
+        badge: 'Multicast QoS',
+        badgeStyle: 'bg-cyan-50 text-cyan-800 border-cyan-200',
+        icon: Globe,
+        iconBg: 'bg-gradient-to-br from-cyan-500 to-blue-600',
+        desc: 'Multicast QoS bandwidth reservation, IGMP snooping packet loss, and video buffering checks.',
+        ruleCode: 'RULE_UNLIMITED_SLOWNESS',
+        ttTemplate: 'SERVICE: Broadband & PEO TV\nFAULT: Video buffering due to bandwidth saturation\nACTION: Re-verify QoS profile and advise bandwidth booster.',
+        route: '/knowledge-hub/faq'
+      },
+      {
+        id: 'peotv-core',
+        title: 'PEO TV',
+        badge: 'STB & Remote',
+        badgeStyle: 'bg-purple-50 text-purple-800 border-purple-200',
+        icon: Tv,
+        iconBg: 'bg-gradient-to-br from-purple-500 to-indigo-600',
+        desc: 'STB power failure, blinking red LED, HDMI handshaking, remote controller warranty, and channel packages.',
+        ruleCode: 'RULE_STB_ONT_ROUTER_FAULTY',
+        ttTemplate: 'SERVICE: PEO TV Core\nFAULT: STB Hardware Failure / Red Power Light\nACTION: Dispatch TT to AREA-MTCE for premises hardware replacement.',
+        route: '/knowledge-hub/faq'
+      },
+      {
+        id: 'peotv-vas',
+        title: 'VAS',
+        badge: 'VOD & PEO Mobile',
+        badgeStyle: 'bg-amber-50 text-amber-800 border-amber-200',
+        icon: Sparkles,
+        iconBg: 'bg-gradient-to-br from-amber-500 to-orange-600',
+        desc: 'Video-on-Demand purchases, PEO Mobile multi-screen subscription, and SVOD channel add-ons.',
+        ruleCode: 'RULE_CQMS_VAS_AND_PROMOS',
+        ttTemplate: 'SERVICE: PEO TV VAS\nFAULT: PEO Mobile App Authentication / Channel Subscription not active\nACTION: Dispatch to Digital Services Support.',
+        route: '/knowledge-hub/faq'
+      },
+      {
+        id: 'peotv-faq',
+        title: 'FAQ',
+        badge: 'Error Matrix',
+        badgeStyle: 'bg-emerald-50 text-emerald-800 border-emerald-200',
+        icon: HelpCircle,
+        iconBg: 'bg-gradient-to-br from-emerald-500 to-teal-600',
+        desc: 'Decoder error codes (CAS error, 101, 102), factory reset, and remote pairing codes.',
+        ruleCode: null,
+        ttTemplate: 'KNOWLEDGE BASE: PEO TV Error Matrix & Decoder Diagnostics\nURL: /knowledge-hub/faq\nACTION: Reference CAS error codes and STB reboot sequences.',
+        route: '/knowledge-hub/faq'
+      }
+    ]
   },
   {
-    id: 'bill_info',
-    title: 'Billing & Tariff Information',
-    pillar: 'billing',
-    icon: CreditCard,
-    gradient: 'from-pink-600 to-rose-700',
-    cardBorder: 'border-pink-300 shadow-pink-500/10',
-    badge: 'Billing Support',
-    badgeStyle: 'bg-pink-100 text-pink-900 border-pink-200',
-    desc: 'Tariffs, e-Bill paperless registration, Bill-Com disputes, disconnection policies & payment reconciliation.',
-    asset: 'BILLING',
-    ruleCode: 'RULE_4G_RELOAD_THIRD_PARTY_CHANNELS'
-  },
-  {
-    id: 'slt_apps',
-    title: 'SLT Apps & Digital Channels',
-    pillar: 'multimedia',
-    icon: Smartphone,
-    gradient: 'from-indigo-600 to-blue-700',
-    cardBorder: 'border-indigo-300 shadow-indigo-500/10',
-    badge: 'Self-Care Apps',
-    badgeStyle: 'bg-indigo-100 text-indigo-900 border-indigo-200',
-    desc: 'MySLT Self-care app, mCash integration, PEO Mobile streaming, bill settlement & password resets.',
-    asset: 'VAS',
-    ruleCode: 'RULE_CQMS_VAS_AND_PROMOS'
-  },
-  {
-    id: 'vas',
-    title: 'Value Added Services (VAS)',
-    pillar: 'multimedia',
-    icon: Sparkles,
-    gradient: 'from-violet-600 to-purple-700',
-    cardBorder: 'border-violet-300 shadow-violet-500/10',
-    badge: 'Rule 7 & 8: Addons',
-    badgeStyle: 'bg-violet-100 text-violet-900 border-violet-200',
-    desc: 'Data Addons, Caller Ring Tunes (CRBT), Voice Mail, Data consumption not deducting issues (INT-NW-SYS-ADMIN).',
-    asset: 'VAS',
-    ruleCode: 'RULE_ADDON_PROVISIONING_ERROR'
-  },
-  {
-    id: 'self_services',
-    title: 'SLT Self Services & USSD',
-    pillar: 'billing',
-    icon: Zap,
-    gradient: 'from-amber-600 to-orange-700',
-    cardBorder: 'border-amber-300 shadow-amber-500/10',
-    badge: 'Automated 24/7',
-    badgeStyle: 'bg-amber-100 text-amber-900 border-amber-200',
-    desc: 'USSD shortcodes (*121#), Web Self-Care portal, Auto Wi-Fi Password Reset, SMS balance & usage inquiry.',
-    asset: 'VAS',
-    ruleCode: 'RULE_CQMS_VAS_AND_PROMOS'
-  },
-  {
-    id: 'promotions',
-    title: 'Promotions & Special Schemes',
-    pillar: 'billing',
-    icon: Award,
-    gradient: 'from-rose-600 to-pink-700',
-    cardBorder: 'border-rose-300 shadow-rose-500/10',
-    badge: 'Rule 13: CQMS',
-    badgeStyle: 'bg-rose-100 text-rose-900 border-rose-200',
-    desc: 'Seasonal Promotions, Free Router Upgrades, Timely Pay Discounts, Double Data, CQMS commercial logging.',
-    asset: 'VAS',
-    ruleCode: 'RULE_CQMS_VAS_AND_PROMOS'
-  },
-  {
-    id: 'enterprise',
-    title: 'Enterprise & Corporate Sales',
-    pillar: 'enterprise',
-    icon: Building,
-    gradient: 'from-slate-700 to-slate-900',
-    cardBorder: 'border-slate-300 shadow-slate-500/10',
-    badge: 'B2B / SLA',
-    badgeStyle: 'bg-slate-100 text-slate-900 border-slate-200',
-    desc: 'Corporate Leased Lines, MPLS VPNs, Tier-III Cloud Hosting, SIP Trunking, Priority Enterprise SLA contracts.',
-    asset: 'GENERAL',
-    ruleCode: null
-  },
-  {
-    id: 'equipment',
-    title: 'Equipment & Hardware Sales',
-    pillar: 'enterprise',
-    icon: Wrench,
-    gradient: 'from-cyan-700 to-blue-900',
-    cardBorder: 'border-cyan-300 shadow-cyan-500/10',
-    badge: 'Rule 3: ADSL/Hardware',
-    badgeStyle: 'bg-cyan-100 text-cyan-900 border-cyan-200',
-    desc: 'Mesh Wi-Fi extenders, Dual-band gigabit routers, replacement power adapters, Teleshop direct exchange pricing.',
-    asset: 'ROUTER',
-    ruleCode: 'RULE_ADSL_ROUTER_FAULTY'
-  },
-  {
-    id: 'slt_mail',
-    title: 'SLT Customer Webmail',
-    pillar: 'enterprise',
-    icon: Mail,
-    gradient: 'from-blue-700 to-indigo-900',
-    cardBorder: 'border-blue-300 shadow-blue-500/10',
-    badge: 'mail.slt.lk',
-    badgeStyle: 'bg-blue-100 text-blue-900 border-blue-200',
-    desc: 'Customer email domain (mail.slt.lk), Webmail configuration, SMTP / POP3 / IMAP port security parameters.',
-    asset: 'DATA',
-    ruleCode: null
-  },
-  {
-    id: 'staff_packages',
-    title: 'Staff Packages & HR Guides',
-    pillar: 'enterprise',
-    icon: Users,
-    gradient: 'from-slate-600 to-slate-800',
-    cardBorder: 'border-slate-300 shadow-slate-500/10',
-    badge: 'Internal Employee',
-    badgeStyle: 'bg-slate-100 text-slate-800 border-slate-200',
-    desc: 'Employee broadband concessions, staff voice quotas, HR provisioning guides, and transfer policies.',
-    asset: 'INTERNAL',
-    ruleCode: null
-  },
-  {
-    id: 'cc_systems',
-    title: 'CC Telephony & OSS/BSS Systems',
-    pillar: 'operations',
-    icon: Server,
-    gradient: 'from-sky-700 to-blue-900',
-    cardBorder: 'border-sky-300 shadow-sky-500/10',
-    badge: 'OSS / BSS Systems',
-    badgeStyle: 'bg-sky-100 text-sky-900 border-sky-200',
-    desc: 'Contact Center Telephony, MINT CRM, Clarity C12, Cisco Finesse, Avaya desktop integration user guides.',
-    asset: 'INTERNAL',
-    ruleCode: null
-  },
-  {
-    id: 'qed',
-    title: 'QED & Quality Escalations',
-    pillar: 'operations',
-    icon: ShieldCheck,
-    gradient: 'from-teal-700 to-emerald-900',
-    cardBorder: 'border-teal-300 shadow-teal-500/10',
-    badge: 'Supervisor Level',
-    badgeStyle: 'bg-teal-100 text-teal-900 border-teal-200',
-    desc: 'Quality Enhancement Division, Customer Complaints, Escalations to Team Leader & Supervisor protocol.',
-    asset: 'GENERAL',
-    ruleCode: 'RULE_CQMS_VAS_AND_PROMOS'
-  },
-  {
-    id: 'latest_updates',
-    title: 'Latest Circulars & Urgent Notices',
-    pillar: 'operations',
-    icon: Bookmark,
-    gradient: 'from-red-600 to-rose-800',
-    cardBorder: 'border-red-300 shadow-red-500/10',
-    badge: 'Urgent Bulletins',
-    badgeStyle: 'bg-red-100 text-red-900 border-red-200',
-    desc: 'Urgent Operational Circulars, System maintenance outage schedules, and New Triage rule modifications.',
-    asset: 'CIRCULARS',
-    ruleCode: null
-  },
-  {
-    id: 'rebuilding',
-    title: 'National Digital Transformation',
-    pillar: 'operations',
+    id: 'trio',
+    title: 'Trio',
+    fullName: 'SLT Trio (Triple Play 3-in-1 Unified Bundle)',
+    pillar: 'trio',
     icon: Layers,
-    gradient: 'from-blue-800 to-slate-900',
-    cardBorder: 'border-blue-300 shadow-blue-500/10',
-    badge: 'Gov & CSR',
-    badgeStyle: 'bg-blue-100 text-blue-900 border-blue-200',
-    desc: 'National Digitization, e-Government initiatives, Rural connectivity, and SLT Corporate Social Responsibility.',
-    asset: 'GENERAL',
-    ruleCode: null
+    gradient: 'from-amber-600 via-orange-600 to-rose-600',
+    cardBorder: 'border-amber-300 shadow-amber-500/10 hover:border-amber-400 hover:shadow-amber-500/20',
+    badge: 'Voice + Data + IPTV (3-in-1)',
+    badgeStyle: 'bg-amber-100 text-amber-900 border-amber-200',
+    desc: 'Unified 3-in-1 Triple Play package combining Megaline/Fiber Telephone Voice + High Speed Broadband + PEO TV on a single consolidated bill with bundled savings.',
+    asset: 'TRIO / BUNDLE',
+    ruleCode: 'RULE_UNLIMITED_SLOWNESS',
+    route: '/knowledge-hub/faq',
+    ctaText: 'Open Trio Solutions',
+    subCards: [
+      {
+        id: 'trio-voice',
+        title: 'Voice',
+        badge: 'Trio Landline',
+        badgeStyle: 'bg-teal-50 text-teal-800 border-teal-200',
+        icon: Phone,
+        iconBg: 'bg-gradient-to-br from-teal-500 to-emerald-600',
+        desc: 'Unified telephone line diagnostics bundled under Trio triple-play consolidated package.',
+        ruleCode: 'RULE_FIBER_VOICE_LINE_FAULT',
+        ttTemplate: 'SERVICE: Trio Triple Play (Voice)\nFAULT: Landline Inactive / Outgoing calls blocked\nACTION: Check Trio package status and route to MDF.',
+        route: '/knowledge-hub/faq'
+      },
+      {
+        id: 'trio-broadband',
+        title: 'Broadband',
+        badge: 'Trio High-Speed',
+        badgeStyle: 'bg-cyan-50 text-cyan-800 border-cyan-200',
+        icon: Globe,
+        iconBg: 'bg-gradient-to-br from-cyan-500 to-blue-600',
+        desc: 'Dedicated broadband data quota, FUP management, and concurrent streaming checks.',
+        ruleCode: 'RULE_UNLIMITED_SLOWNESS',
+        ttTemplate: 'SERVICE: Trio Broadband\nFAULT: Speed Drop / FUP Limit Exceeded\nACTION: Advised extra GB booster or package upgrade via QED.',
+        route: '/knowledge-hub/faq/ftth/browsing-slow'
+      },
+      {
+        id: 'trio-peotv',
+        title: 'PEO TV',
+        badge: 'Trio TV Stream',
+        badgeStyle: 'bg-purple-50 text-purple-800 border-purple-200',
+        icon: Tv,
+        iconBg: 'bg-gradient-to-br from-purple-500 to-indigo-600',
+        desc: 'Integrated PEO TV service on Trio bundle, multi-room decoders, and premium packages.',
+        ruleCode: 'RULE_STB_ONT_ROUTER_FAULTY',
+        ttTemplate: 'SERVICE: Trio PEO TV\nFAULT: Channel Authorization Failure on Trio Bundle\nACTION: Resend CAS entitlement signal.',
+        route: '/knowledge-hub/faq'
+      },
+      {
+        id: 'trio-vas',
+        title: 'VAS',
+        badge: 'Trio Perks',
+        badgeStyle: 'bg-amber-50 text-amber-800 border-amber-200',
+        icon: Sparkles,
+        iconBg: 'bg-gradient-to-br from-amber-500 to-orange-600',
+        desc: 'Trio exclusive VAS discounts, family sharing, free OTT bundles (HBO, SonyLIV).',
+        ruleCode: 'RULE_CQMS_VAS_AND_PROMOS',
+        ttTemplate: 'SERVICE: Trio VAS Perks\nFAULT: OTT App Bundle Access not synchronized\nACTION: Escalate to Digital Channels Team.',
+        route: '/knowledge-hub/faq'
+      },
+      {
+        id: 'trio-faq',
+        title: 'FAQ',
+        badge: 'Consolidated Bill',
+        badgeStyle: 'bg-emerald-50 text-emerald-800 border-emerald-200',
+        icon: HelpCircle,
+        iconBg: 'bg-gradient-to-br from-emerald-500 to-teal-600',
+        desc: 'Trio single bill dispute resolution, bundle discounts, migration & upgrade SOPs.',
+        ruleCode: null,
+        ttTemplate: 'KNOWLEDGE BASE: Trio Consolidated Billing & Service Rules\nURL: /knowledge-hub/faq\nACTION: Verify single invoice allocation and dispute policies.',
+        route: '/knowledge-hub/faq'
+      }
+    ]
   },
 ];
 
-// Service Pillars grouping the 19 domains cleanly
+// Service Pillars grouping the 4 core products cleanly
 const SERVICE_PILLARS = [
   {
     id: 'all',
-    label: 'All Domains (19)',
+    label: 'All 4 Core Pillars',
     icon: LayoutGrid
   },
   {
-    id: 'connectivity',
-    label: 'Core Connectivity',
-    sub: 'FTTH, Broadband, Voice & 4G',
+    id: 'fiber',
+    label: 'Fiber (FTTH)',
     icon: Wifi,
     color: 'text-cyan-600'
   },
   {
-    id: 'multimedia',
-    label: 'Entertainment & Lifestyle',
-    sub: 'PEOTV, MySLT & VAS',
+    id: 'megaline',
+    label: 'Megaline (Copper)',
+    icon: Phone,
+    color: 'text-teal-600'
+  },
+  {
+    id: 'peo_tv',
+    label: 'PEO TV (IPTV)',
     icon: Tv,
     color: 'text-purple-600'
   },
   {
-    id: 'billing',
-    label: 'Billing & Commercial',
-    sub: 'Tariffs, Self-Care & Promos',
-    icon: CreditCard,
-    color: 'text-pink-600'
-  },
-  {
-    id: 'enterprise',
-    label: 'Enterprise & Hardware',
-    sub: 'B2B, Routers & Webmail',
-    icon: Building,
-    color: 'text-slate-700'
-  },
-  {
-    id: 'operations',
-    label: 'SOPs, Systems & Quality',
-    sub: 'Decision Trees, CRM & Circulars',
-    icon: BookOpen,
+    id: 'trio',
+    label: 'Trio (Triple Play)',
+    icon: Layers,
     color: 'text-amber-600'
   }
 ];
@@ -488,12 +540,19 @@ export default function KnowledgeHubPage() {
   const [copiedLink, setCopiedLink] = useState<string | null>(null);
   const [activeCommonTab, setActiveCommonTab] = useState<'operational' | 'broadbandEmail' | 'billing' | 'internal'>('operational');
 
-  // Filter Categories by search and active pillar
-  const filteredCategories = CATEGORY_TILES.filter((c) => {
+  // Filter 4 Main Pillars by search and active pillar
+  const filteredCategories = MAIN_PRODUCT_TILES.filter((c) => {
     const matchesSearch =
       c.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      c.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       c.desc.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (c.badge && c.badge.toLowerCase().includes(searchQuery.toLowerCase()));
+      (c.badge && c.badge.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      c.subCards.some(
+        (sc) =>
+          sc.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          sc.desc.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          sc.badge.toLowerCase().includes(searchQuery.toLowerCase())
+      );
 
     const matchesPillar = selectedPillar === 'all' || c.pillar === selectedPillar;
 
@@ -512,7 +571,7 @@ export default function KnowledgeHubPage() {
       {/* 1. TOP SLT MOBITEL ENTERPRISE BAR */}
       <header className="bg-gradient-to-r from-[#003B66] via-[#005696] to-[#0072CE] text-white px-5 py-2.5 flex items-center justify-between text-xs shadow-md shrink-0 border-b border-blue-400/20">
         <div className="flex items-center gap-4">
-          <Link href="/dashboard" className="flex items-center gap-2 group">
+          <Link href="/" className="flex items-center gap-2 group">
             <div className="flex flex-col leading-none">
               <span className="font-black text-lg text-white tracking-tighter drop-shadow-xs">SLT MOBITEL</span>
               <span className="text-[9px] text-cyan-200 uppercase tracking-widest font-bold">Smart PEARL Knowledge Hub</span>
@@ -528,7 +587,7 @@ export default function KnowledgeHubPage() {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search 19 Domains, SOPs, Rules, or Common Links..."
+              placeholder="Search Fiber, Megaline, PEO TV, Trio, SOPs..."
               className="w-full bg-white/15 text-white placeholder-cyan-100/70 text-xs pl-8 pr-7 py-1.5 rounded-lg border border-white/20 focus:outline-hidden focus:ring-2 focus:ring-cyan-300 backdrop-blur-md transition-all"
             />
             {searchQuery && (
@@ -728,83 +787,130 @@ export default function KnowledgeHubPage() {
             </div>
 
             <span className="text-xs text-slate-400 font-semibold shrink-0">
-              Showing <b className="text-slate-800">{filteredCategories.length}</b> of 19 Domains
+              Showing <b className="text-slate-800">{filteredCategories.length}</b> of 4 Core Pillars
             </span>
           </div>
 
           {/* ======================================================== */}
-          {/* C. 19 MAIN CATEGORY TILES (MODERN BENTO / COMPACT VIEW) */}
+          {/* C. 4 MAIN PRODUCT TILES (FIBER, MEGALINE, PEO TV, TRIO) */}
           {/* ======================================================== */}
           {viewMode === 'bento' ? (
-            /* Modern Rich Bento Grid View */
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            /* Modern Rich 4-Pillar Grid View */
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5">
               {filteredCategories.map((tile) => {
                 const IconComponent = tile.icon;
                 return (
                   <motion.div
                     key={tile.id}
-                    whileHover={{ y: -3, scale: 1.01 }}
-                    whileTap={{ scale: 0.99 }}
-                    onClick={() => {
-                      if (tile.route) {
-                        router.push(tile.route);
-                      } else {
-                        setSelectedItem({ ...tile, type: 'tile' });
-                      }
-                    }}
-                    className={`bg-white rounded-2xl p-4 border transition-all cursor-pointer relative overflow-hidden group flex flex-col justify-between shadow-xs hover:shadow-xl ${
-                      tile.isSpecial
-                        ? 'border-amber-400 bg-gradient-to-br from-amber-50/70 via-white to-orange-50/30'
-                        : 'border-slate-200/90 hover:border-[#005696]/40'
-                    }`}
+                    whileHover={{ y: -4, scale: 1.01 }}
+                    transition={{ duration: 0.2 }}
+                    className={`bg-white rounded-2xl p-5 border transition-all relative overflow-hidden group flex flex-col justify-between shadow-xs hover:shadow-xl ${tile.cardBorder}`}
                   >
                     {/* Top Header */}
                     <div>
                       <div className="flex items-start justify-between gap-2 mb-3">
                         <div
-                          className={`w-10 h-10 rounded-xl bg-gradient-to-br ${tile.gradient} text-white flex items-center justify-center shadow-md group-hover:scale-110 transition-transform`}
+                          className={`w-12 h-12 rounded-xl bg-gradient-to-br ${tile.gradient} text-white flex items-center justify-center shadow-md group-hover:scale-105 transition-transform`}
                         >
-                          <IconComponent className="w-5 h-5" />
+                          <IconComponent className="w-6 h-6" />
                         </div>
 
-                        {tile.badge && (
-                          <span
-                            className={`text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full border shadow-2xs ${tile.badgeStyle}`}
-                          >
-                            {tile.badge}
-                          </span>
-                        )}
+                        <span
+                          className={`text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full border shadow-2xs ${tile.badgeStyle}`}
+                        >
+                          {tile.badge}
+                        </span>
                       </div>
 
-                      <h3 className="font-black text-sm text-slate-900 group-hover:text-[#005696] transition-colors flex items-center gap-1.5">
+                      <h3 className="font-black text-xl text-slate-900 group-hover:text-[#005696] transition-colors flex items-center justify-between">
                         <span>{tile.title}</span>
-                        <ArrowUpRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-opacity text-[#005696]" />
+                        <ArrowUpRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity text-[#005696]" />
                       </h3>
 
-                      <p className="text-xs text-slate-500 font-medium leading-relaxed mt-1 line-clamp-2">
+                      <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">
+                        {tile.fullName}
+                      </p>
+
+                      <p className="text-xs text-slate-600 font-medium leading-relaxed line-clamp-3 mb-4">
                         {tile.desc}
                       </p>
+
+                      {/* 5 Distinct Sub-Cards (Voice, Broadband, PEO TV, VAS, FAQ) */}
+                      <div className="space-y-2 pt-3 border-t border-slate-100">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] font-black uppercase tracking-wider text-slate-500">
+                            Service Cards (5 Domains):
+                          </span>
+                          <span className="text-[9px] font-bold text-[#005696] bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200">
+                            Click to inspect &amp; TT
+                          </span>
+                        </div>
+
+                        <div className="flex flex-col gap-1.5">
+                          {tile.subCards.map((sc, scIdx) => {
+                            const ScIcon = sc.icon;
+                            return (
+                              <div
+                                key={scIdx}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelectedItem({
+                                    name: `${tile.title} - ${sc.title}`,
+                                    title: `${tile.title} - ${sc.title}`,
+                                    category: `${tile.title} Core Domain`,
+                                    desc: sc.desc,
+                                    ruleCode: sc.ruleCode,
+                                    ttTemplate: sc.ttTemplate,
+                                    route: sc.route,
+                                    badge: sc.badge,
+                                    badgeStyle: sc.badgeStyle,
+                                    type: 'subcard'
+                                  });
+                                }}
+                                className="p-2 rounded-xl bg-slate-50 hover:bg-white border border-slate-200/90 hover:border-[#005696]/60 hover:shadow-md transition-all cursor-pointer group/sc flex items-center justify-between gap-2"
+                              >
+                                <div className="flex items-center gap-2 min-w-0">
+                                  <div
+                                    className={`w-6 h-6 rounded-lg ${sc.iconBg} text-white flex items-center justify-center shadow-2xs group-hover/sc:scale-110 transition-transform shrink-0`}
+                                  >
+                                    <ScIcon className="w-3 h-3" />
+                                  </div>
+                                  <div className="min-w-0">
+                                    <div className="flex items-center gap-1.5">
+                                      <span className="font-bold text-xs text-slate-800 group-hover/sc:text-[#005696] transition-colors truncate">
+                                        {sc.title}
+                                      </span>
+                                      <span
+                                        className={`text-[8px] font-black uppercase px-1.5 py-0.2 rounded border ${sc.badgeStyle} shrink-0`}
+                                      >
+                                        {sc.badge}
+                                      </span>
+                                    </div>
+                                    <p className="text-[10px] text-slate-500 font-medium truncate leading-tight mt-0.5">
+                                      {sc.desc}
+                                    </p>
+                                  </div>
+                                </div>
+                                <ChevronRight className="w-3.5 h-3.5 text-slate-400 group-hover/sc:text-[#005696] group-hover/sc:translate-x-0.5 transition-all shrink-0" />
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
                     </div>
 
-                    {/* Bottom Metadata & Quick Launch */}
-                    <div className="pt-3 mt-3 border-t border-slate-100 flex items-center justify-between text-[11px]">
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                        {tile.asset || 'Service'}
+                    {/* Bottom CTA */}
+                    <div className="pt-4 mt-4 border-t border-slate-100 flex items-center justify-between">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase">
+                        {tile.asset}
                       </span>
-
-                      {tile.route ? (
-                        <span className="font-black text-amber-600 group-hover:underline flex items-center gap-1 text-[11px]">
-                          View SOP &rarr;
-                        </span>
-                      ) : tile.ruleCode ? (
-                        <span className="font-mono text-[9px] font-bold px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-200">
-                          {tile.ruleCode}
-                        </span>
-                      ) : (
-                        <span className="text-slate-400 font-medium group-hover:text-slate-700">
-                          Inspect &rarr;
-                        </span>
-                      )}
+                      <Link
+                        href={tile.route}
+                        className="px-3.5 py-1.5 rounded-lg bg-[#005696] hover:bg-[#00407a] text-white font-bold text-xs flex items-center gap-1.5 shadow-sm hover:shadow transition-all"
+                      >
+                        <span>{tile.ctaText}</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </Link>
                     </div>
                   </motion.div>
                 );
@@ -812,44 +918,80 @@ export default function KnowledgeHubPage() {
             </div>
           ) : (
             /* Compact Modern Tiles View */
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {filteredCategories.map((tile) => {
                 const IconComponent = tile.icon;
                 return (
-                  <motion.button
+                  <motion.div
                     key={tile.id}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => {
-                      if (tile.route) {
-                        router.push(tile.route);
-                      } else {
-                        setSelectedItem({ ...tile, type: 'tile' });
-                      }
-                    }}
-                    className={`p-3 rounded-xl border text-left flex flex-col justify-between transition-all bg-white hover:bg-slate-50 shadow-2xs hover:shadow-md cursor-pointer ${
-                      tile.isSpecial ? 'border-amber-400 bg-amber-50/40' : 'border-slate-200'
-                    }`}
+                    whileHover={{ scale: 1.01 }}
+                    className={`p-4 rounded-xl border text-left flex flex-col justify-between transition-all bg-white hover:bg-slate-50 shadow-2xs hover:shadow-md ${tile.cardBorder}`}
                   >
-                    <div className="flex items-center gap-2 mb-1.5">
-                      <div className={`p-1.5 rounded-lg bg-gradient-to-br ${tile.gradient} text-white shadow-xs`}>
-                        <IconComponent className="w-3.5 h-3.5" />
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <div className={`p-2 rounded-lg bg-gradient-to-br ${tile.gradient} text-white shadow-xs`}>
+                          <IconComponent className="w-4 h-4" />
+                        </div>
+                        <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full border ${tile.badgeStyle}`}>
+                          {tile.badge}
+                        </span>
                       </div>
-                      <span className="text-[9px] font-bold text-slate-400 uppercase truncate">
-                        {tile.asset}
-                      </span>
+
+                      <h4 className="font-black text-lg text-slate-900">
+                        {tile.title}
+                      </h4>
+                      <p className="text-[10px] text-slate-400 font-bold mb-2 truncate">
+                        {tile.fullName}
+                      </p>
+                      <p className="text-xs text-slate-500 font-medium line-clamp-2 leading-relaxed mb-3">
+                        {tile.desc}
+                      </p>
+
+                      {/* 5 Sub-Cards Quick Bar in Compact Mode */}
+                      <div className="grid grid-cols-2 gap-1.5 pt-2 border-t border-slate-100">
+                        {tile.subCards.map((sc, scIdx) => {
+                          const ScIcon = sc.icon;
+                          return (
+                            <button
+                              key={scIdx}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedItem({
+                                  name: `${tile.title} - ${sc.title}`,
+                                  title: `${tile.title} - ${sc.title}`,
+                                  category: `${tile.title} Core Domain`,
+                                  desc: sc.desc,
+                                  ruleCode: sc.ruleCode,
+                                  ttTemplate: sc.ttTemplate,
+                                  route: sc.route,
+                                  badge: sc.badge,
+                                  badgeStyle: sc.badgeStyle,
+                                  type: 'subcard'
+                                });
+                              }}
+                              className="px-2 py-1 rounded-md bg-slate-100 hover:bg-blue-50 border border-slate-200 text-left flex items-center gap-1.5 transition-colors"
+                            >
+                              <ScIcon className="w-3 h-3 text-[#005696] shrink-0" />
+                              <span className="text-[10px] font-bold text-slate-700 truncate">{sc.title}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
                     </div>
 
-                    <h4 className="font-bold text-xs text-slate-800 line-clamp-1">
-                      {tile.title}
-                    </h4>
-
-                    {tile.badge && (
-                      <span className="text-[9px] font-bold text-[#005696] mt-1 truncate">
-                        {tile.badge}
+                    <div className="pt-3 mt-3 border-t border-slate-100 flex items-center justify-between">
+                      <span className="text-[9px] font-bold text-slate-400 uppercase">
+                        {tile.asset}
                       </span>
-                    )}
-                  </motion.button>
+                      <Link
+                        href={tile.route}
+                        className="text-xs font-bold text-[#005696] hover:underline flex items-center gap-1"
+                      >
+                        <span>{tile.ctaText}</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </Link>
+                    </div>
+                  </motion.div>
                 );
               })}
             </div>
@@ -1031,6 +1173,25 @@ export default function KnowledgeHubPage() {
                     <p className="text-[11px] text-indigo-900 leading-relaxed">
                       This service domain is automatically analyzed by Gemini Voice Triage for instant trouble ticket creation and dispatch.
                     </p>
+                  </div>
+                )}
+
+                {/* If Trouble Ticket Template is present */}
+                {selectedItem.ttTemplate && (
+                  <div className="p-3.5 bg-slate-900 border border-slate-700 rounded-xl space-y-2 text-white font-mono text-[11px]">
+                    <div className="flex items-center justify-between text-slate-400 border-b border-slate-800 pb-1.5">
+                      <span className="font-bold text-cyan-300">Standard Trouble Ticket Draft</span>
+                      <button
+                        onClick={() => copyToClipboard(selectedItem.ttTemplate, 'modal-tt-copy')}
+                        className="px-2.5 py-1 bg-[#005696] hover:bg-[#0070ba] text-white text-[10px] rounded-md font-sans font-bold flex items-center gap-1 transition-all"
+                      >
+                        {copiedLink === 'modal-tt-copy' ? <Check className="w-3 h-3 text-emerald-300" /> : <Copy className="w-3 h-3" />}
+                        <span>{copiedLink === 'modal-tt-copy' ? 'Copied TT!' : 'Copy TT'}</span>
+                      </button>
+                    </div>
+                    <pre className="whitespace-pre-wrap leading-relaxed text-lime-300 font-mono text-[10px]">
+                      {selectedItem.ttTemplate}
+                    </pre>
                   </div>
                 )}
 
