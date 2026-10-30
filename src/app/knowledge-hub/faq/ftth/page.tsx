@@ -570,7 +570,7 @@ export default function FTTHFAQPage() {
 
                     {/* Right Column: Symptoms/Action */}
                     <td className="p-4 align-top space-y-2">
-                      {row.actions.map((act, aIdx) => {
+                      {row.actions.map((act: any, aIdx) => {
                         const isOntFlowchart = act.type === 'ont_pdf_flowchart' || act.text.includes('ONT not working');
                         const isGeneralFlowchart = act.type === 'general_questions_flowchart' || act.text.includes('General Questions FTTH');
                         const isPonFlowchart = act.type === 'pon_indicator_flowchart' || act.text.includes('PON indicator Red, Off, Blinking and Steady');

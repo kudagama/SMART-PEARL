@@ -561,7 +561,7 @@ export default function EvaluationsPage() {
                         </span>
                       </div>
                       <p className="text-[11px] text-slate-500 font-medium">
-                        Standard: "Please hold on Sir/Madam" (45s max refresh) -> "Thank you for being on hold"
+                        Standard: "Please hold on Sir/Madam" (45s max refresh) &rarr; "Thank you for being on hold"
                       </p>
                     </div>
 

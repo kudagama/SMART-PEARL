@@ -434,7 +434,7 @@ Action Required: Technical investigation for gateway peering congestion, BNG ses
                       {/* Ready-to-copy Ticket Template */}
                       <div className="bg-slate-900 text-white p-4 rounded-lg font-mono text-[11px] space-y-2 border border-black/40">
                         <div className="flex items-center justify-between text-slate-400 border-b border-slate-700 pb-1.5">
-                          <span>Standard Trouble Ticket Draft (Voice Service -> Default WG)</span>
+                          <span>Standard Trouble Ticket Draft (Voice Service &rarr; Default WG)</span>
                           <button
                             onClick={() => copyTtDetails(ttTemplateVoiceNoise, 'tt-voice-noise')}
                             className="px-2.5 py-1 bg-[#005696] hover:bg-[#0070ba] text-white text-[10px] rounded flex items-center gap-1 transition-all"
